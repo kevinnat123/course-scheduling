@@ -1,6 +1,6 @@
 import os
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_URI = "mongodb+srv://kevinnat123:GoTadashi123@freecluster.ej7xn.mongodb.net/" # os.getenv("MONGO_URI", "mongodb://localhost:27017")
 
 MONGO_DB = 'db_course_scheduling'
 MONGO_USERS_COLLECTION = 'users'
