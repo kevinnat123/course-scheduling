@@ -1139,11 +1139,12 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             # best_individual_global = copy.deepcopy(gen_best_individual)
 
             avg = sum(fitness_scores) / len(fitness_scores)
-            print(f"[Gen {gen}] [({len(populasi)} population)] AVG : {round(avg, 2):<10}")
-            print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True):<5}BEST ALLTIME: {best_fitness_global}")
-            print(f"gen best fitness {gen_best_fitness}")
-            # hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-            print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
+            if int(gen) % 20 == 0:
+                print(f"[Gen {gen}] [({len(populasi)} population)] AVG : {round(avg, 2):<10}")
+                print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True):<5}BEST ALLTIME: {best_fitness_global}")
+                print(f"gen best fitness {gen_best_fitness}")
+                # hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
+                print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
 
         print(f"GLOBAL BEST FITNESS {best_fitness_global}, LAST GEN WORST INDIVIDUAL {min(fitness_scores)}")
         # CEK BEST GLOBAL
