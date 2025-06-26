@@ -1,5 +1,5 @@
 from dao import Database
-from database import MONGO_DB, MONGO_CLASSES_COLLECTION as db_kelas
+from config import MONGO_DB, MONGO_CLASSES_COLLECTION as db_kelas
 from flask import session
 import copy
 

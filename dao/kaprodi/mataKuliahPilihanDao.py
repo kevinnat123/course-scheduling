@@ -1,6 +1,6 @@
 from dao import Database
-from database import MONGO_DB, MONGO_COURSES_COLLECTION as db_courses, MONGO_OPEN_COURSES_COLLECTION as db_open_courses, MONGO_USERS_COLLECTION as db_users
-from database import MONGO_MAJOR_COLLECTION as db_prodi
+from config import MONGO_DB, MONGO_COURSES_COLLECTION as db_courses, MONGO_OPEN_COURSES_COLLECTION as db_open_courses, MONGO_USERS_COLLECTION as db_users
+from config import MONGO_MAJOR_COLLECTION as db_prodi
 from flask import session
 
 from dao.kaprodi.dataMataKuliahDao import dataMataKuliahDao

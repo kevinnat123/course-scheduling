@@ -1,5 +1,5 @@
 from dao import Database
-from database import MONGO_DB, MONGO_USERS_COLLECTION as db_users, MONGO_URLS_COLLECTION as db_urls, MONGO_MAJOR_COLLECTION as db_prodi
+from config import MONGO_DB, MONGO_USERS_COLLECTION as db_users, MONGO_URLS_COLLECTION as db_urls, MONGO_MAJOR_COLLECTION as db_prodi
 from global_func import CustomError
 from flask import session
 from werkzeug.security import check_password_hash, generate_password_hash

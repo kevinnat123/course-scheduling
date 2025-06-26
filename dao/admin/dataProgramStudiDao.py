@@ -1,6 +1,6 @@
 from dao import Database
-from database import MONGO_DB, MONGO_MAJOR_COLLECTION as db_prodi, MONGO_USERS_COLLECTION as db_user
-from database import MONGO_LECTURERS_COLLECTION as db_dosen
+from config import MONGO_DB, MONGO_MAJOR_COLLECTION as db_prodi, MONGO_USERS_COLLECTION as db_user
+from config import MONGO_LECTURERS_COLLECTION as db_dosen
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
 
