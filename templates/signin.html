@@ -95,6 +95,76 @@
         background-color: #357abd;
       }
 
+      /* Loading - Modern Animation Style */
+      #loadingModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+      }
+
+      .loading-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        width: 100%;
+      }
+
+      /* Pulse Dots Animation */
+      .pulse-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 15px 0;
+      }
+
+      .pulse-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #0066cc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .pulse-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .pulse-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      .loading-content p {
+        color: #333;
+        font-size: 16px;
+        font-weight: 500;
+        margin-top: 10px;
+        margin-bottom: 0;
+      }
+
       /* Responsivitas */
       @media screen and (max-width: 480px) {
         .signin-container {
@@ -139,6 +209,18 @@
       </form>
     </div>
 
+    <!-- Modern Loading Modal -->
+    <div id="loadingModal">
+      <div class="loading-content">
+        <div class="pulse-container">
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+        </div>
+        <p>Mohon tunggu...</p>
+      </div>
+    </div>
+
     <script src="/static/plugins/jquery/jquery-3.7.1.min.js"></script>
     <script src="/static/plugins/jquery/jquery-3.7.1.js"></script>
 
@@ -177,6 +259,12 @@
           url: "/login",
           cache: false,
           data: JSON.stringify(params),
+          beforeSend: () => {
+            document.getElementById("loadingModal").style.display = "flex";
+          },
+          complete: () => {
+            document.getElementById("loadingModal").style.display = "none";
+          },
           success: function (res) {
             window.location.href = res.redirect_url;
           },
