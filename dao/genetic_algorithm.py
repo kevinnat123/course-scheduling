@@ -22,6 +22,7 @@ class JadwalKuliah:
 # (15)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok             (DONE)
 # (15)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen        (DONE)
 # (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib                (DONE)
+# (15)  Solo Team_Teaching                                          >> solo_team
 # (10)  Beban SKS Dosen melebihi 12 sks                             >> dosen_overdosis           (DONE)
 # (10)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja          (DONE)
 # (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas  (DONE)
@@ -835,6 +836,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     # (15)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok             (DONE)
     # (15)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen        (DONE)
     # (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib                (DONE)
+    # (15)  Solo Team_Teaching                                          >> solo_team
     # (10)  Beban SKS Dosen melebihi 12 sks                             >> dosen_overdosis           (DONE)
     # (10)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja          (DONE)
     # (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas  (DONE)
