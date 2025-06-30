@@ -37,9 +37,9 @@ class mataKuliahPilihanDao:
                 list_matkul = dao_matkul.get_matkul_by_kode(list_kode_matkul)
                 for matkul in list_matkul:
                     matkul.setdefault('jumlah_kelas', None)
-                    jumlah_kelas = next((data.get('jumlah_kelas') for data in data['list_matkul'] if data['kode'] == matkul['kode']), 0)
+                    jumlah_kelas = next((data.get('jumlah_kelas') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
                     if jumlah_kelas:
-                        matkul['jumlah_kelas'] = jumlah_kelas
+                        matkul['jumlah_kelas'] = int(jumlah_kelas)
                 data['list_matkul'] = [matkul for matkul in list_matkul]
 
         return result['data'] if result and result.get('status') else []
