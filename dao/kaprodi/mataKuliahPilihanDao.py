@@ -12,9 +12,9 @@ class mataKuliahPilihanDao:
     def __init__(self):
         self.connection = Database(MONGO_DB)
 
-    def get_listMatkulTersimpan(self, prodi=None):
-        print(f"{'[ DAO ]':<25} Get List Matkul Tersimpan (Prodi: {prodi})")
-        if prodi:
+    def get_listMatkulTersimpan(self):
+        print(f"{'[ DAO ]':<25} Get List Matkul Tersimpan (Role: {session['user']['role']})")
+        if session['user']['role'] == "KEPALA PROGRAM STUDI":
             result = self.connection.find_many(
                 collection_name = db_open_courses, 
                 filter          = {
@@ -25,7 +25,7 @@ class mataKuliahPilihanDao:
                     }, 
                 sort            = [ ("angkatan", 1) ] 
             )
-        else:
+        elif session['user']['role'] == "ADMIN":
             result = self.connection.find_many(
                 collection_name = db_open_courses, 
                 sort            = [ ("prodi", 1), ("angkatan", 1) ]
@@ -36,8 +36,10 @@ class mataKuliahPilihanDao:
                 list_kode_matkul = [matkul['kode'] for matkul in data['list_matkul']]
                 list_matkul = dao_matkul.get_matkul_by_kode(list_kode_matkul)
                 for matkul in list_matkul:
-                    jumlah_kelas = next((data['jumlah_kelas'] for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
-                    matkul['jumlah_kelas'] = jumlah_kelas
+                    matkul.setdefault('jumlah_kelas', None)
+                    jumlah_kelas = next((data.get('jumlah_kelas') for data in data['list_matkul'] if data['kode'] == matkul['kode']), 0)
+                    if jumlah_kelas:
+                        matkul['jumlah_kelas'] = jumlah_kelas
                 data['list_matkul'] = [matkul for matkul in list_matkul]
 
         return result['data'] if result and result.get('status') else []
@@ -89,6 +91,13 @@ class mataKuliahPilihanDao:
                 bidang_minat = ''
                 for bm in bidang_minat_words:
                     bidang_minat += bm[0]
+
+            if params.get('list_matkul'):
+                for dt in params['list_matkul']:
+                    if not dt.get('jumlah_kelas') or dt.get('jumlah_kelas') == "0":
+                        dt.pop('jumlah_kelas', None)
+                    elif dt.get('jumlah_kelas'):
+                        dt['jumlah_kelas'] = int(dt['jumlah_kelas'])
             
             u_id = (session['academic_details']['tahun_ajaran_berikutnya'].replace("/","-") + "_" + session['academic_details']['semester_depan'] + "_" + prodi).upper()
             u_id = u_id + ("_" + bidang_minat if params.get('bidang_minat') else '') + "_" + str(params['angkatan'])
@@ -151,6 +160,13 @@ class mataKuliahPilihanDao:
                 bidang_minat = ''
                 for bm in bidang_minat_words:
                     bidang_minat += bm[0]
+
+            if params.get('list_matkul'):
+                for dt in params['list_matkul']:
+                    if not dt.get('jumlah_kelas') or dt.get('jumlah_kelas') == "0":
+                        dt.pop('jumlah_kelas', None)
+                    elif dt.get('jumlah_kelas'):
+                        dt['jumlah_kelas'] = int(dt['jumlah_kelas'])
             
             u_id = (session['academic_details']['tahun_ajaran_berikutnya'].replace("/","-") + "_" + session['academic_details']['semester_depan'] + "_" + prodi).upper()
             u_id = u_id + ("_" + bidang_minat if params.get('bidang_minat') else '') + "_" + str(params['angkatan'])

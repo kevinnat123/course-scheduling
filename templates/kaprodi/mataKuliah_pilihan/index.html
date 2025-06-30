@@ -819,9 +819,10 @@
 
           // Mencari indeks elemen dengan angkatan '2021'
           let index = data_angkatan.findIndex(
-            (item) =>
-              item.angkatan === params.angkatan &&
-              item.bidang_minat === params.bidang_minat
+            (item) => item.u_id === params.u_id
+            // item.angkatan === params.angkatan &&
+            // item.prodi === params.prodi &&
+            // item.bidang_minat === params.bidang_minat
           );
 
           // Jika ditemukan, ganti elemen tersebut, jika tidak, tambahkan data baru

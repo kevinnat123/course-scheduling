@@ -22,7 +22,7 @@ def mataKuliahPilihan_index():
                     if session['user']['role'] == "KEPALA PROGRAM STUDI"
                     else "",
                 list_prodi = session['user']['list_prodi'],
-                data_sebelum = dao.get_listMatkulTersimpan(session['user'].get('prodi'))
+                data_sebelum = dao.get_listMatkulTersimpan()
             )
     
 @mataKuliahPilihan.route("/mata_kuliah_pilihan/get_bidang_minat", methods=['GET'])
