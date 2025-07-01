@@ -1156,11 +1156,8 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
     if not ruang_list: print('[ KOSONG ] list ruang')
 
     try:
-        print(f"{'':<15} Generate Generasi Pertama")
         populasi = generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi)
-        print(f"{'':<15} Repair Generasi Pertama")
         populasi = [repair_jadwal(j, matakuliah_list, dosen_list, ruang_list) for j in populasi]
-        print(f"{'':<15} Repair Generasi Pertama - DONE")
 
         best_fitness_global = float('-inf')
         best_individual_global = None
@@ -1205,10 +1202,11 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 print(f"[Gen {gen}] [({len(populasi)} population)]")
                 print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {max(fitness_scores):<5}BEST ALLTIME: {best_fitness_global}")
                 if best_individual_global:
+                    print('entry3')
                     hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
                     print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
 
-            if gen_best_fitness == 1000:
+            if best_fitness_global == 1000:
                 break
     except Exception as e:
         print(f"{'[ GA ]':<25} Error: {e}")
