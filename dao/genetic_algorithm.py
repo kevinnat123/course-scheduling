@@ -126,7 +126,7 @@ def find_missing_course(jadwal, matakuliah_list):
 
 def sync_team_teaching(sesi_dosen, jadwal, jadwal_dosen, jadwal_ruangan):
     for sesi_lain in jadwal:
-        if sesi_lain.kode_matkul == sesi_dosen.kode_matkul and sesi_lain.kode_dosen != sesi_dosen.kode_dosen:
+        if sesi_lain.kode_matkul == sesi_dosen.kode_matkul: # and sesi_lain.kode_dosen != sesi_dosen.kode_dosen:
             old_hari = sesi_lain.hari
             old_jam_mulai = sesi_lain.jam_mulai
             old_jam_selesai = sesi_lain.jam_selesai
@@ -491,7 +491,68 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 #     continue
 
     # LOOP KEDUA:
-    # 2. REPAIR JADWAL ASISTEN KALAU BENTRO K DENGAN KELAS LAIN (DONE)
+    # - TRY DISTRIBUSI SKS
+    for sesi_dosen in jadwal:
+        if sesi_dosen.kode_dosen != "AS":
+            matkul = next((m for m in matakuliah_list if m['kode'] == sesi_dosen.kode_matkul[:-1]), None)
+            info_dosen = next((d for d in dosen_list if d['nip'] == sesi_dosen.kode_dosen), None)
+            if matkul and info_dosen:
+                # Cek semua beban sks dosen ajar matkul bersangkutan
+                beban_pengajar_matkul = {
+                    dosen['nip']: beban_dosen[dosen['nip']] 
+                    for dosen in dosen_list if dosen['nama'] in matkul.get('dosen_ajar', [])
+                }
+
+                if beban_pengajar_matkul:
+                    dosen_beban_tertinggi, beban_tertinggi = max(beban_pengajar_matkul.items(), key=lambda x: x[1])
+                    current_sks = beban_dosen.get(sesi_dosen.kode_dosen, 0)
+
+                    if current_sks < beban_tertinggi:
+                        # kalo beban sks current dosen < beban tertinggi, ambil jadwal dosen dg beban tertinggi
+                        jadwal_dosen_beban_tertinggi = [
+                            j for j in jadwal # jadwal_dosen[dosen_beban_tertinggi] 
+                            if j.kode_matkul.startswith(matkul['kode']) and
+                                j.kode_dosen == dosen_beban_tertinggi
+                        ]
+
+                        # cek apakah ada jadwal dosen beban tertinggi yang bisa digantikan current dosen
+                        for jadwal_b in jadwal_dosen_beban_tertinggi:
+                            # Cek Preferensi
+                            preferensi = info_dosen.get('preferensi', {})
+                            hindari_hari = preferensi.get('hindari_hari', [])
+                            
+                            if jadwal_b.hari in hindari_hari:
+                                continue
+                            
+                            # Cek Bentrok
+                            bentrok = False
+                            for jadwal_a in jadwal_dosen.get(sesi_dosen.kode_dosen, []):
+                                if jadwal_a['hari'] == jadwal_b.hari:
+                                    if jadwal_b.jam_mulai < jadwal_a['jam_selesai'] and jadwal_b.jam_selesai > jadwal_a['jam_mulai']:
+                                        bentrok = True
+                                        break
+
+                            if bentrok:
+                                continue
+                            
+                            jadwal_b.kode_dosen = sesi_dosen.kode_dosen
+
+                            jadwal_dosen[dosen_beban_tertinggi] = [
+                                j for j in jadwal_dosen[dosen_beban_tertinggi]
+                                if not (j['hari'] == jadwal_b.hari and j['jam_mulai'] == jadwal_b.jam_mulai and j['jam_selesai'] == jadwal_b.jam_selesai)
+                            ]
+                            jadwal_dosen[sesi_dosen.kode_dosen].append({
+                                'hari': jadwal_b.hari,
+                                'jam_mulai': jadwal_b.jam_mulai,
+                                'jam_selesai': jadwal_b.jam_selesai
+                            })
+
+                            beban_dosen[dosen_beban_tertinggi] -= jadwal_b.sks_akademik
+                            beban_dosen[sesi_dosen.kode_dosen] += jadwal_b.sks_akademik
+                            break  # break setelah tukar sesi
+
+    # LOOP KEDUA:
+    # - REPAIR JADWAL ASISTEN KALAU BENTRO K DENGAN KELAS LAIN (DONE)
     for sesi_asisten in jadwal:
         if sesi_asisten.kode_dosen == "AS": # KODE ASISTEN
             matkul = next((m for m in matakuliah_list if m['kode'] == sesi_asisten.kode_matkul[:-4]), None)
@@ -801,7 +862,6 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
     return jadwal
 
 def generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi):
-    print(f"{'':<8}{'[ GA ]':<7} Generate Generasi Pertama")
     return [generate_jadwal(matakuliah_list, dosen_list, ruang_list) for _ in range(ukuran_populasi)]
 
 def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False):
@@ -936,7 +996,6 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                 mata_kuliah_minus[kode_matkul] = kekurangan_kapasitas
 
     if detail:
-        if beban_dosen: print(f"{'':<10}{'beban dosen':<40}: {beban_dosen}")
         if hitung_dosen_bentrok: print(f"{'':<10}{'Bentrok Dosen':<40} : {hitung_dosen_bentrok}")
         if hitung_ruangan_bentrok: print(f"{'':<10}{'Bentrok Ruangan':<40} : {hitung_ruangan_bentrok}")
         if hitung_asdos_nabrak_dosen: print(f"{'':<10}{'Bentrok Dosen-Asdos':<40} : {hitung_asdos_nabrak_dosen}")
@@ -946,8 +1005,8 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
         if mata_kuliah_minus: print(f"{'':<10}{'Kapasitas kelas kurang x':<40} : {mata_kuliah_minus}")
         hitung_solo_team = {k: v for k, v in hitung_solo_team.items() if v}
         pelanggaran_preferensi = {k: v for k, v in pelanggaran_preferensi.items() if v}
-        print(f"{'solo team':<50}: {hitung_solo_team}")
-        print(f"{'pelanggaran preferensi':<50}: {pelanggaran_preferensi}")
+        print(f"{'':<41}solo team : {hitung_solo_team}")
+        print(f"{'':<28}pelanggaran preferensi : {pelanggaran_preferensi}")
 
     # print(f"{'final fitness':<50} : {max(0, 1000 - penalti)}")
     # return max(0, 1000 - penalti)
@@ -1073,7 +1132,7 @@ def mutasi(individu, dosen_list, matakuliah_list, ruang_list, peluang_mutasi=0.1
                 sesi.kode_ruangan = ruang_pengganti['kode']
     return individu
 
-def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=75, jumlah_generasi=100, peluang_mutasi=0.1, proporsi_elite=0.05):
+def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=75, jumlah_generasi=100, peluang_mutasi=0.1):
     """
     Melakukan mutasi pada individu (jadwal) secara acak berdasarkan peluang yang ditentukan.
 
@@ -1092,23 +1151,23 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         dict: Jadwal hasil algoritma genetika dalam bentuk dictionary.
     """
     print(f"{'':<8}{'[ GA ]':<7} Genetic Algorithm")
+    if not matakuliah_list: print('[ KOSONG ] list mata kuliah')
+    if not dosen_list: print('[ KOSONG ] list dosen')
+    if not ruang_list: print('[ KOSONG ] list ruang')
 
     try:
+        print(f"{'':<15} Generate Generasi Pertama")
         populasi = generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi)
+        print(f"{'':<15} Repair Generasi Pertama")
         populasi = [repair_jadwal(j, matakuliah_list, dosen_list, ruang_list) for j in populasi]
-        
+        print(f"{'':<15} Repair Generasi Pertama - DONE")
+
         best_fitness_global = float('-inf')
         best_individual_global = None
-
-        # jumlah_elite = max(1, int(ukuran_populasi * proporsi_elite))
 
         for gen in range(jumlah_generasi):
             fitness_scores = [hitung_fitness(individu, matakuliah_list, dosen_list, ruang_list) for individu in populasi]
             next_gen = []
-
-            # # Simpan individu terbaik
-            # individu_elite = [individu for _, individu in sorted(zip(fitness_scores, populasi), key=lambda x: x[0], reverse=True)][:jumlah_elite]
-            # next_gen = individu_elite.copy()
 
             # Generate anak baru
             while len(next_gen) < ukuran_populasi:
@@ -1133,24 +1192,24 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             gen_best_fitness = max(fitness_scores)
             gen_best_individual = populasi[fitness_scores.index(gen_best_fitness)]
             
-            if gen_best_fitness >= best_fitness_global:
+            if gen > 15 and gen_best_fitness == 1000:
+                print(f"{'[ Highest Best ]':<15} {gen} 1000")
+                best_fitness_global = gen_best_fitness
+                best_individual_global = copy.deepcopy(gen_best_individual)
+            elif gen > 15 and gen_best_fitness > best_fitness_global:
+                print(f"{'[ Update  Best ]':<15} {gen} {gen_best_fitness}")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
 
-            # best_fitness_global = gen_best_fitness
-            # best_individual_global = copy.deepcopy(gen_best_individual)
+            if int(gen) % 20 == 0 or int(gen) == (jumlah_generasi - 1):
+                print(f"[Gen {gen}] [({len(populasi)} population)]")
+                print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {max(fitness_scores):<5}BEST ALLTIME: {best_fitness_global}")
+                if best_individual_global:
+                    hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
+                    print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
 
-            avg = sum(fitness_scores) / len(fitness_scores)
-            if int(gen) % 20 == 0:
-                print(f"[Gen {gen}] [({len(populasi)} population)] AVG : {round(avg, 2):<10}")
-                print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True):<5}BEST ALLTIME: {best_fitness_global}")
-                print(f"gen best fitness {gen_best_fitness}")
-                # hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-                print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
-
-        print(f"GLOBAL BEST FITNESS {best_fitness_global}, LAST GEN WORST INDIVIDUAL {min(fitness_scores)}")
-        # CEK BEST GLOBAL
-        hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, True)
+            if gen_best_fitness == 1000:
+                break
     except Exception as e:
         print(f"{'[ GA ]':<25} Error: {e}")
         return { 'status': False, 'message': e }
