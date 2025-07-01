@@ -1193,17 +1193,16 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 print(f"{'[ Highest Best ]':<15} {gen} 1000")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
-            elif gen > 15 and gen_best_fitness > best_fitness_global:
+            elif gen > 15 and gen_best_fitness >= best_fitness_global:
                 print(f"{'[ Update  Best ]':<15} {gen} {gen_best_fitness}")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
 
-            if int(gen) % 20 == 0 or int(gen) == (jumlah_generasi - 1):
+            if int(gen) % 20 == 0 or int(gen) == (jumlah_generasi - 1) or (gen > 15 and gen_best_fitness == 1000):
                 print(f"[Gen {gen}] [({len(populasi)} population)]")
-                print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {max(fitness_scores):<5}BEST ALLTIME: {best_fitness_global}")
-                if best_individual_global:
-                    hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-                    print(f"{'':<5}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n") if find_missing_course(best_individual_global, matakuliah_list) else print("\n")
+                print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {gen_best_fitness:<5}BEST ALLTIME: {best_fitness_global}")
+                hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
+                print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n") if find_missing_course(gen_best_individual, matakuliah_list) else print("\n")
 
             if best_fitness_global == 1000:
                 break
