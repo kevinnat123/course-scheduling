@@ -93,7 +93,7 @@ def create_app():
 
     @app.before_request
     def check_session():
-        safe_endpoints = ['signin.login', 'signin.logout', 'static', 'signin.ping']
+        safe_endpoints = ['signin.login', 'signin.logout', 'static', 'signin.ping', 'favicon']
         current_endpoint = request.endpoint
 
         # SESSION
