@@ -95,7 +95,10 @@ class loginDao:
                     )
                     if not prodi_user["status"]:
                         raise CustomError({ 'message': 'Program Studi anda tidak ditemukan!' })
+    
                     prodi_data = prodi_user.get('data', {})
+                    if not prodi_data.get("status_aktif"):
+                        raise CustomError({ 'message': 'Program Studi anda sudah di non-aktifkan!' })
 
                     if prodi_data.get("kepala_program_studi") != u_id:
                         self.connection.update_one(
@@ -104,9 +107,9 @@ class loginDao:
                             update_data     = {"role": "EX KEPALA PROGRAM STUDI"}
                         )
                         raise CustomError({ 'message': 'Kepala Program Studi sudah diubah oleh Admin!' })
-                    elif prodi_data.get("kepala_program_studi") == u_id:
-                        if not prodi_data.get("status_aktif"):
-                            raise CustomError({ 'message': 'Program Studi anda sudah di non-aktifkan!' })
+                elif user_data.get('role') == "EX KEPALA PROGRAM STUDI":
+                    raise CustomError({ 'message': 'Kepala Program Studi sudah diubah oleh Admin!' })
+
                 stored_password = user_data.get('password', '')
                 if check_password_hash(stored_password, password):
                     del user_data['password']
