@@ -151,20 +151,21 @@ class dataProgramStudiDao:
                         filter          = { 'nama': params['kepala_program_studi'] }
                     )
                     if data_kaprodi_baru['status']:
-                        nip_kaprodi_baru = data_kaprodi_baru['data']['nip']
+                        data_kaprodi_baru = data_kaprodi_baru['data']
+                        nip_kaprodi_baru = data_kaprodi_baru['nip']
                         params['kepala_program_studi'] = nip_kaprodi_baru
-                        if old_prodi['kepala_program_studi'] != nip_kaprodi_baru:
+                        if old_prodi.get('kepala_program_studi') != nip_kaprodi_baru:
                             # hapus user kaprodi lama
                             self.connection.delete_one(
                                 collection_name = db_user,
-                                filter          = { 'u_id': old_prodi['kepala_program_studi'] },
+                                filter          = { 'u_id': old_prodi.get('kepala_program_studi') },
                             )
                             # tambahkan user baru
                             self.connection.insert_one(
                                 collection_name = db_user,
                                 data            = {
                                     'u_id': nip_kaprodi_baru,
-                                    'nama': data_kaprodi_baru['data']['nama'],
+                                    'nama': data_kaprodi_baru['nama'],
                                     'password': generate_password_hash(nip_kaprodi_baru, method='pbkdf2:sha256'),
                                     'role': 'KEPALA PROGRAM STUDI',
                                     'prodi': params['program_studi']

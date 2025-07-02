@@ -1,7 +1,7 @@
 from dao import Database
 from config import MONGO_DB, MONGO_USERS_COLLECTION as db_users, MONGO_URLS_COLLECTION as db_urls, MONGO_MAJOR_COLLECTION as db_prodi
 from global_func import CustomError
-from flask import session
+from flask import session, abort
 from werkzeug.security import check_password_hash, generate_password_hash
 
 class loginDao:
@@ -88,6 +88,9 @@ class loginDao:
             )
             if user.get('status'):
                 user_data = user['data']
+                if user_data.get('role') not in ["ADMIN", "KEPALA PROGRAM STUDI", "LABORAN"]:
+                    abort(401)
+
                 if user_data.get('role') == "KEPALA PROGRAM STUDI":
                     prodi_user = self.connection.find_one(
                         collection_name = db_prodi, 
@@ -99,16 +102,6 @@ class loginDao:
                     prodi_data = prodi_user.get('data', {})
                     if not prodi_data.get("status_aktif"):
                         raise CustomError({ 'message': 'Program Studi anda sudah di non-aktifkan!' })
-
-                    if prodi_data.get("kepala_program_studi") != u_id:
-                        self.connection.update_one(
-                            collection_name = db_users,
-                            filter          = {"u_id": u_id},
-                            update_data     = {"role": "EX KEPALA PROGRAM STUDI"}
-                        )
-                        raise CustomError({ 'message': 'Kepala Program Studi sudah diubah oleh Admin!' })
-                elif user_data.get('role') == "EX KEPALA PROGRAM STUDI":
-                    raise CustomError({ 'message': 'Kepala Program Studi sudah diubah oleh Admin!' })
 
                 stored_password = user_data.get('password', '')
                 if check_password_hash(stored_password, password):
