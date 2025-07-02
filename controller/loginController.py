@@ -15,11 +15,15 @@ def home():
         return redirect(url_for('dashboard.dashboard_index'))
     else:
         abort(401)
+
+@signin.route("/gotadashi/signup", methods=["POST"])
+def gotadashi_signup():
+    req = request.get_json('data')
+    loginDao.signUp(u_id=req['id'], role=req['role'], password=req['password'], prodi=req['prodi'])
     
 @signin.route("/login", methods=['GET', 'POST'])
 def login():
     print(f"{'[ CONTROLLER ]':<25} Login (Method: {request.method})")
-    # loginDao.signUp(u_id="asd", role="KEPALA PROGRAM STUDI", password="asd")
     if session.get('user') and 'u_id' in session['user']:
         return redirect(url_for('dashboard.dashboard_index'))
     
