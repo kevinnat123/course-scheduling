@@ -7,6 +7,27 @@
       <div class="row">
         <h4 id="formTitle"></h4>
       </div>
+      <!-- PROGRAM STUDI -->
+      <div class="form-group row">
+        <label for="input_prodi" class="col-2 col-form-label text-end"
+          >Program Studi<span class="text-danger" aria-hidden="true"
+            >*</span
+          ></label
+        >
+        <div class="col">
+          <select
+            class="form-select"
+            id="input_prodi"
+            onchange="changedProdi($(this).val())"
+          >
+            <option value="">-- Pilih Program Studi --</option>
+            {% for prodi in list_prodi %}
+            <option value="{{ prodi }}">{{ prodi }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <!-- PROGRAM STUDI -->
       <!-- KODE -->
       <div class="form-group row">
         <label for="input_kode" class="col-2 col-form-label text-end"
@@ -40,27 +61,6 @@
         </div>
       </div>
       <!-- NAMA END -->
-      <!-- PROGRAM STUDI -->
-      <div class="form-group row">
-        <label for="input_prodi" class="col-2 col-form-label text-end"
-          >Program Studi<span class="text-danger" aria-hidden="true"
-            >*</span
-          ></label
-        >
-        <div class="col">
-          <select
-            class="form-select"
-            id="input_prodi"
-            onchange="changedProdi($(this).val())"
-          >
-            <option value="">-- Pilih Program Studi --</option>
-            {% for prodi in list_prodi %}
-            <option value="{{ prodi }}">{{ prodi }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-      <!-- PROGRAM STUDI -->
       <!-- KELOMPOK -->
       <div class="form-group row">
         <label for="input_kelompok" class="col-2 col-form-label text-end"
@@ -1021,8 +1021,8 @@
   });
 
   async function changedProdi(program_studi) {
-    clear_form();
-    $("#input_prodi").val(program_studi);
+    $("#field_dosen_ajar span.badge").remove();
+    $("#field_dosen_ajar").attr("hidden", true);
 
     dosen_lov.ajax.reload();
     bidang_lov.ajax.reload();
@@ -1045,6 +1045,7 @@
         if (kelompok.length) {
           $("#input_kelompok").prop("disabled", false);
 
+          $("#input_kelompok").children().filter(":not(.default)").remove(); // hapus semua list bidang_minat
           await kelompok.forEach((element) => {
             $("#input_kelompok").append(
               `<option value="` + element + `">` + element + `</option>`

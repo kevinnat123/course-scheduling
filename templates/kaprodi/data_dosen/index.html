@@ -6,6 +6,27 @@
       <div class="row">
         <h4 id="formTitle"></h4>
       </div>
+      <!-- PROGRAM STUDI -->
+      <div class="form-group row">
+        <label for="input_prodi" class="col-2 col-form-label text-end"
+          >Program Studi<span class="text-danger" aria-hidden="true"
+            >*</span
+          ></label
+        >
+        <div class="col">
+          <select
+            class="form-select"
+            id="input_prodi"
+            onchange="changedProdi($(this).val())"
+          >
+            <option value="">-- Pilih Program Studi --</option>
+            {% for prodi in list_prodi %}
+            <option value="{{ prodi }}">{{ prodi }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <!-- PROGRAM STUDI END -->
       <!-- NIP + STATUS -->
       <div class="form-group row">
         <label for="input_nip" class="col-2 col-form-label text-end"
@@ -68,27 +89,6 @@
         </div>
       </div>
       <!-- NAMA END -->
-      <!-- PROGRAM STUDI -->
-      <div class="form-group row">
-        <label for="input_prodi" class="col-2 col-form-label text-end"
-          >Program Studi<span class="text-danger" aria-hidden="true"
-            >*</span
-          ></label
-        >
-        <div class="col">
-          <select
-            class="form-select"
-            id="input_prodi"
-            onchange="changedProdi($(this).val())"
-          >
-            <option value="">-- Pilih Program Studi --</option>
-            {% for prodi in list_prodi %}
-            <option value="{{ prodi }}">{{ prodi }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-      <!-- PROGRAM STUDI END -->
       <!-- PAKAR -->
       <div class="form-group row">
         <label for="input_pakar" class="col-2 col-form-label text-end"
@@ -355,6 +355,7 @@
 {% endblock %} {% block script %}
 <script>
   const prodi = "{{ prodi | safe }}";
+  var old_program_studi_input = undefined;
   $(document).ready(function () {
     $("#modal-matkul tbody").on("click", "tr", async function () {
       let row = matkul_lov.row(this).data();
@@ -410,6 +411,10 @@
       $("#input_prodi").val(prodi ? prodi : data.prodi);
       await changedProdi($("#input_prodi").val());
       $("#" + data.status).prop("checked", true);
+      if (data.status === "TIDAK_TETAP") {
+        if (!prodi) $("#input_prodi").val("").prop("disabled", true);
+        pakar_lov.ajax.reload();
+      }
       $("input[name='cbPreferensi']").prop("checked", data.preferensi);
       if (data.pakar)
         data.pakar.forEach((element) => {
@@ -429,6 +434,22 @@
 
     $("#card-form").prop("hidden", hidden ? true : false);
   }
+
+  $("input[name='rbStatus']").on("change", async function () {
+    await pakar_lov.ajax.reload();
+
+    if (!prodi) {
+      old_program_studi_input =
+        $("#input_prodi").val() || old_program_studi_input;
+      if ($(this).val() === "TIDAK_TETAP") {
+        $("#input_prodi").val("").prop("disabled", true);
+      } else {
+        $("#input_prodi")
+          .val(prodi ? prodi : old_program_studi_input)
+          .prop("disabled", false);
+      }
+    }
+  });
 
   $("#btn-simpan").on("click", function () {
     if (!$("#input_nip").val()) {
@@ -790,9 +811,9 @@
       popUpTimer("info", "Input minimal 3 karakter!");
   });
 
-  async function changedProdi(program_studi) {
-    clear_form();
-    $("#input_prodi").val(program_studi);
+  async function changedProdi(program_studi = undefined) {
+    $("#field_matkul_ajar span.badge").remove();
+    $("#field_matkul_ajar").attr("hidden", true);
 
     matkul_lov.ajax.reload();
     pakar_lov.ajax.reload();
@@ -855,7 +876,8 @@
     },
   ];
   if (!prodi) {
-    dosen_tab_column.splice(4, 0, {
+    dosen_tab_column.splice(3, 0, {
+      // 3 diganti 4 klo cb exist
       data: "prodi",
       width: "300px",
       defaultContent: "",
@@ -936,6 +958,7 @@
       data: function (d) {
         return {
           prodi: prodi ? prodi : $("#input_prodi").val(),
+          status_dosen: $("input[name='rbStatus']:checked").val(),
         };
       },
       cache: false,

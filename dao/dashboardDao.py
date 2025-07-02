@@ -21,14 +21,28 @@ class dashboardDao:
             )
         return result if result and result.get('status') else None
     
-    def get_pakar_prodi(self, prodi):
-        print(f"{'[ DAO ]':<25} Get Pakar Prodi (prodi: {prodi})")
-        result = self.connection.find_one(
-            collection_name = db_prodi, 
-            filter          = {'program_studi': prodi}
-        )
+    def get_pakar_prodi(self, prodi=None, status_dosen=None):
+        print(f"{'[ DAO ]':<25} Get Pakar Prodi (prodi: {prodi}, status dosen {status_dosen})")
+        if not status_dosen or status_dosen != "TIDAK_TETAP":
+            result = self.connection.find_many(
+                collection_name = db_prodi, 
+                filter          = {'program_studi': prodi}
+            )
+        elif status_dosen == "TIDAK_TETAP":
+            result = self.connection.find_many(
+                collection_name = db_prodi, 
+            )
         if result and result.get('status'):
-            pakar = [{"pakar": pakar} for pakar in result['data'].get('pakar', [])]
+            # # manual loop
+            # pakar = set()
+            # for data in result['data']:
+            #     if data.get('pakar'):
+            #         for item in data['pakar']:
+            #             pakar.add(item)
+            # pakar = [{"pakar": item} for item in list(pakar)]
+
+            # List Compre
+            pakar = [{"pakar": item} for item in set(i for d in result['data'] if d.get('pakar') for i in d['pakar'])]
         return pakar if result and result.get('status') else []
 
     def update_general(self, params):

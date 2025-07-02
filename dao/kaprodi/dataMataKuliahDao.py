@@ -3,6 +3,7 @@ from config import MONGO_DB, MONGO_USERS_COLLECTION as db_users, MONGO_COURSES_C
 from config import MONGO_MAJOR_COLLECTION as db_prodi
 from flask import session
 
+from dao.dashboardDao import dashboardDao
 from global_func import CustomError
 
 ASISTENSI_RELATED = ['asistensi', 'tipe_kelas_asistensi', 'integrated_class']
@@ -114,6 +115,10 @@ class dataMataKuliahDao:
             if not params.get('team_teaching'):
                 for x in TEAM_TEACHING_RELATED:
                     params.pop(x, None)
+            if params.get('bidang'):
+                accessible_field = dashboardDao().get_pakar_prodi(prodi=params.get('prodi'))
+                accessible_field = [item['pakar'] for item in accessible_field]
+                params['bidang'] = [item for item in params['bidang'] if item in accessible_field]
             params = {k: v for k, v in params.items() if v}
 
             # Update Dosen
@@ -197,6 +202,13 @@ class dataMataKuliahDao:
                 for x in TEAM_TEACHING_RELATED:
                     params.pop(x, None)
                     if x not in unset: unset[x] = ""
+            if params.get('bidang'):
+                accessible_field = dashboardDao().get_pakar_prodi(prodi=params.get('prodi'))
+                accessible_field = [item['pakar'] for item in accessible_field]
+                params['bidang'] = [item for item in params['bidang'] if item in accessible_field]
+            if not params.get('bidang'):
+                unset['bidang'] = ""
+                params.pop('bidang', None)
             params = {k: v for k, v in params.items() if v}
             
             res = self.connection.update_one(

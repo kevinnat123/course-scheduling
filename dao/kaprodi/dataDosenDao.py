@@ -2,6 +2,7 @@ from dao import Database
 from config import MONGO_DB, MONGO_LECTURERS_COLLECTION as db_dosen, MONGO_COURSES_COLLECTION as db_matkul
 from flask import session
 
+from dao.dashboardDao import dashboardDao
 from global_func import CustomError
 
 class dataDosenDao:
@@ -78,7 +79,7 @@ class dataDosenDao:
                 raise CustomError({ 'message': 'Nama belum diisi!', 'target': 'input_nama' })
             elif not params.get("status"):
                 raise CustomError({ 'message': 'Status Dosen belum diisi!' })
-            elif not params.get('prodi'):
+            elif not params.get('prodi') and params.get('status') != "TIDAK_TETAP":
                 raise CustomError({ 'message': 'Program Studi belum diisi!' })
             
             # Check exist
@@ -89,7 +90,7 @@ class dataDosenDao:
             if (res['status'] == True):
                 raise CustomError({ 'message': 'Data dengan NIP ' + params['nip'] + ' sudah ada!' })
             if session['user']['role'] == "KEPALA PROGRAM STUDI":
-                if params['prodi'] != session['user']['prodi']:
+                if params['prodi'] != session['user']['prodi'] and params.get('status') != "TIDAK_TETAP":
                     raise CustomError({ 'message': 'Anda input program studi diluar program studi anda! (Input Anda: ' + params['prodi'] + ')' })
                 
             # Hapus key yang memiliki value kosong
@@ -101,8 +102,14 @@ class dataDosenDao:
                     params.pop('preferensi', None)
             if params.get('status') and str(params.get('status')) == "TIDAK_TETAP":
                 params.pop('prodi', None)
-            params = {k: v for k, v in params.items() if v}
+
+            if params.get('pakar'):
+                accessible_field = dashboardDao().get_pakar_prodi(prodi=params.get('prodi'), status_dosen=params.get('status'))
+                accessible_field = [item['pakar'] for item in accessible_field]
+                params['pakar'] = [item for item in params['pakar'] if item in accessible_field]
                 
+            params = {k: v for k, v in params.items() if v}
+
             res = self.connection.insert_one(
                 collection_name = db_dosen, 
                 data            = params
@@ -150,7 +157,7 @@ class dataDosenDao:
                 raise CustomError({ 'message': 'Nama belum diisi!', 'target': 'input_nama' })
             elif not params.get('status'):
                 raise CustomError({ 'message': 'Status Dosen belum diisi!' })
-            elif not params.get('prodi'):
+            elif not params.get('prodi') and params.get('status') != "TIDAK_TETAP":
                 raise CustomError({ 'message': 'Program Studi belum diisi!' })
             
             # Check exist
@@ -162,7 +169,7 @@ class dataDosenDao:
                 raise CustomError({ 'message': 'Data dengan NIP ' + params['nip'] + ' tidak ditemukan!' })
 
             if session['user']['role'] == "KEPALA PROGRAM STUDI":    
-                if params['prodi'] != session['user']['prodi']:
+                if params['prodi'] != session['user']['prodi'] and params.get('status') != "TIDAK_TETAP":
                     raise CustomError({ 'message': 'Anda mengubah program studi diluar program studi anda! (Input Anda: ' + params['prodi'] + ')' })
             
             unset = {k: "" for k, v in params.items() if not v}
@@ -190,6 +197,14 @@ class dataDosenDao:
                 if 'prodi' in params: 
                     unset['prodi'] = ""
                     params.pop('prodi', None)
+
+            if params.get('pakar'):
+                accessible_field = dashboardDao().get_pakar_prodi(prodi=params.get('prodi'), status_dosen=params.get('status'))
+                accessible_field = [item['pakar'] for item in accessible_field]
+                params['pakar'] = [item for item in params['pakar'] if item in accessible_field]
+            if not params.get('pakar'):
+                unset['pakar'] = ""
+                params.pop('pakar', None)
 
             params = {k: v for k, v in params.items() if v}
                 

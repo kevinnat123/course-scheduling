@@ -47,7 +47,7 @@ def dashboard_index():
 def dashboard_getPakarProdi():
     print(f"{'[ CONTROLLER ]':<25} Get Data Pakar Prodi")
     req = request.args.to_dict()
-    data = dashboardDao.get_pakar_prodi(req['prodi'])
+    data = dashboardDao.get_pakar_prodi(req.get('prodi'), req.get('status_dosen'))
     return jsonify({ "data": data })
 
 @dashboard.route("/update_general", methods=['POST'])
