@@ -27,7 +27,6 @@ def mataKuliah_index():
 def mataKuliah__get_kelompok():
     print(f"{'[ CONTROLLER ]':<25} Get Kelompok")
     req = request.args.to_dict()
-    print('req', req)
     data = dao.get_kelompok(req['prodi'])
     return jsonify({ 'data': data })
     

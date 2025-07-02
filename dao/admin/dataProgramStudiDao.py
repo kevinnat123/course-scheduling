@@ -128,7 +128,7 @@ class dataProgramStudiDao:
                 raise CustomError({ 'message': 'Status Program Studi belum diisi!' })
             
             # Check is Program Studi exist
-            old_program_studi = params.get('old_program_studi')
+            old_program_studi = params.pop('old_program_studi', None)
             isExist = self.connection.find_one(
                 collection_name = db_prodi, 
                 filter          = {'program_studi': old_program_studi}

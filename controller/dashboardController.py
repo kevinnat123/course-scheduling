@@ -21,7 +21,7 @@ def dashboard_index():
                     prodi = session['user']['prodi'],
                     maks_sks = prodiInfo.get('maks_sks', 0),
                     kelompok_matkul = prodiInfo.get('kelompok_matkul', []),
-                    bidang_minat = prodiInfo.get('bidang_minat', [])
+                    pakar = prodiInfo.get('pakar', [])
                 )
         else:
             print(f"{'💥💥💥💥💥':<25} 💣 Program Studi User tidak ditemukan")
@@ -41,6 +41,14 @@ def dashboard_index():
             )
     else:
         return abort(403)
+    
+@dashboard.route("/get_pakar_prodi", methods=['GET'])
+@login_required
+def dashboard_getPakarProdi():
+    print(f"{'[ CONTROLLER ]':<25} Get Data Pakar Prodi")
+    req = request.args.to_dict()
+    data = dashboardDao.get_pakar_prodi(req['prodi'])
+    return jsonify({ "data": data })
 
 @dashboard.route("/update_general", methods=['POST'])
 @login_required
@@ -58,12 +66,12 @@ def dashboardKaprodi_updateKelompokMatkul():
     data = dashboardDao.update_kelompokMatkul(req)
     return jsonify( data )
 
-@dashboard.route("/update_bidang_minat", methods=['POST'])
+@dashboard.route("/update_pakar", methods=['POST'])
 @login_required
-def dashboardKaprodi_updateBidangMinat():
-    print(f"{'[ CONTROLLER ]':<25} Update Bidang Minat")
+def dashboardKaprodi_updatePakar():
+    print(f"{'[ CONTROLLER ]':<25} Update Pakar")
     req = request.get_json('data')
-    data = dashboardDao.update_bidangMinat(req)
+    data = dashboardDao.update_pakar(req)
     return jsonify( data )    
 
 @dashboard.route("/update_os", methods=['POST'])

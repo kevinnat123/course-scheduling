@@ -265,6 +265,7 @@ class dataDosenDao:
         result = { 'status': False }
 
         try:
+            raise CustomError({ 'message': 'This action has been disabled!' })
             if session['user']['role'] not in ['ADMIN']:
                 params = self.connection.find_many(
                     collection_name = db_dosen, 

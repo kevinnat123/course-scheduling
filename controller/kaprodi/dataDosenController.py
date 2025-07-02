@@ -58,6 +58,7 @@ def dosen_put_dosen():
 @login_required
 def dosen_delete_dosen():
     print(f"{'[ CONTROLLER ]':<25} Delete Dosen")
+    abort(401)
     req = request.get_json('data')
     data = dao.delete_dosen(req)
     return jsonify( data )

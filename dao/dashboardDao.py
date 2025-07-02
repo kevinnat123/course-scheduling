@@ -20,6 +20,16 @@ class dashboardDao:
                 filter          = {'prodi': prodi}
             )
         return result if result and result.get('status') else None
+    
+    def get_pakar_prodi(self, prodi):
+        print(f"{'[ DAO ]':<25} Get Pakar Prodi (prodi: {prodi})")
+        result = self.connection.find_one(
+            collection_name = db_prodi, 
+            filter          = {'program_studi': prodi}
+        )
+        if result and result.get('status'):
+            pakar = [{"pakar": pakar} for pakar in result['data'].get('pakar', [])]
+        return pakar if result and result.get('status') else []
 
     def update_general(self, params):
         print(f"{'[ DAO ]':<25} Update General (Parameter: {params})")
@@ -90,14 +100,14 @@ class dashboardDao:
         print(f"{'':<25} {result}")
         return result
     
-    def update_bidangMinat(self, data):
-        print(f"{'[ DAO ]':<25} Update Bidang Minat (Parameter: {data})")
+    def update_pakar(self, data):
+        print(f"{'[ DAO ]':<25} Update Pakar (Parameter: {data})")
         result = { 'status': False }
 
         try:
             if session['user']['role'] in ["KEPALA PROGRAM STUDI"]:
                 if data:
-                    newGroup = [item["bidang_minat"] for item in data if item['bidang_minat']]
+                    newGroup = [item["pakar"] for item in data if item['pakar']]
                 elif data == []:
                     newGroup = data
                 else:
@@ -106,7 +116,7 @@ class dashboardDao:
                 res = self.connection.update_one(
                     collection_name = db_prodi, 
                     filter          = { 'program_studi': session['user']['prodi'] }, 
-                    update_data     = { 'bidang_minat': newGroup }
+                    update_data     = { 'pakar': newGroup }
                 )
 
                 if res['status'] == True:
@@ -114,7 +124,7 @@ class dashboardDao:
                 else:
                     raise CustomError({ 'message': res['message'] })
             else:
-                raise CustomError({ 'message': 'Bidang Minat prodi hanya bisa diakses kaprodi!' })
+                raise CustomError({ 'message': 'Pakar / Bidang prodi hanya bisa diakses kaprodi!' })
             result.update({ 'status': True })
         except CustomError as e:
             result.update( e.error_dict )

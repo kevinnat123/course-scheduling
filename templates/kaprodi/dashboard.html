@@ -100,25 +100,21 @@
   </div>
 </div>
 
-<!-- <div class="card close-able" id="card-bidang_minat">
+<div class="card close-able" id="card-pakar">
   <div class="card-body">
     <div class="row align-items-center justify-content-between mb-3">
       <h4 id="formTitle" class="col btn-toggle-card">
         <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
-        ><span>Setting Bidang Minat</span>
+        ><span>Setting Pakar / Bidang</span>
       </h4>
       <div class="col-auto text-end">
-        <button
-          type="button"
-          class="btn btn-primary"
-          id="btn-simpanBidangMinat"
-        >
+        <button type="button" class="btn btn-primary" id="btn-simpanPakar">
           Simpan
         </button>
         <button
           type="button"
           class="btn btn-danger"
-          id="btn-hapusBidangMinat"
+          id="btn-hapusPakar"
           style="display: none"
         >
           Hapus
@@ -130,22 +126,22 @@
     <div class="card-content">
       <form role="form" class="form-horizontal" id="frmDetail">
         <div class="form-group row">
-          <label for="input-bidang_minat_baru" class="col-3 col-form-label"
-            >Bidang Minat Baru</label
+          <label for="input-pakar_baru" class="col-3 col-form-label"
+            >Pakar / Bidang Baru</label
           >
           <div class="input-group col">
             <input
               type="text"
-              id="input-bidang_minat_baru"
+              id="input-pakar_baru"
               class="form-control"
               placeholder="Masukkan bidang minat baru"
               autocomplete="off"
             />
             <button
               type="button"
-              id="tambah_bidang_minat"
+              id="tambah_pakar"
               class="btn btn-primary"
-              onclick="tambahBidangMinat($('#input-bidang_minat_baru').val())"
+              onclick="tambahPakar($('#input-pakar_baru').val())"
             >
               Tambah
             </button>
@@ -153,11 +149,11 @@
           <div class="table-responsive">
             <table
               class="table table-bordered table-stripped table-hover w-100"
-              id="table_bidang_minat"
+              id="table_pakar"
             >
               <thead>
-                <th><input type="checkbox" name="cbBidangMinatAll" /></th>
-                <th>Bidang Minat</th>
+                <th><input type="checkbox" name="cbPakarAll" /></th>
+                <th>Pakar / Bidang</th>
               </thead>
               <tbody></tbody>
             </table>
@@ -166,17 +162,17 @@
       </form>
     </div>
   </div>
-</div> -->
+</div>
 {% endblock %} {% block script %}
 <script>
   const list_matkul = JSON.parse(`{{ kelompok_matkul | tojson | safe }}`);
-  const list_bidang_minat = JSON.parse(`{{ bidang_minat | tojson | safe }}`);
+  const list_pakar = JSON.parse(`{{ pakar | tojson | safe }}`);
   var maks_sks = "{{ maks_sks | safe }}";
   var json_matkul = list_matkul.map((kelompok) => ({
     kelompok_matkul: kelompok,
   }));
-  var json_bidang_minat = list_bidang_minat.map((bidang_minat) => ({
-    bidang_minat: bidang_minat,
+  var json_pakar = list_pakar.map((pakar) => ({
+    pakar: pakar,
   }));
 
   $(document).ready(function () {
@@ -304,33 +300,33 @@
     });
   });
 
-  $("#input-bidang_minat_baru").on("keydown", function (event) {
+  $("#input-pakar_baru").on("keydown", function (event) {
     if (event.key === "Enter") {
-      tambahBidangMinat($(this).val().trim());
-      $("#input-bidang_minat_baru").val("");
+      tambahPakar($(this).val().trim());
+      $("#input-pakar_baru").val("");
     }
   });
 
-  function tambahBidangMinat(data) {
+  function tambahPakar(data) {
     if (data) {
+      if (data.length < 3)
+        return popUpTimer("info", "Input minimal 3 karakter!");
       let newData = String(data).toUpperCase();
-      let isExist = json_bidang_minat.findIndex(
-        (bidang_minat) => bidang_minat.bidang_minat === newData
-      );
+      let isExist = json_pakar.findIndex((pakar) => pakar.pakar === newData);
       if (isExist !== -1)
-        return popUpTimer("error", "Data Bidang Minat ini sudah ada!");
+        return popUpTimer("error", "Data Pakar / Bidang ini sudah ada!");
 
-      json_bidang_minat.push({ bidang_minat: newData });
-      bidang_minat_tab.clear().rows.add(json_bidang_minat).draw(false);
+      json_pakar.push({ pakar: newData });
+      pakar_tab.clear().rows.add(json_pakar).draw(false);
     } else return;
   }
 
-  $("#btn-simpanBidangMinat").on("click", function () {
+  $("#btn-simpanPakar").on("click", function () {
     $.ajax({
       type: "POST",
-      url: "/update_bidang_minat",
+      url: "/update_pakar",
       cache: false,
-      data: JSON.stringify(json_bidang_minat),
+      data: JSON.stringify(json_pakar),
       beforeSend: () => {
         showLoading();
       },
@@ -346,24 +342,24 @@
     });
   });
 
-  $("#btn-hapusBidangMinat").on("click", function () {
+  $("#btn-hapusPakar").on("click", function () {
     let selectedData = [];
-    $("input[name='cbBidangMinat']:checked").each(function () {
+    $("input[name='cbPakar']:checked").each(function () {
       let row = $(this).closest("tr"); // Dapatkan baris terkait
-      let rowData = bidang_minat_tab.row(row).data(); // Ambil data baris dari DataTable
+      let rowData = pakar_tab.row(row).data(); // Ambil data baris dari DataTable
 
       if (rowData) {
-        selectedData.push(rowData.bidang_minat);
+        selectedData.push(rowData.pakar);
       }
     });
 
-    let filtered_data = json_bidang_minat.filter(
-      (bidang_minat) => !selectedData.includes(bidang_minat.bidang_minat)
+    let filtered_data = json_pakar.filter(
+      (pakar) => !selectedData.includes(pakar.pakar)
     );
 
     $.ajax({
       type: "POST",
-      url: "/update_bidang_minat",
+      url: "/update_pakar",
       cache: false,
       data: JSON.stringify(filtered_data),
       beforeSend: () => {
@@ -375,8 +371,8 @@
       success: async function (res) {
         if (res.status == false) popUpTimer("error", res.message);
         else {
-          json_bidang_minat = JSON.parse(JSON.stringify(filtered_data));
-          bidang_minat_tab.clear().rows.add(json_bidang_minat).draw(false);
+          json_pakar = JSON.parse(JSON.stringify(filtered_data));
+          pakar_tab.clear().rows.add(json_pakar).draw(false);
           await popUpTimer("success", res.message);
         }
       },
@@ -406,25 +402,25 @@
       : "none";
   });
 
-  // Event ketika cbBidangMinatAll di-click
-  $('input[name="cbBidangMinatAll"]').on("change", function () {
+  // Event ketika cbPakarAll di-click
+  $('input[name="cbPakarAll"]').on("change", function () {
     let isChecked = $(this).prop("checked");
-    $('input[name="cbBidangMinat"]').prop("checked", isChecked);
+    $('input[name="cbPakar"]').prop("checked", isChecked);
 
-    document.getElementById("btn-hapusBidangMinat").style.display = isChecked
+    document.getElementById("btn-hapusPakar").style.display = isChecked
       ? "inline-block"
       : "none";
   });
 
-  // Event ketika salah satu cbBidangMinat di-click
-  $(document).on("change", 'input[name="cbBidangMinat"]', function () {
+  // Event ketika salah satu cbPakar di-click
+  $(document).on("change", 'input[name="cbPakar"]', function () {
     let allChecked =
-      $('input[name="cbBidangMinat"]').length ===
-      $('input[name="cbBidangMinat"]:checked').length;
-    $('input[name="cbBidangMinatAll"]').prop("checked", allChecked);
+      $('input[name="cbPakar"]').length ===
+      $('input[name="cbPakar"]:checked').length;
+    $('input[name="cbPakarAll"]').prop("checked", allChecked);
 
-    let anyChecked = $('input[name="cbBidangMinat"]:checked').length > 0;
-    document.getElementById("btn-hapusBidangMinat").style.display = anyChecked
+    let anyChecked = $('input[name="cbPakar"]:checked').length > 0;
+    document.getElementById("btn-hapusPakar").style.display = anyChecked
       ? "inline-block"
       : "none";
   });
@@ -457,7 +453,7 @@
     ],
   });
 
-  let bidang_minat_tab = $("#table_bidang_minat").DataTable({
+  let pakar_tab = $("#table_pakar").DataTable({
     scrollX: true,
     scrollY: "50vh",
     scrollCollapse: true,
@@ -466,7 +462,7 @@
     ordering: false,
     searching: false,
     info: false,
-    data: json_bidang_minat,
+    data: json_pakar,
     columns: [
       {
         data: null,
@@ -474,12 +470,12 @@
         className: "text-center",
         render: function (data, type, row) {
           return `
-              <input type="checkbox" name="cbBidangMinat"/>
+              <input type="checkbox" name="cbPakar"/>
             `;
         },
       },
       {
-        data: "bidang_minat",
+        data: "pakar",
         width: "",
       },
     ],

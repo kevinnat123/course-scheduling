@@ -76,7 +76,11 @@
           ></label
         >
         <div class="col">
-          <select class="form-select" id="input_prodi">
+          <select
+            class="form-select"
+            id="input_prodi"
+            onchange="changedProdi($(this).val())"
+          >
             <option value="">-- Pilih Program Studi --</option>
             {% for prodi in list_prodi %}
             <option value="{{ prodi }}">{{ prodi }}</option>
@@ -258,7 +262,7 @@
         id="table_dosen"
       >
         <thead>
-          <th><input type="checkbox" name="cbDosenTabAll" /></th>
+          <!-- <th><input type="checkbox" name="cbDosenTabAll" /></th> -->
           <th>NIP</th>
           <th>Nama</th>
           <th>Pakar</th>
@@ -311,6 +315,43 @@
   <!-- /.modal-dialog -->
 </div>
 <!-- MODAL LOV MATKUL END -->
+
+<!-- MODAL LOV PAKAR -->
+<div class="modal fade" id="modal-pakar">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">List Pakar</h4>
+        <button type="button" class="close" data-bs-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table
+          class="table table-hover table-bordered w-100"
+          style="overflow: auto"
+          id="table_lov_pakar"
+        >
+          <thead>
+            <th>Pakar</th>
+          </thead>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-default pull-left"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<!-- MODAL LOV PAKAR END -->
 {% endblock %} {% block script %}
 <script>
   const prodi = "{{ prodi | safe }}";
@@ -319,6 +360,12 @@
       let row = matkul_lov.row(this).data();
       $("#modal-matkul").modal("hide");
       await addBadge("field_matkul_ajar", "list_matkul_ajar", row.nama);
+    });
+
+    $("#modal-pakar tbody").on("click", "tr", async function () {
+      let row = pakar_lov.row(this).data();
+      $("#modal-pakar").modal("hide");
+      await addBadge("field_pakar", "list_pakar", row.pakar);
     });
   });
 
@@ -354,12 +401,14 @@
     if (prodi) {
       $("#input_prodi").prop("disabled", true);
       $("#input_prodi").val(prodi);
+      if (update == false) await changedProdi($("#input_prodi").val());
     }
 
     if (data) {
       $("#input_nip").val(data.nip);
       $("#input_nama").val(data.nama);
-      $("#input_prodi").val(data.prodi);
+      $("#input_prodi").val(prodi ? prodi : data.prodi);
+      await changedProdi($("#input_prodi").val());
       $("#" + data.status).prop("checked", true);
       $("input[name='cbPreferensi']").prop("checked", data.preferensi);
       if (data.pakar)
@@ -377,8 +426,6 @@
         });
       }
     }
-
-    if (!prodi && $("#input_prodi").val()) matkul_lov.ajax.reload();
 
     $("#card-form").prop("hidden", hidden ? true : false);
   }
@@ -602,16 +649,73 @@
 
   $("#input_prodi").on("change", function () {
     matkul_lov.ajax.reload();
+    pakar_lov.ajax.reload();
   });
 
-  $("#input_pakar").on("keydown", function (event) {
-    if (event.key === "Enter") {
-      let user_input = $("#input_pakar").val();
-      if (user_input.length >= 3) {
-        addBadge("field_pakar", "list_pakar", user_input);
-        $("#input_pakar").val("");
-      } else popUpTimer("info", "Input minimal 3 karakter!");
-    }
+  $("#input_pakar").on("keydown", async function (event) {
+    if (event.key === "F9") {
+      event.preventDefault();
+      $("#modal-pakar").modal("show");
+      $("#table_lov_pakar_filter input").focus(); // focus ke field search saat modal matkul dibuka
+    } else if (event.key === "Enter" && this.value.length >= 3) {
+      event.preventDefault();
+      let resultKode = pakar_lov
+        .data()
+        .toArray()
+        .filter((data) => data.pakar.includes(this.value));
+
+      if (resultKode.length === 1)
+        await addBadge("field_pakar", "list_pakar", resultKode[0].pakar);
+      else if (resultKode.length > 1) {
+        let infoData = [];
+        resultKode.forEach((element) => {
+          if (!retrieveBadgeValues("list_pakar").includes(element.pakar))
+            infoData.push(element);
+        });
+
+        if (infoData.length > 1) {
+          let selectOptions = resultKode
+            .map(
+              (data) => `<option value="${data.pakar}">${data.pakar}</option>`
+            )
+            .join("");
+
+          Swal.fire({
+            title: "Pakar Mana?",
+            text: "Hasil pencarian jamak. Pakar apa yang anda maksud?",
+            icon: "question",
+            html: `
+                <select id="swal-select" class="form-select">
+                  <option value="">-- Pilih --</option>
+                  ${selectOptions}
+                </select>
+              `,
+            showCancelButton: true,
+            confirmButtonText: "OK",
+            preConfirm: () => {
+              const selected = document.getElementById("swal-select").value;
+              if (!selected) {
+                Swal.showValidationMessage("Silakan pilih salah satu opsi.");
+              }
+              return selected;
+            },
+          }).then((result) => {
+            if (result.isConfirmed) {
+              addBadge("field_pakar", "list_pakar", result.value);
+            }
+          });
+        } else addBadge("field_pakar", "list_pakar", infoData[0].pakar);
+      } else
+        await popUpTimer(
+          "error",
+          "Data tidak ditemukan!",
+          "Jika bersikeras, harap tambahkan data terlebih dahulu.",
+          2000
+        );
+
+      this.value = "";
+    } else if (event.key === "Enter")
+      popUpTimer("info", "Input minimal 3 karakter!");
   });
 
   $("#input_matkul_ajar").on("keydown", async function (event) {
@@ -686,6 +790,14 @@
       popUpTimer("info", "Input minimal 3 karakter!");
   });
 
+  async function changedProdi(program_studi) {
+    clear_form();
+    $("#input_prodi").val(program_studi);
+
+    matkul_lov.ajax.reload();
+    pakar_lov.ajax.reload();
+  }
+
   // CHECKBOX
   $('input[name="cbPreferensi"]').on("change", function () {
     let isChecked = $(this).prop("checked");
@@ -708,15 +820,15 @@
 
   // DATATABLE
   let dosen_tab_column = [
-    {
-      data: null,
-      width: "10px",
-      render: function (data, type, row) {
-        return `
-          <input type="checkbox" name="cbDosenTab"/>
-        `;
-      },
-    },
+    // {
+    //   data: null,
+    //   width: "10px",
+    //   render: function (data, type, row) {
+    //     return `
+    //       <input type="checkbox" name="cbDosenTab"/>
+    //     `;
+    //   },
+    // },
     {
       data: "nip",
       width: "75px",
@@ -805,6 +917,38 @@
       {
         data: "nama",
         width: "300px",
+        defaultContent: "",
+      },
+    ],
+  });
+
+  let pakar_lov = $("#table_lov_pakar").DataTable({
+    scrollX: true,
+    scrollY: "50vh",
+    scrollCollapse: true,
+    paging: false,
+    responsive: true,
+    ordering: false,
+    info: false,
+    ajax: {
+      type: "GET",
+      url: "/get_pakar_prodi",
+      data: function (d) {
+        return {
+          prodi: prodi ? prodi : $("#input_prodi").val(),
+        };
+      },
+      cache: false,
+      beforeSend: () => {
+        showLoading();
+      },
+      complete: () => {
+        hideLoading();
+      },
+    },
+    columns: [
+      {
+        data: "pakar",
         defaultContent: "",
       },
     ],
