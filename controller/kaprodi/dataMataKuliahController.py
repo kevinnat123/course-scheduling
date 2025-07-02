@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.kaprodi.dataMataKuliahDao import dataMataKuliahDao
 from flask_login import login_required
 
@@ -10,7 +10,7 @@ dao = dataMataKuliahDao()
 def mataKuliah_index():
     print(f"{'[ RENDER ]':<25} Data Mata Kuliah (Role: {session['user']['role']})")
     if session['user']['role'] not in ["KEPALA PROGRAM STUDI", "ADMIN"]:
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         return render_template(
                 '/kaprodi/data_mataKuliah/index.html', 

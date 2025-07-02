@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.laboran.dataRuanganDao import dataRuanganDao
 from flask_login import login_required
 
@@ -10,7 +10,7 @@ dao = dataRuanganDao()
 def dataRuangan_index():
     print(f"{'[ RENDER ]':<25} Ruang Kelas (Role: {session['user']['role']})")
     if session['user']['role'] != 'LABORAN' and session['user']['role'] != "ADMIN":
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         return render_template(
             '/laboran/data_ruangan/index.html', 

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, abort
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import check_password_hash
 from datetime import datetime, timezone
@@ -11,9 +11,10 @@ loginDao = loginDao()
 @signin.route("/")
 def home():
     print(f"{'[ THROW ]':<25} Login Page / Dashboard")
-    if session.get('user') and 'u_id' in session['user']:
+    if "user" in session and 'u_id' in session['user']:
         return redirect(url_for('dashboard.dashboard_index'))
-    return redirect(url_for('signin.login'))
+    else:
+        abort(401)
     
 @signin.route("/login", methods=['GET', 'POST'])
 def login():
@@ -103,7 +104,7 @@ def session_generator():
     else:
         print(f"{'':<25} 🚫 User tidak valid di database")
         session.clear()  # Pastikan semua session terhapus
-        return redirect(url_for('signin.logout'))
+        abort(401)
 
 def get_academic_details():
     today = datetime.today()
@@ -137,24 +138,6 @@ def get_academic_details():
         "tahun_ajaran_berikutnya": tahun_ajaran_berikutnya,
         "list_angkatan": list_angkatan
     }
-
-@signin.route("/404NotFound")
-@login_required
-def error404():
-    print(f"{'[ RENDER ]':<25} Error 404")
-    if not session.get('user') or 'u_id' not in session['user']:
-        return redirect(url_for('signin.login'))
-
-    return render_template('404.html', menu = "404 Not Found", redirect_url = url_for('dashboard.dashboard_index'))
-
-@signin.route("/403Forbidden")
-@login_required
-def error403():
-    print(f"{'[ RENDER ]':<25} Error 403")
-    if not session.get('user') or 'u_id' not in session['user']:
-        return redirect(url_for('signin.login'))
-
-    return render_template('403.html', menu = "403 Forbidden", redirect_url = url_for('dashboard.dashboard_index'))
 
 @signin.route("/logout")
 def logout():

@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.dashboardDao import dashboardDao
 from dao.kaprodi.mataKuliahPilihanDao import mataKuliahPilihanDao
 from flask_login import login_required
@@ -12,7 +12,7 @@ dao = mataKuliahPilihanDao()
 def mataKuliahPilihan_index():
     print(f"{'[ RENDER ]':<25} Mata Kuliah Pilihan (Role: {session['user']['role']})")
     if session['user']['role'] != 'KEPALA PROGRAM STUDI' and session['user']['role'] != "ADMIN":
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         return render_template(
                 '/kaprodi/mataKuliah_pilihan/index.html', 
@@ -30,7 +30,6 @@ def mataKuliahPilihan_index():
 def mataKuliahPilihan_get_bidang_minat():
     print(f"{'[ CONTROLLER ]':<25} Get Bidang Minat")
     req = request.args.to_dict()
-    print('req', req)
     data = dao.get_bidang_minat(req['prodi'])
     return jsonify({ 'data': data })
     

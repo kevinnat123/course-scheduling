@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.kaprodi.dataDosenDao import dataDosenDao
 from flask_login import login_required
 
@@ -11,7 +11,7 @@ def dosen_dosen_index():
     print(f"{'[ RENDER ]':<25} Data Dosen (Role: {session['user']['role']})")
     print('========== ========== ========== ========== RENDER DATA DOSEN  ========== ========== ========== ==========')
     if session['user']['role'] not in ["KEPALA PROGRAM STUDI", "ADMIN"]:
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         return render_template(
                 '/kaprodi/data_dosen/index.html', 

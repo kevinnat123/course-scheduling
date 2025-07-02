@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.admin.generateJadwalDao import generateJadwalDao
 from dao import genetic_algorithm as ga
 from flask_login import login_required
@@ -12,7 +12,7 @@ dao = generateJadwalDao()
 def generateJadwal_index():
     print(f"{'[ RENDER ]':<25} Generate Jadwal (Role: {session['user']['role']})")
     if session['user']['role'] != 'ADMIN':
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         jadwal = dao.get_jadwal()
         jadwal = True if jadwal and jadwal.get('jadwal') else False

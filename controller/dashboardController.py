@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, abort
 from dao.dashboardDao import dashboardDao
 from dao.loginDao import loginDao
 from dao.admin.dataProgramStudiDao import dataProgramStudiDao
@@ -25,7 +25,7 @@ def dashboard_index():
                 )
         else:
             print(f"{'💥💥💥💥💥':<25} 💣 Program Studi User tidak ditemukan")
-            return redirect(url_for('signin.error403'))
+            abort(401)
     elif session['user']['role'] == 'LABORAN':
         return render_template(
                 '/laboran/dashboard.html', 
@@ -40,7 +40,7 @@ def dashboard_index():
                 list_prodi = session['user']['list_prodi']
             )
     else:
-        return redirect(url_for('signin.error403'))
+        return abort(403)
 
 @dashboard.route("/update_general", methods=['POST'])
 @login_required

@@ -1,9 +1,9 @@
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, render_template, abort
 from flask import request, session, jsonify
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user, logout_user
 from userModel import User
 from dao.loginDao import loginDao
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from controller.loginController import signin, session_generator
 from controller.dashboardController import dashboard
@@ -62,11 +62,22 @@ def create_app():
 
     @app.errorhandler(401)
     def unathorized(e):
+        print(f"[ Error 401 ]")
+        # Jika user sudah login tapi datanya tidak valid
+        if current_user.is_authenticated:
+            logout_user()
+            session.clear()
         return redirect(url_for('signin.login'))
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        print(f"[ Error 403 ]")
+        return render_template('403.html', menu = "403 Forbidden", redirect_url = url_for('dashboard.dashboard_index'))
 
     @app.errorhandler(404)
     def page_not_found(e):
-        return redirect(url_for('signin.error404'))
+        print(f"[ Error 404 ]")
+        return render_template('404.html', menu = "404 Not Found", redirect_url = url_for('dashboard.dashboard_index'))
     
     @app.route('/favicon.ico')
     def favicon():
@@ -94,9 +105,9 @@ def create_app():
         print(f"{'[ 🔍 Before request ]':<25} Current Endpoint: {current_endpoint}")
 
         # Cek apakah session masih ada
-        if not session.get('user') or 'u_id' not in session['user']:
-            print(f"{'':<25} ⚠️ Session kosong atau tidak valid")
-            return redirect(url_for('signin.logout'))
+        if not current_user.is_authenticated or "user" not in session or 'u_id' not in session['user']:
+            print(f"{'':<25} ⚠️ Session tidak valid atau belum login")
+            abort(401)
 
         # Jangan reset lifetime kalau hanya /ping
         if not request.path.startswith('/ping'):

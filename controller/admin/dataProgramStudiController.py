@@ -1,4 +1,4 @@
-from flask import render_template, Blueprint, request, jsonify, session, redirect, url_for
+from flask import render_template, Blueprint, request, jsonify, session, abort
 from flask.wrappers import Response
 from dao.admin.dataProgramStudiDao import dataProgramStudiDao
 from dao.kaprodi.dataDosenDao import dataDosenDao
@@ -16,7 +16,7 @@ def program_studi_index():
     print(f"{'[ RENDER ]':<25} Data Program Studi (Role: {session['user']['role']})")
     print('========== ========== ========== ========== RENDER DATA PROGRAM STUDI  ========== ========== ========== ==========')
     if session['user']['role'] not in ["ADMIN"]:
-        return redirect(url_for('signin.error403'))
+        return abort(403)
     else:
         return render_template(
                 '/admin/data_program_studi/index.html', 
