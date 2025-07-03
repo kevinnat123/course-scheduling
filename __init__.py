@@ -107,6 +107,14 @@ def create_app():
         if not current_user.is_authenticated:
             print(f"{'':<25} ⚠️ Autentikasi user gagal")
             abort(401)
+        elif current_user.is_authenticated:
+            print(session['user']['last_update'])
+            print(current_user.last_update)
+            print(current_user.last_update != session['user']['last_update'])
+            if current_user.last_update != session['user']['last_update']:
+                logout_user()
+                session.clear()
+                return redirect(url_for('signin.login'))
         
         if "user" not in session or 'u_id' not in session['user']:
             print(f"{'':<25} ⚠️ Session tidak valid")

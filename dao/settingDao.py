@@ -2,13 +2,14 @@ from dao import Database
 from config import MONGO_DB, MONGO_USERS_COLLECTION as db_users
 from flask import session
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
 class settingDao:
     def __init__(self):
         self.connection = Database(MONGO_DB)
 
     def get_user(self, u_id):
-        print(f"{'[ DAO ]':<25} Get User (u_id: {u_id})")
+        print(f"{'[ DAO ]':<25} Get User")
         result = self.connection.find_one(
             collection_name = db_users, 
             filter          = {"u_id": u_id.upper()}
@@ -30,9 +31,14 @@ class settingDao:
                     register_user_password = self.connection.update_one(
                         collection_name = db_users, 
                         filter          = { 'u_id': session['user']['u_id'] }, 
-                        update_data     = { 'password': generate_password_hash(newPassword) }
+                        update_data     = { 
+                            'password': generate_password_hash(newPassword),
+                            'last_update': datetime.now().strftime("%d-%b-%Y")
+                        }
                     )
                     if register_user_password and register_user_password['status']:
+                        session['user']['last_update'] = datetime.now().strftime("%d-%b-%Y")
+                        session.modified = True
                         return {'status': True, 'message': 'Password berhasil disimpan!'}
                 else:
                     return {'status': False, 'message': 'Input password baru tidak cocok!'}
