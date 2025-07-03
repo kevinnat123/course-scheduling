@@ -8,7 +8,7 @@ class dashboardDao:
         self.connection = Database(MONGO_DB)
 
     def get_user(self, u_id=None, prodi=None):
-        print(f"{'[ DAO ]':<25} Get User (u_id: {u_id})")
+        print(f"{'[ DAO ]':<25} Get User")
         if u_id:
             result = self.connection.find_one(
                 collection_name = db_users, 

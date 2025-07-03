@@ -9,7 +9,7 @@ class loginDao:
         self.connection = Database(MONGO_DB)
 
     def signUp(self, u_id, role, password, prodi=None):
-        print(f"{'[ DAO ]':<25} Sign Up User: {u_id}")
+        print(f"{'[ DAO ]':<25} Sign Up User")
         # # PYTHON 3.7.9 (Method Hash: "pbkdf2:sha256")
         # result = self.connection.insert_one(db_users, {'u_id': u_id, 'role': 'ADMIN', 'password': generate_password_hash(password, method='pbkdf2:sha256')})
         # DEFAULT HASH: "scrypt"
@@ -28,7 +28,7 @@ class loginDao:
         return result
     
     def get_user_id(self, u_id):
-        print(f"{'[ DAO ]':<25} Get User ID: {u_id}")
+        print(f"{'[ DAO ]':<25} Get User ID")
         result = self.connection.find_one(
             collection_name = db_users, 
             filter          = {"u_id": u_id.upper()}
@@ -36,7 +36,7 @@ class loginDao:
         return result['data']['u_id'] if result and result.get('status') else None
 
     def get_user(self, u_id):
-        print(f"{'[ DAO ]':<25} Get User: {u_id}")
+        print(f"{'[ DAO ]':<25} Get User")
         result = self.connection.find_one(
             collection_name = db_users, 
             filter          = {"u_id": u_id.upper()}
@@ -81,7 +81,7 @@ class loginDao:
         return final_menu
 
     def verify_user(self, u_id, password):
-        print(f"{'[ DAO ]':<25} Verify User: {u_id}, {password}")
+        print(f"{'[ DAO ]':<25} Verify User")
         result = { 'status': False }
 
         try:

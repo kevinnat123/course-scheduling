@@ -40,7 +40,6 @@ class dataProgramStudiDao:
         result = { 'status': False }
 
         try:
-            print('session akses', session['user'].get('akses'))
             if not session['user'].get('akses', False):
                 raise CustomError({ 'reVerify': True })
                 
@@ -73,7 +72,6 @@ class dataProgramStudiDao:
                 if data_kaprodi_baru['status']:
                     nip_kaprodi = data_kaprodi_baru['data']['nip']
                     params['kepala_program_studi'] = nip_kaprodi
-                    print('nip kaprodi', nip_kaprodi)
                     # tambahkan user baru
                     self.connection.insert_one(
                         collection_name = db_user,
@@ -115,7 +113,6 @@ class dataProgramStudiDao:
         result = { 'status': False }
 
         try:
-            print('session akses', session['user'].get('akses'))
             if not session['user'].get('akses', False):
                 raise CustomError({ 'reVerify': True })
                 
