@@ -104,8 +104,12 @@ def create_app():
         print(f"{'[ 🔍 Before request ]':<25} Current Endpoint: {current_endpoint}")
 
         # Cek apakah session masih ada
-        if not current_user.is_authenticated or "user" not in session or 'u_id' not in session['user']:
-            print(f"{'':<25} ⚠️ Session tidak valid atau belum login")
+        if not current_user.is_authenticated:
+            print(f"{'':<25} ⚠️ Autentikasi user gagal")
+            abort(401)
+        
+        if "user" not in session or 'u_id' not in session['user']:
+            print(f"{'':<25} ⚠️ Session tidak valid")
             abort(401)
 
         # Jangan reset lifetime kalau hanya /ping

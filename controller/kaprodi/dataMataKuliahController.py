@@ -24,7 +24,7 @@ def mataKuliah_index():
     
 @mataKuliah.route("/data_mata_kuliah/get_kelompok", methods=['GET'])
 @login_required
-def mataKuliah__get_kelompok():
+def mataKuliah_get_kelompok():
     print(f"{'[ CONTROLLER ]':<25} Get Kelompok")
     req = request.args.to_dict()
     data = dao.get_kelompok(req['prodi'])
