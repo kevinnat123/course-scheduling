@@ -1,7 +1,9 @@
 {% extends "layout.html" %} {% block content %}
 <div class="card close-able" id="card-general">
   <div class="card-body">
-    <div class="row align-items-center justify-content-between mb-3">
+    <div
+      class="row align-items-center justify-content-between mb-3 hover-element"
+    >
       <h4 id="formTitle" class="col btn-toggle-card">
         <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
         ><span>General Setting</span>
@@ -10,7 +12,6 @@
         <button type="button" class="btn btn-primary" id="btn-simpanGeneral">
           Simpan
         </button>
-        <button type="button" class="btn btn-secondary btn-batal">Clear</button>
       </div>
       <!-- <small class="text-danger ms-5">* maks sks</small> -->
     </div>
@@ -38,7 +39,9 @@
 
 <div class="card close-able" id="card-kelompok_mata_kuliah">
   <div class="card-body">
-    <div class="row align-items-center justify-content-between mb-3">
+    <div
+      class="row align-items-center justify-content-between mb-3 hover-element"
+    >
       <h4 id="formTitle" class="col btn-toggle-card">
         <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
         ><span>Setting Kelompok Mata Kuliah</span>
@@ -102,7 +105,9 @@
 
 <div class="card close-able" id="card-pakar">
   <div class="card-body">
-    <div class="row align-items-center justify-content-between mb-3">
+    <div
+      class="row align-items-center justify-content-between mb-3 hover-element"
+    >
       <h4 id="formTitle" class="col btn-toggle-card">
         <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
         ><span>Setting Pakar / Bidang</span>
@@ -176,6 +181,31 @@
   }));
 
   $(document).ready(function () {
+    $(document).on("click", ".btn-toggle-card", function (e) {
+      const $card = $(this).closest(".card");
+      $card.toggleClass("collapsed");
+
+      const $icon = $(".toggle-icon");
+      console.log($icon.hasClass("fa-folder-open"));
+
+      if ($icon.hasClass("fa-folder-open")) {
+        $icon.removeClass("fa-folder-open").addClass("fa-folder-closed");
+      } else if ($icon.hasClass("fa-folder-closed")) {
+        $icon.removeClass("fa-folder-closed").addClass("fa-folder-open");
+      }
+
+      $card.find("button").prop("hidden", function (i, v) {
+        return !v;
+      });
+
+      // disable input, button, etc
+      $card
+        .find("input, select, textarea, button")
+        .prop("disabled", function (i, v) {
+          return !v;
+        });
+    });
+
     const toggle_close_card = document.querySelectorAll(".btn-toggle-card");
     toggle_close_card.forEach((toggle) => {
       toggle.click();

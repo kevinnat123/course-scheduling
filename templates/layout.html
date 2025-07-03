@@ -55,6 +55,10 @@
         outline: none;
       }
 
+      .hover-element {
+        cursor: pointer;
+      }
+
       /* Sidebar */
       #sidebar {
         width: 250px;
@@ -549,34 +553,6 @@
           $("#content").toggleClass("full");
           $("#header").toggleClass("full");
           $("#footer").toggleClass("full");
-        });
-
-        $(document).on("click", ".btn-toggle-card", function (e) {
-          const $card = $(this).closest(".card");
-          $card.toggleClass("collapsed");
-
-          const iconClosed = $(this).find(".toggle-icon-closed")[0];
-          const iconOpen = $(this).find(".toggle-icon-open")[0];
-
-          // Tukar display
-          if (
-            iconClosed.style.display === "inline" &&
-            iconOpen.style.display === "none"
-          ) {
-            iconClosed.style.display = "inline";
-            iconOpen.style.display = "none";
-          } else {
-            iconClosed.style.display = "none";
-            iconOpen.style.display = "inline";
-          }
-
-          // disable button
-          $card
-            .find("input, select, textarea, button")
-            .not(this) // Hindari tombol yang diklik
-            .prop("disabled", function (i, v) {
-              return !v;
-            });
         });
 
         // Profile dropdown toggle
