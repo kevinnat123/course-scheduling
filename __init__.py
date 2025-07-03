@@ -5,7 +5,7 @@ from userModel import User
 from dao.loginDao import loginDao
 from datetime import timedelta
 
-from controller.loginController import signin, session_generator
+from controller.loginController import signin
 from controller.dashboardController import dashboard
 from controller.settingController import setting
 from controller.excelController import export
@@ -34,6 +34,7 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(username):
+        print(f"[ Load User ]")
         user_data = loginDao().get_user(username)
         if user_data:
             return User(username, user_data['data'])
@@ -66,7 +67,7 @@ def create_app():
         # Jika user sudah login tapi datanya tidak valid
         if current_user.is_authenticated:
             logout_user()
-            session.clear()
+        session.clear()
         return redirect(url_for('signin.login'))
     
     @app.errorhandler(403)
@@ -96,9 +97,7 @@ def create_app():
         safe_endpoints = ['signin.login', 'signin.logout', 'static', 'signin.ping', 'favicon']
         current_endpoint = request.endpoint
 
-        # SESSION
-
-        # LIFETIME
+        # IF SAFE ENDPOINT
         if current_endpoint is None or current_endpoint in safe_endpoints or "index" in current_endpoint:
             return
         
@@ -114,8 +113,6 @@ def create_app():
             print(f"{'':<25} 🔄 Perpanjang lifetime session")
             session.permanent = True
             session.modified = True
-
-        session_generator()
 
     # Cache control
     @app.after_request
