@@ -44,10 +44,9 @@ class dataRuanganDao:
             if isExist['status'] == True:
                 raise CustomError({ 'message': f"Data dengan Kode Ruangan {params['kode']} sudah ada!" })
 
-            if params["prodi"] != "default":
-                plot = [params["prodi"]]
-                plot.extend(params["plot"])
-                params["plot"] = plot
+            plot = [params["prodi"]] if params["prodi"] != "default" else ["GENERAL"]
+            plot.extend(params["plot"])
+            params["plot"] = plot
             params.pop("prodi", None)
 
             # if params['tipe_ruangan'] != "PRAKTIKUM":
@@ -90,10 +89,9 @@ class dataRuanganDao:
             if isExist['status'] == False:
                 raise CustomError({ 'message': f"Data dengan Kode Ruangan {params['kode']} tidak ada!" })
 
-            if params["prodi"] != "default":
-                plot = [params["prodi"]]
-                plot.extend(params["plot"])
-                params["plot"] = plot
+            plot = [params["prodi"]] if params["prodi"] != "default" else ["GENERAL"]
+            plot.extend(params["plot"])
+            params["plot"] = plot
             params.pop("prodi", None)
 
             unset = {k: "" for k, v in params.items() if not v}

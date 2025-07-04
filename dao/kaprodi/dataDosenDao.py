@@ -39,17 +39,17 @@ class dataDosenDao:
         result = self.connection.find_many(
             collection_name = db_dosen, 
             filter          = {
-                    '$and': [
-                        {
+                    # '$and': [
+                        # {
                             '$or': [
                                 {'prodi': prodi}, 
                                 {'status': 'TIDAK_TETAP'}
                             ]
-                        },
-                        {
-                            'status': { '$ne': 'TIDAK_AKTIF' }
-                        }
-                    ]
+                        # },
+                        # {
+                        #     'status': { '$ne': 'TIDAK_AKTIF' }
+                        # }
+                    # ]
                 }, 
             sort            = [ ("status", 1), ("nip", 1) ]
         )

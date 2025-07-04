@@ -124,16 +124,24 @@ class dataProgramStudiDao:
             elif not params.get('status_aktif'):
                 raise CustomError({ 'message': 'Status Program Studi belum diisi!' })
             
-            # Check is Program Studi exist
+            # Check is old Program Studi exist
             old_program_studi = params.pop('old_program_studi', None)
-            isExist = self.connection.find_one(
+            isExist = self.connection.find_many(
                 collection_name = db_prodi, 
-                filter          = {'program_studi': old_program_studi}
+                filter          = {
+                    'program_studi': { '$in' : [old_program_studi, params['program_studi']] }
+                }
             )
-            if isExist['status'] == False:
-                raise CustomError({ 'message': 'Data prodi ' + params['program_studi'] + ' tidak ditemukan!' })
-            else:
+            if isExist['status'] == True:
                 old_prodi = isExist['data']
+
+                isExist_data = [data["program_studi"] for data in isExist["data"]]
+                if old_program_studi not in isExist_data:
+                    raise CustomError({ 'message': 'Data prodi ' + old_program_studi + ' tidak ditemukan!' })
+                elif params['program_studi'] in isExist_data:
+                    raise CustomError({ 'message': f"Data Program Studi {params['program_studi']} sudah ada!" })
+            else:
+                raise CustomError({ 'message': 'Data prodi ' + old_program_studi + ' tidak ditemukan!' })
 
             params["status_aktif"] = True if params.pop("status_aktif", None) == "AKTIF" else False
             unset = {k: "" for k, v in params.items() if not v and k not in ["fakultas", "program_studi", "status_aktif"]}

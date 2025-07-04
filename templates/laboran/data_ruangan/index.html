@@ -190,6 +190,43 @@
     </div>
   </div>
 </div>
+
+<!-- MODAL LOV PLOT -->
+<div class="modal fade" id="modal-plot">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">List Plot</h4>
+        <button type="button" class="close" data-bs-dismiss="modal">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <table
+          class="table table-hover table-bordered w-100"
+          style="overflow: auto"
+          id="table_lov_plot"
+        >
+          <thead>
+            <th>Plot</th>
+          </thead>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-default pull-left"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<!-- MODAL LOV PLOT END -->
 {% endblock %} {% block script %}
 <script>
   const list_prodi = JSON.parse(
@@ -209,6 +246,12 @@
     // auto blur input - 9 June
     $("input").on("keydown", function (event) {
       if (event.key === "Enter") $(this).blur();
+    });
+
+    $("#modal-plot tbody").on("click", "tr", async function () {
+      let row = plot_lov.row(this).data();
+      $("#modal-plot").modal("hide");
+      await addBadge("field_plot", "list_plot", row.pakar);
     });
 
     // $("#cbLab").on("change", function () {
@@ -428,14 +471,70 @@
     form_ruang(true, false, data);
   }
 
-  $("#input_plot").on("keydown", function (event) {
-    if (event.key === "Enter") {
-      let user_input = $("#input_plot").val();
-      if (user_input.length >= 3) {
-        addBadge("field_plot", "list_plot", user_input);
-        $("#input_plot").val("");
-      } else popUpTimer("info", "Input minimal 3 karakter!");
-    }
+  $("#input_plot").on("keydown", async function (event) {
+    if (event.key === "F9") {
+      event.preventDefault();
+      $("#modal-plot").modal("show");
+      $("#table_lov_plot_filter input").focus(); // focus ke field search saat modal matkul dibuka
+    } else if (event.key === "Enter" && this.value.length >= 3) {
+      event.preventDefault();
+      let resultKode = plot_lov
+        .data()
+        .toArray()
+        .filter((data) => data.pakar.includes(this.value));
+
+      if (resultKode.length === 1)
+        await addBadge("field_plot", "list_plot", resultKode[0].pakar);
+      else if (resultKode.length > 1) {
+        let infoData = [];
+        resultKode.forEach((element) => {
+          if (!retrieveBadgeValues("list_plot").includes(element.pakar))
+            infoData.push(element);
+        });
+
+        if (infoData.length > 1) {
+          let selectOptions = resultKode
+            .map(
+              (data) => `<option value="${data.pakar}">${data.pakar}</option>`
+            )
+            .join("");
+
+          Swal.fire({
+            title: "Plot Mana?",
+            text: "Hasil pencarian jamak. Plot apa yang anda maksud?",
+            icon: "question",
+            html: `
+                <select id="swal-select" class="form-select">
+                  <option value="">-- Pilih --</option>
+                  ${selectOptions}
+                </select>
+              `,
+            showCancelButton: true,
+            confirmButtonText: "OK",
+            preConfirm: () => {
+              const selected = document.getElementById("swal-select").value;
+              if (!selected) {
+                Swal.showValidationMessage("Silakan pilih salah satu opsi.");
+              }
+              return selected;
+            },
+          }).then((result) => {
+            if (result.isConfirmed) {
+              addBadge("field_plot", "list_plot", result.value);
+            }
+          });
+        } else addBadge("field_plot", "list_plot", infoData[0].pakar);
+      } else
+        await popUpTimer(
+          "error",
+          "Data tidak ditemukan!",
+          "Jika bersikeras, harap tambahkan data terlebih dahulu.",
+          2000
+        );
+
+      this.value = "";
+    } else if (event.key === "Enter")
+      popUpTimer("info", "Input minimal 3 karakter!");
   });
 
   // Event ketika cbKelasTabAll di-click
@@ -511,6 +610,33 @@
         },
         // orderable: false,
         className: "text-center",
+      },
+    ],
+  });
+
+  let plot_lov = $("#table_lov_plot").DataTable({
+    scrollX: true,
+    scrollY: "50vh",
+    scrollCollapse: true,
+    paging: false,
+    responsive: true,
+    ordering: false,
+    info: false,
+    ajax: {
+      type: "GET",
+      url: "/get_all_pakar",
+      cache: false,
+      beforeSend: () => {
+        showLoading();
+      },
+      complete: () => {
+        hideLoading();
+      },
+    },
+    columns: [
+      {
+        data: "pakar",
+        defaultContent: "",
       },
     ],
   });

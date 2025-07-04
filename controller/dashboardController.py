@@ -42,6 +42,13 @@ def dashboard_index():
     else:
         return abort(403)
     
+@dashboard.route("/get_all_pakar", methods=['GET'])
+@login_required
+def dashboard_getAllPakar():
+    print(f"{'[ CONTROLLER ]':<25} Get All Data Pakar")
+    data = dashboardDao.get_all_pakar()
+    return jsonify({ "data": data })
+    
 @dashboard.route("/get_pakar_prodi", methods=['GET'])
 @login_required
 def dashboard_getPakarProdi():

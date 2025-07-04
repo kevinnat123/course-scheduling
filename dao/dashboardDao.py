@@ -21,6 +21,15 @@ class dashboardDao:
             )
         return result if result and result.get('status') else None
     
+    def get_all_pakar(self):
+        print(f"{'[ DAO ]':<25} Get All Pakar")
+        result = self.connection.find_many(
+            collection_name = db_prodi
+        )
+        if result and result.get('status'):
+            pakar = [{"pakar": item} for item in set(i for d in result['data'] if d.get('pakar') for i in d['pakar'])]
+        return pakar if result and result.get('status') else []
+    
     def get_pakar_prodi(self, prodi=None, status_dosen=None):
         print(f"{'[ DAO ]':<25} Get Pakar Prodi (prodi: {prodi}, status dosen {status_dosen})")
         if not status_dosen or status_dosen != "TIDAK_TETAP":

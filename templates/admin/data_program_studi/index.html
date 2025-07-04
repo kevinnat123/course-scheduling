@@ -370,6 +370,15 @@
       kepala_program_studi: $("#input_kaprodi").val(),
     };
 
+    let isExist = prodi_tab
+      .data()
+      .toArray()
+      .find((prodi) => prodi.program_studi.includes($("#input_prodi").val()));
+    if (isExist) {
+      $("#btn-batal").click();
+      return popUpTimer("error", "Data Program Studi sudah ada!");
+    }
+
     $.ajax({
       type: "POST",
       url: "/data_program_studi/post_program_studi",
