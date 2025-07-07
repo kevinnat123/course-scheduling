@@ -1,20 +1,4 @@
-function testing() {
-  $.ajax({
-    type: "GET",
-    url: "/get_dosen",
-    cache: false,
-    beforeSend: () => {
-      showLoading();
-    },
-    complete: () => {
-      hideLoading();
-    },
-    success: async function (res) {
-      console.log("res ajax", res);
-      asd = res;
-    },
-  });
-}
+console.warn("[ Global Loaded ]");
 
 window.showLoading = function () {
   document.getElementById("loadingModal").style.display = "flex";
@@ -22,6 +6,24 @@ window.showLoading = function () {
 
 window.hideLoading = function () {
   document.getElementById("loadingModal").style.display = "none";
+};
+
+/**
+ * @param {string} [icon] - The icon type (e.g., "success", "error", "warning", "info"). Leave as `undefined` to skip.
+ * @param {string} [title] - The title text. Leave as `undefined` to skip.
+ * @param {string} [text] - The message text. Leave as `undefined` to skip.
+ * @param {number} [timer] - The duration in milliseconds before closing. Leave as `undefined` for default behavior.
+ */
+window.popUpTimer = async function (icon, title, text = null, timer = null) {
+  await Swal.fire({
+    position: "center",
+    icon: icon ?? "error",
+    title: title ?? "Terjadi kesalahan pada sistem.",
+    text: text ?? null,
+    showConfirmButton: false,
+    timer: timer ?? Math.max(1000, title.length * 75), // Hitung timer berdasarkan panjang title (75ms per karakter, minimal 1000ms)
+    timerProgressBar: true,
+  });
 };
 
 $(document).on("click", ".btn-close-badge", function () {
@@ -198,24 +200,6 @@ function getDatatableData(dataTable, index = undefined) {
 
   return index >= 0 ? tableData[0] : tableData;
 }
-
-/**
- * @param {string} [icon] - The icon type (e.g., "success", "error", "warning", "info"). Leave as `undefined` to skip.
- * @param {string} [title] - The title text. Leave as `undefined` to skip.
- * @param {string} [text] - The message text. Leave as `undefined` to skip.
- * @param {number} [timer] - The duration in milliseconds before closing. Leave as `undefined` for default behavior.
- */
-window.popUpTimer = async function (icon, title, text = null, timer = null) {
-  await Swal.fire({
-    position: "center",
-    icon: icon ?? "error",
-    title: title ?? "Terjadi kesalahan pada sistem.",
-    text: text ?? null,
-    showConfirmButton: false,
-    timer: timer ?? Math.max(1000, title.length * 75), // Hitung timer berdasarkan panjang title (75ms per karakter, minimal 1000ms)
-    timerProgressBar: true,
-  });
-};
 
 /**
  * Creating empty row contains of empty columns data of the specified datatable.
