@@ -9,7 +9,7 @@ __pycache__/
 
 # Mengabaikan file konfigurasi dan dependency yang tidak perlu
 .env
-.DS_Store
+.coverage
 
 # Ignore configuration files
 config.py
