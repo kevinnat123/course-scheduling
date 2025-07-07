@@ -87,7 +87,12 @@ class loginDao:
         try:
             user = self.connection.find_one(
                 collection_name = db_users, 
-                filter          = {"u_id": u_id}
+                filter          = {
+                    '$or': [
+                        {"u_id": u_id}, 
+                        {"username": u_id}
+                    ]
+                }
             )
             if user.get('status'):
                 user_data = user['data']
@@ -109,10 +114,9 @@ class loginDao:
                 stored_password = user_data.get('password', '')
                 if check_password_hash(stored_password, password):
                     del user_data['password']
-                    session['user'] = user_data
                     result.update({'data': user_data, 'message': 'Login berhasil'})
                 else:
-                    raise CustomError({ 'message': 'NIP atau password salah' })
+                    raise CustomError({ 'message': 'Username atau password salah' })
             else:
                 raise CustomError({ 'message': 'Anda tidak punya akun!' })
             result.update({ 'status': True })

@@ -14,11 +14,24 @@ def setting_index():
             menu = 'Setting', 
             title = 'Setting', 
         )
-    
-@setting.route("/password_verification", methods=['GET', 'POST'])
+
+@setting.route("/pengaturan_akun", methods=['POST'])
 @login_required
-def setting_passwordVerification():
-    print(f"{'[ CONTROLLER ]':<25} Password Verification (Method: {request.method})")
+def setting_pengaturanAkun():
+    print(f"{'[ CONTROLLER ]':<25} Pengaturan Akun")
+    req = request.get_json('data')
+    username = req.get('username')
+    newPassword = req.get('new_password')
+    confirmPassword = req.get('confirm_password')
+
+    manage_account = settingDao.manage_account(username, newPassword, confirmPassword)
+
+    return jsonify( manage_account )
+    
+@setting.route("/register_new_password", methods=['GET', 'POST'])
+@login_required
+def setting_registerNewPassword():
+    print(f"{'[ CONTROLLER ]':<25} Register New Password (Method: {request.method})")
     if request.method == 'POST':
         req = request.get_json('data')
         oldPassword = req.get('oldPassword')

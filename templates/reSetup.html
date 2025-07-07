@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pengaturan Akun</title>
+    <link
+      rel="stylesheet"
+      href="/static/plugins/sweetAlert/css/sweetalert2.min.css"
+    />
+    <style>
+      /* Reset dan base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* Body dan background */
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #4a90e2, #50c878);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: auto;
+      }
+
+      /* Logo latar belakang */
+      .background-logo {
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background-image: url("static/img/UKSW-Color_outline.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        opacity: 0.3; /* Mengurangi opacity logo */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+      }
+
+      /* Container Setup */
+      .setup-container {
+        position: relative;
+        z-index: 2;
+        width: 90%;
+        max-width: 400px;
+        background-color: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
+        /* text-align: center; */
+      }
+
+      /* Judul */
+      .setup-container h2 {
+        text-align: center;
+        color: #ffffff; /* Warna putih solid */
+        margin-bottom: 10px;
+      }
+
+      .setup-container h3 {
+        text-align: center;
+        color: #ffffff; /* Warna putih solid */
+        margin-bottom: 30px;
+      }
+
+      /* Form styling */
+      #setup-form {
+        display: flex;
+        flex-direction: column;
+        /* gap: 2px; */
+      }
+
+      /* Input group styling */
+      .input-group {
+        position: relative;
+        margin-bottom: 25px;
+      }
+
+      /* Input field styling */
+      .input-group input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        background: rgba(255, 255, 255, 1);
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      /* Input focus styling */
+      .input-group input:focus {
+        border-color: #003366;
+        background-color: rgba(255, 255, 255, 0.95);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Placeholder styling */
+      .input-group input::placeholder {
+        color: #666;
+        opacity: 0.7;
+      }
+
+      /* Input hover effect */
+      .input-group input:hover {
+        border-color: rgba(0, 51, 102, 0.5);
+        background-color: rgba(255, 255, 255, 0.95);
+      }
+
+      /* Tombol setup */
+      .setup-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .setup-btn:hover {
+        background-color: #357abd;
+      }
+
+      /* Loading - Modern Animation Style */
+      #loadingModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(4px);
+      }
+
+      .loading-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        width: 100%;
+      }
+
+      /* Pulse Dots Animation */
+      .pulse-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 15px 0;
+      }
+
+      .pulse-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #0066cc;
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      .pulse-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .pulse-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      .loading-content p {
+        color: #333;
+        font-size: 16px;
+        font-weight: 500;
+        margin-top: 10px;
+        margin-bottom: 0;
+      }
+
+      /* Responsivitas */
+      @media screen and (max-width: 480px) {
+        .setup-container {
+          width: 95%;
+          padding: 20px;
+        }
+
+        .setup-container h1 {
+          font-size: 60px;
+        }
+
+        .setup-container h2 {
+          font-size: 22px;
+        }
+
+        .background-logo {
+          width: 200px;
+          height: 200px;
+        }
+
+        .input-group input {
+          padding: 12px 16px;
+          font-size: 14px;
+        }
+
+        .setup-btn {
+          padding: 12px 20px;
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Logo latar belakang -->
+    <div class="background-logo"></div>
+
+    <!-- Container error -->
+    <div class="setup-container">
+      <h2>Pengaturan Akun</h2>
+      <h3>Harap ubah password anda!</h3>
+      <form id="setup-form">
+        <!-- Input username -->
+        <div class="input-group">
+          <input
+            type="text"
+            id="username"
+            placeholder="Username"
+            value="{{ username | safe}}"
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Re-Input password -->
+        <div class="input-group">
+          <input type="password" id="new-password" placeholder="New Password" />
+        </div>
+
+        <div class="input-group">
+          <input
+            type="password"
+            id="confirm-password"
+            placeholder="Confirm Password"
+          />
+        </div>
+
+        <!-- Tombol signin -->
+        <button type="submit" class="setup-btn" onclick="setup(event)">
+          Simpan
+        </button>
+      </form>
+    </div>
+
+    <!-- Modern Loading Modal -->
+    <div id="loadingModal">
+      <div class="loading-content">
+        <div class="pulse-container">
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+          <div class="pulse-dot"></div>
+        </div>
+        <p>Mohon tunggu...</p>
+      </div>
+    </div>
+
+    <script src="/static/plugins/jquery/jquery-3.7.1.min.js"></script>
+    <script src="/static/plugins/jquery/jquery-3.7.1.js"></script>
+    <script src="/static/plugins/sweetAlert/sweetalert2.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // setTimeout(() => {
+        //   window.location.href = "{{ redirect_url | safe }}";
+        // }, 15 * 1000);
+      });
+
+      function setup(event) {
+        event.preventDefault();
+
+        let username = $("#username").val();
+        let password = $("#new-password").val();
+        let confirm_password = $("#confirm-password").val();
+
+        if (!username || !password || !confirm_password) {
+          return Swal.fire({
+            icon: "error",
+            title: (!username ? "Username" : "Password") + " belum diisi!",
+            text:
+              "Silakan masukkan " +
+              (!username ? "username" : "password") +
+              " Anda",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          }).then((result) => {
+            $("#" + (!username ? "username" : "password")).focus();
+          });
+        } else if (password != confirm_password) {
+          return Swal.fire({
+            icon: "error",
+            title: "Password tidak sesuai!",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          });
+        }
+
+        params = {
+          username: username,
+          new_password: password,
+          confirm_password: confirm_password,
+        };
+        console.log("param");
+
+        $.ajax({
+          type: "POST",
+          url: "/pengaturan_akun",
+          cache: false,
+          data: JSON.stringify(params),
+          beforeSend: () => {
+            document.getElementById("loadingModal").style.display = "flex";
+          },
+          complete: () => {
+            document.getElementById("loadingModal").style.display = "none";
+          },
+          success: async function (res) {
+            console.log(res);
+            if (res.status) {
+              Swal.fire({
+                icon: "success",
+                title: res.message,
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+              }).then((result) => {
+                window.location.href = res.redirect_url;
+              });
+            } else {
+              $("#setup-form")[0].reset();
+              Swal.fire({
+                icon: "error",
+                title: res.message,
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+              });
+            }
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

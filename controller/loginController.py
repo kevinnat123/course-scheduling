@@ -29,13 +29,13 @@ def login():
     
     if request.method == 'POST':
         req = request.get_json('data')
-        nip = req.get('nip')
+        nip = req.get('username')
         password = req.get('password')
 
         user = loginDao.verify_user(nip, password)
 
         if user['status']:
-            user_obj = User(nip, user['data'])
+            user_obj = User(user['data']['u_id'], user['data'])
             login_user(user_obj)
 
             session['user'] = user['data']
@@ -53,11 +53,22 @@ def login():
             print(f"{'':<25} {'Session User':<30}: {session['user']}\n")
             print(f"{'':<25} {'Session Academic_Details':<30}: {session['academic_details']}\n")
             print(f"{'':<25} {'Session Menu':<30}: {session['menu']}\n")
+
+            if password == nip:
+                return jsonify({'status': True, 'redirect_url': url_for('signin.pengaturan_akun')}), 200
             return jsonify({'status': True, 'redirect_url': url_for('dashboard.dashboard_index')}), 200
-            # return jsonify({'status': True, 'redirect_url': url_for('dashboard.dashboard_index')}), 200
 
         return jsonify({'status': False, 'message': user['message']}), 401
     return render_template('signin.html')
+
+@signin.route("/pengaturan_akun")
+@login_required
+def pengaturan_akun():
+    print(f"{'[ RENDER ]':<25} Pengaturan Akun")
+    return render_template(
+        'reSetup.html',
+        username = session['user'].get('username', session['user']['u_id'])
+    )
 
 # @signin.route("/dashboard")
 # @login_required
