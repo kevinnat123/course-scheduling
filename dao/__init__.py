@@ -12,15 +12,15 @@ class Database:
         except Exception as err:
             print(f"Gagal membuat koneksi (Others) | {err}")
 
-    def to_uppercase(self, value):
-        if isinstance(value, str):
-            return value.upper()
-        elif isinstance(value, list):
-            return [self.to_uppercase(item) for item in value]
-        elif isinstance(value, dict):
-            return {key: self.to_uppercase(val) for key, val in value.items()}
-        else:
-            return value  # Jika bukan string, list, atau dict, biarkan tetap
+    # def to_uppercase(self, value):
+    #     if isinstance(value, str):
+    #         return value.upper()
+    #     elif isinstance(value, list):
+    #         return [self.to_uppercase(item) for item in value]
+    #     elif isinstance(value, dict):
+    #         return {key: self.to_uppercase(val) for key, val in value.items()}
+    #     else:
+    #         return value  # Jika bukan string, list, atau dict, biarkan tetap
 
     def get_collection(self, collection_name):
         return self.db[collection_name]
