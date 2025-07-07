@@ -65,28 +65,38 @@ class dataProgramStudiDao:
             params = {k: v for k, v in params.items() if v or k in ["program_studi", "status_aktif"]}
 
             if params['status_aktif'] == True and params.get('kepala_program_studi'):
-                # cek data dosen
-                data_kaprodi_baru = self.connection.find_one(
-                    collection_name = db_dosen,
-                    filter          = { 'nama': params['kepala_program_studi'] }
+                kaprodi_isExist = self.connection.find_one(
+                    collection_name = db_user,
+                    filter          = {
+                        'nama': params['kepala_program_studi'],
+                        'program_studi': { "$ne": { params['program_studi'] } }
+                    }
                 )
-                if data_kaprodi_baru['status']:
-                    nip_kaprodi = data_kaprodi_baru['data']['nip']
-                    params['kepala_program_studi'] = nip_kaprodi
-                    # tambahkan user baru
-                    self.connection.insert_one(
-                        collection_name = db_user,
-                        data            = {
-                            'u_id': nip_kaprodi,
-                            'nama': data_kaprodi_baru['data']['nama'],
-                            'password': generate_password_hash(nip_kaprodi, method='pbkdf2:sha256'),
-                            'role': 'KEPALA PROGRAM STUDI',
-                            'prodi': params['program_studi'],
-                            'last_update': datetime.now().strftime("%d-%b-%Y")
-                        }
+                if not kaprodi_isExist['status']:
+                    # cek data dosen
+                    data_kaprodi_baru = self.connection.find_one(
+                        collection_name = db_dosen,
+                        filter          = { 'nama': params['kepala_program_studi'] }
                     )
+                    if data_kaprodi_baru['status']:
+                        nip_kaprodi = data_kaprodi_baru['data']['nip']
+                        params['kepala_program_studi'] = nip_kaprodi
+                        # tambahkan user baru
+                        self.connection.insert_one(
+                            collection_name = db_user,
+                            data            = {
+                                'u_id': nip_kaprodi,
+                                'nama': data_kaprodi_baru['data']['nama'],
+                                'password': generate_password_hash(nip_kaprodi, method='pbkdf2:sha256'),
+                                'role': 'KEPALA PROGRAM STUDI',
+                                'prodi': params['program_studi'],
+                                'last_update': datetime.now().strftime("%d-%b-%Y")
+                            }
+                        )
+                    else:
+                        raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
                 else:
-                    raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
+                    raise CustomError({ 'message': 'Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!' })
             else:
                 params.pop('kepala_program_studi', None)
                 
@@ -152,37 +162,47 @@ class dataProgramStudiDao:
 
             if params['status_aktif'] == True:
                 if params.get('kepala_program_studi'):
-                    # cek data dosen
-                    data_kaprodi_baru = self.connection.find_one(
-                        collection_name = db_dosen,
-                        filter          = { 'nama': params['kepala_program_studi'] }
+                    kaprodi_isExist = self.connection.find_one(
+                        collection_name = db_user,
+                        filter          = {
+                            'nama': params['kepala_program_studi'],
+                            'program_studi': { "$ne": { params['program_studi'] } }
+                        }
                     )
-                    if data_kaprodi_baru['status']:
-                        data_kaprodi_baru = data_kaprodi_baru['data']
-                        nip_kaprodi_baru = data_kaprodi_baru['nip']
-                        params['kepala_program_studi'] = nip_kaprodi_baru
-                        if old_prodi.get('kepala_program_studi') != nip_kaprodi_baru:
-                            # hapus user kaprodi lama
-                            self.connection.delete_one(
-                                collection_name = db_user,
-                                filter          = { 'u_id': old_prodi.get('kepala_program_studi') },
-                            )
-                            # tambahkan user baru
-                            self.connection.insert_one(
-                                collection_name = db_user,
-                                data            = {
-                                    'u_id': nip_kaprodi_baru,
-                                    'nama': data_kaprodi_baru['nama'],
-                                    'password': generate_password_hash(nip_kaprodi_baru, method='pbkdf2:sha256'),
-                                    'role': 'KEPALA PROGRAM STUDI',
-                                    'prodi': params['program_studi'],
-                                    'last_update': datetime.now().strftime("%d-%b-%Y")
-                                }
-                            )
+                    if not kaprodi_isExist['status']:
+                        # cek data dosen
+                        data_kaprodi_baru = self.connection.find_one(
+                            collection_name = db_dosen,
+                            filter          = { 'nama': params['kepala_program_studi'] }
+                        )
+                        if data_kaprodi_baru['status']:
+                            data_kaprodi_baru = data_kaprodi_baru['data']
+                            nip_kaprodi_baru = data_kaprodi_baru['nip']
+                            params['kepala_program_studi'] = nip_kaprodi_baru
+                            if old_prodi.get('kepala_program_studi') != nip_kaprodi_baru:
+                                # hapus user kaprodi lama
+                                self.connection.delete_one(
+                                    collection_name = db_user,
+                                    filter          = { 'u_id': old_prodi.get('kepala_program_studi') },
+                                )
+                                # tambahkan user baru
+                                self.connection.insert_one(
+                                    collection_name = db_user,
+                                    data            = {
+                                        'u_id': nip_kaprodi_baru,
+                                        'nama': data_kaprodi_baru['nama'],
+                                        'password': generate_password_hash(nip_kaprodi_baru, method='pbkdf2:sha256'),
+                                        'role': 'KEPALA PROGRAM STUDI',
+                                        'prodi': params['program_studi'],
+                                        'last_update': datetime.now().strftime("%d-%b-%Y")
+                                    }
+                                )
+                            else:
+                                params.pop('kepala_program_studi', None)
                         else:
-                            params.pop('kepala_program_studi', None)
+                            raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
                     else:
-                        raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
+                        raise CustomError({ 'message': 'Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!' })
                 else:
                     # hapus user kaprodi lama
                     self.connection.delete_one(

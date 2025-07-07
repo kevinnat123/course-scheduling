@@ -362,6 +362,20 @@
         $("input[name='rbStatus']").focus();
       }, 1500);
       return;
+    } else if (
+      prodi_tab
+        .data()
+        .toArray()
+        .find(
+          (data) =>
+            data.kepala_program_studi == $("#input_kaprodi").val() &&
+            data.program_studi != $("#input_prodi").val()
+        )
+    ) {
+      return popUpTimer(
+        "error",
+        "Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!!"
+      );
     }
 
     let params = {
@@ -433,6 +447,20 @@
         $("input[name='rbStatus']").focus();
       }, 1500);
       return;
+    } else if (
+      prodi_tab
+        .data()
+        .toArray()
+        .find(
+          (data) =>
+            data.kepala_program_studi == $("#input_kaprodi").val() &&
+            data.program_studi != $("#input_prodi").val()
+        )
+    ) {
+      return popUpTimer(
+        "error",
+        "Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!!"
+      );
     }
 
     let params = {
