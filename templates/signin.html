@@ -187,11 +187,11 @@
     <div class="signin-container">
       <h2>Sign In</h2>
       <form id="signin-form">
-        <!-- Input nip -->
+        <!-- Input username -->
         <div class="input-group">
           <input
             type="text"
-            id="nip"
+            id="username"
             placeholder="Username"
             autocomplete="off"
           />
@@ -234,24 +234,26 @@
       function signin(event) {
         event.preventDefault();
 
-        let nip = $("#nip").val();
+        let username = $("#username").val();
         let password = $("#password").val();
 
-        // if (!nip) {
-        //   return Swal.fire({
-        //     title: "Username Wajib diisi!",
-        //     text: "Silakan masukkan nip Anda sebelum Submit",
-        //     icon: "warning",
-        //   });
-        // } else if (!password) {
-        //   return Swal.fire({
-        //     title: "Password Wajib diisi!",
-        //     text: "Silakan masukkan password Anda sebelum Submit",
-        //     icon: "warning",
-        //   });
-        // }
+        if (!username || !password) {
+          return Swal.fire({
+            icon: "error",
+            title: (!username ? "Username" : "Password") + " belum diisi!",
+            text:
+              "Silakan masukkan " +
+              (!username ? "username" : "password") +
+              " Anda",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          }).then((result) => {
+            $("#" + (!username ? "username" : "password")).focus();
+          });
+        }
 
-        params = { nip: nip, password: password };
+        params = { username: username, password: password };
         console.log("param");
 
         $.ajax({
