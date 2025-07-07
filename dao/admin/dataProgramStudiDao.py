@@ -3,6 +3,7 @@ from config import MONGO_DB, MONGO_MAJOR_COLLECTION as db_prodi, MONGO_USERS_COL
 from config import MONGO_LECTURERS_COLLECTION as db_dosen
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 from global_func import CustomError
 
@@ -80,7 +81,8 @@ class dataProgramStudiDao:
                             'nama': data_kaprodi_baru['data']['nama'],
                             'password': generate_password_hash(nip_kaprodi, method='pbkdf2:sha256'),
                             'role': 'KEPALA PROGRAM STUDI',
-                            'prodi': params['program_studi']
+                            'prodi': params['program_studi'],
+                            'last_update': datetime.now().strftime("%d-%b-%Y")
                         }
                     )
                 else:
@@ -133,12 +135,12 @@ class dataProgramStudiDao:
                 }
             )
             if isExist['status'] == True:
-                old_prodi = isExist['data']
+                old_prodi = next(prodi for prodi in isExist['data'] if prodi["program_studi"] == old_program_studi)
 
                 isExist_data = [data["program_studi"] for data in isExist["data"]]
                 if old_program_studi not in isExist_data:
                     raise CustomError({ 'message': 'Data prodi ' + old_program_studi + ' tidak ditemukan!' })
-                elif params['program_studi'] in isExist_data:
+                elif old_program_studi != params['program_studi'] and params['program_studi'] in isExist_data:
                     raise CustomError({ 'message': f"Data Program Studi {params['program_studi']} sudah ada!" })
             else:
                 raise CustomError({ 'message': 'Data prodi ' + old_program_studi + ' tidak ditemukan!' })
@@ -173,15 +175,27 @@ class dataProgramStudiDao:
                                     'nama': data_kaprodi_baru['nama'],
                                     'password': generate_password_hash(nip_kaprodi_baru, method='pbkdf2:sha256'),
                                     'role': 'KEPALA PROGRAM STUDI',
-                                    'prodi': params['program_studi']
+                                    'prodi': params['program_studi'],
+                                    'last_update': datetime.now().strftime("%d-%b-%Y")
                                 }
                             )
                         else:
                             params.pop('kepala_program_studi', None)
                     else:
                         raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
+                else:
+                    # hapus user kaprodi lama
+                    self.connection.delete_one(
+                        collection_name = db_user,
+                        filter          = { 'u_id': old_prodi.get('kepala_program_studi') },
+                    )
             else:
                 params.pop('kepala_program_studi', None)
+                # hapus user kaprodi lama
+                self.connection.delete_one(
+                    collection_name = db_user,
+                    filter          = { 'u_id': old_prodi.get('kepala_program_studi') },
+                )
                 
             res = self.connection.update_one(
                 collection_name = db_prodi, 
