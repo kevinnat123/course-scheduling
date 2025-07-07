@@ -10,6 +10,8 @@ __pycache__/
 # Mengabaikan file konfigurasi dan dependency yang tidak perlu
 .env
 .coverage
+htmlcov/
+.cache/
 
 # Ignore configuration files
 config.py
