@@ -157,7 +157,7 @@
             class="form-control"
             id="input_matkul_ajar"
             autocomplete="off"
-            placeholder="Tekan 'F9' atau '`' untuk lihat list matkul | Input kata kunci"
+            placeholder="Tekan 'F9' untuk lihat list matkul | Input kata kunci"
           />
           <button
             type="button"
@@ -711,7 +711,7 @@
   });
 
   $("#input_pakar").on("keydown", async function (event) {
-    if (event.key === "F9" || event.key === "`") {
+    if (event.key === "F9") {
       event.preventDefault();
       $("#modal-pakar").modal("show");
       $("#table_lov_pakar_filter input").focus(); // focus ke field search saat modal matkul dibuka
@@ -777,7 +777,7 @@
   });
 
   $("#input_matkul_ajar").on("keydown", async function (event) {
-    if (event.key === "F9" || event.key === "`") {
+    if (event.key === "F9") {
       event.preventDefault();
       $("#modal-matkul").modal("show");
       $("#table_lov_matkul_filter input").focus(); // focus ke field search saat modal matkul dibuka
