@@ -23,8 +23,8 @@ class JadwalKuliah:
 # (15)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen        (DONE)
 # (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib                (DONE)
 # (15)  Solo Team_Teaching                                          >> solo_team
+# (15)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja          (DONE)
 # (10)  Beban SKS Dosen melebihi 12 sks                             >> dosen_overdosis           (DONE)
-# (10)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja          (DONE)
 # (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas  (DONE)
 # (5)   Tidak Sesuai dengan permintaan / request dosen              >> melanggar_preferensi      (DONE)
 BOBOT_PENALTI = {
@@ -33,8 +33,8 @@ BOBOT_PENALTI = {
     "asdos_nabrak_dosen": 15,
     "kelas_gaib": 15,
     "solo_team": 15,
+    "diluar_jam_kerja": 15,
     "dosen_overdosis": 10,
-    "diluar_jam_kerja": 10,
     "kapasitas_kelas_terbatas": 10,
     "melanggar_preferensi": 5,
 
