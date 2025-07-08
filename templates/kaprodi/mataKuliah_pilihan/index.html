@@ -17,38 +17,53 @@
       </div>
       <!-- ANGKATAN + JUMLAH MAHASISWA -->
       <div class="form-group row">
-        <label for="input_angkatan" class="col-2 col-form-label text-end"
-          >Angkatan</label
-        >
-        <div class="col-2">
-          <select class="form-control" id="input_angkatan">
-            <option value="ALL">All</option>
-            {% for tahun in session['academic_details']['list_angkatan'] %}
-            <option value="{{ tahun }}">{{ tahun }}</option>
-            {% endfor %}
-          </select>
+        <!-- ANGKATAN -->
+        <div class="col-12 col-md-6">
+          <div class="row d-flex align-items-center">
+            <label
+              for="input_angkatan"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+            >
+              Angkatan
+            </label>
+            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <select class="form-control" id="input_angkatan">
+                <option value="ALL">All</option>
+                {% for tahun in session['academic_details']['list_angkatan'] %}
+                <option value="{{ tahun }}">{{ tahun }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div class="col"></div>
-        <label
-          for="input_jumlah_mahasiswa"
-          class="col-5 col-form-label text-end"
-          id="label_jumlah_mahasiswa"
-          >Jumlah Mahasiswa Aktif Angkatan -</label
-        >
-        <div class="col-2">
-          <input
-            type="text"
-            class="form-control numberOnly text-end"
-            id="input_jumlah_mahasiswa"
-            autocomplete="off"
-          />
+        <!-- JUMLAH MAHASISWA -->
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="input_jumlah_mahasiswa"
+              id="label_jumlah_mahasiswa"
+              class="col-12 col-sm-8 col-md-8 col-lg-7 col-xl-7 col-xxl-6 col-form-label"
+            >
+              Jumlah Mahasiswa Aktif Angkatan -
+            </label>
+            <div class="col-5 col-sm-4 col-md-4 col-lg-3 col-xl-3 col-xxl-2">
+              <input
+                type="text"
+                class="form-control numberOnly text-end"
+                id="input_jumlah_mahasiswa"
+                autocomplete="off"
+              />
+            </div>
+          </div>
         </div>
       </div>
       <!-- ANGKATAN + JUMLAH MAHASISWA END -->
       <!-- PROGRAM STUDI -->
       <div class="form-group row">
-        <label for="input_prodi" class="col-2 col-form-label text-end"
+        <label
+          for="input_prodi"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Program Studi<span class="text-danger" aria-hidden="true"
             >*</span
           ></label
@@ -69,7 +84,9 @@
       <!-- PROGRAM STUDI END -->
       <!-- BIDANG MINAT -->
       <div class="form-group row">
-        <label for="input_bidangMinat" class="col-2 col-form-label text-end"
+        <label
+          for="input_bidangMinat"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Bidang Minat</label
         >
         <div class="col">
@@ -83,7 +100,9 @@
       <!-- BIDANG MINAT END -->
       <!-- LIST MATKUL -->
       <div class="form-group row">
-        <label for="input_listMatkul" class="col-2 col-form-label text-end"
+        <label
+          for="input_listMatkul"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >List Matkul</label
         >
         <div class="col">
