@@ -9,7 +9,9 @@
       </div>
       <!-- PROGRAM STUDI -->
       <div class="form-group row">
-        <label for="input_prodi" class="col-2 col-form-label text-end"
+        <label
+          for="input_prodi"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Program Studi<span class="text-danger" aria-hidden="true"
             >*</span
           ></label
@@ -30,10 +32,12 @@
       <!-- PROGRAM STUDI -->
       <!-- KODE -->
       <div class="form-group row">
-        <label for="input_kode" class="col-2 col-form-label text-end"
+        <label
+          for="input_kode"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Kode<span class="text-danger" aria-hidden="true">*</span></label
         >
-        <div class="col-2">
+        <div class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
           <input
             type="text"
             class="form-control"
@@ -47,7 +51,9 @@
       <!-- KODE END -->
       <!-- NAMA -->
       <div class="form-group row">
-        <label for="input_nama" class="col-2 col-form-label text-end"
+        <label
+          for="input_nama"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Nama<span class="text-danger" aria-hidden="true">*</span></label
         >
         <div class="col">
@@ -63,7 +69,9 @@
       <!-- NAMA END -->
       <!-- KELOMPOK -->
       <div class="form-group row">
-        <label for="input_kelompok" class="col-2 col-form-label text-end"
+        <label
+          for="input_kelompok"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Kelompok&ensp;</label
         >
         <div class="col">
@@ -77,7 +85,9 @@
       <!-- KELOMPOK END -->
       <!-- TIPE KELAS -->
       <div class="form-group row">
-        <label for="rbTipeKelas" class="col-2 col-form-label text-end"
+        <label
+          for="rbTipeKelas"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Tipe Kelas<span class="text-danger" aria-hidden="true"
             >*</span
           ></label
@@ -112,39 +122,56 @@
       <!-- TIPE KELAS END -->
       <!-- SKS -->
       <div class="form-group row">
-        <label for="input_sksA" class="col-2 col-form-label text-end"
-          >SKS Akademik<span class="text-danger" aria-hidden="true"
-            >*</span
-          ></label
-        >
-        <div class="col-2">
-          <input
-            type="text"
-            class="form-control numberOnly"
-            id="input_sksA"
-            autocomplete="off"
-            maxlength="2"
-            placeholder="Input SKS akademik"
-          />
+        <!-- SKS Akademik -->
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="input_sksA"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+            >
+              SKS Akademik<span class="text-danger">*</span>
+            </label>
+            <div class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <input
+                type="text"
+                class="form-control numberOnly"
+                id="input_sksA"
+                autocomplete="off"
+                maxlength="2"
+                placeholder="Input SKS akademik"
+              />
+            </div>
+          </div>
         </div>
-        <label for="input_sksB" class="col-2 col-form-label text-end"
-          >SKS Bayar<span class="text-danger" aria-hidden="true">*</span></label
-        >
-        <div class="col-2">
-          <input
-            type="text"
-            class="form-control numberOnly"
-            id="input_sksB"
-            autocomplete="off"
-            maxlength="2"
-            placeholder="Input SKS bayar"
-          />
+
+        <!-- SKS Bayar -->
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="input_sksB"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+            >
+              SKS Bayar<span class="text-danger">*</span>
+            </label>
+            <div class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <input
+                type="text"
+                class="form-control numberOnly"
+                id="input_sksB"
+                autocomplete="off"
+                maxlength="2"
+                placeholder="Input SKS bayar"
+              />
+            </div>
+          </div>
         </div>
       </div>
       <!-- SKS END -->
       <!-- BIDANG -->
       <div class="form-group row">
-        <label for="input_bidang" class="col-2 col-form-label text-end"
+        <label
+          for="input_bidang"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Bidang&ensp;</label
         >
         <div class="col input-group">
@@ -165,13 +192,18 @@
         </div>
       </div>
       <div class="form-group row" id="field_bidang" hidden>
-        <label for="input_bidang" class="col-2 col-form-label"></label>
+        <label
+          for="input_bidang"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+        ></label>
         <div class="col" id="list_bidang"></div>
       </div>
       <!-- BIDANG END -->
       <!-- DOSEN AJAR -->
       <div class="form-group row">
-        <label for="input_dosen_ajar" class="col-2 col-form-label text-end"
+        <label
+          for="input_dosen_ajar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Dosen Ajar&ensp;</label
         >
         <div class="col input-group">
@@ -192,13 +224,18 @@
         </div>
       </div>
       <div class="form-group row" id="field_dosen_ajar" hidden>
-        <label for="input_dosen_ajar" class="col-2 col-form-label"></label>
+        <label
+          for="input_dosen_ajar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+        ></label>
         <div class="col" id="list_dosen_ajar"></div>
       </div>
       <!-- DOSEN AJAR END -->
       <!-- ASISTENSI -->
       <div class="form-group row">
-        <label for="cbAsistensi" class="col-2 col-form-label text-end"
+        <label
+          for="cbAsistensi"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Asistensi&ensp;</label
         >
         <div class="col d-flex align-items-center">
@@ -207,7 +244,7 @@
 
         <label
           for="cbIntegratedClass"
-          class="col-3 col-form-label text-end asistensi_detail"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label text-end asistensi_detail"
           hidden
           >Kelas Gabungan</label
         >
@@ -222,7 +259,9 @@
       </div>
 
       <div class="form-group row asistensi_detail tipe_kelas_asisten" hidden>
-        <label for="rbTipeKelasAsistensi" class="col-2 col-form-label text-end"
+        <label
+          for="rbTipeKelasAsistensi"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Tipe Kelas Asisten&ensp;</label
         >
         <div class="col d-flex align-items-center">
@@ -257,7 +296,9 @@
       <!-- ASISTENSI END -->
       <!-- TEAM TEACHING -->
       <div class="form-group row">
-        <label for="cbTeamTeaching" class="col-2 col-form-label text-end"
+        <label
+          for="cbTeamTeaching"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Team Teaching&ensp;</label
         >
         <div class="col d-flex align-items-center">
@@ -285,12 +326,14 @@
       </div>
 
       <div class="form-group row team_teaching_detail" hidden>
-        <label for="input_jumlah_dosen" class="col-2 col-form-label text-end"
+        <label
+          for="input_jumlah_dosen"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Jumlah Dosen<span class="text-danger" aria-hidden="true"
             >*</span
           ></label
         >
-        <div class="col-2">
+        <div class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
           <input
             type="text"
             class="form-control numberOnly"

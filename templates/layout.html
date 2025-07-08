@@ -534,17 +534,17 @@
 
         // auto-closed sidebar when page shrinked
         function adjustSidebar() {
-          if (window.matchMedia("(max-width: 1200px)").matches) {
-            $("#sidebar").addClass("closed");
-            $("#content").addClass("full");
-            $("#header").addClass("full");
-            $("#footer").addClass("full");
-          } else {
-            $("#sidebar").removeClass("closed");
-            $("#content").removeClass("full");
-            $("#header").removeClass("full");
-            $("#footer").removeClass("full");
-          }
+          // if (window.matchMedia("(max-width: 1200px)").matches) {
+          $("#sidebar").addClass("closed");
+          $("#content").addClass("full");
+          $("#header").addClass("full");
+          $("#footer").addClass("full");
+          // } else {
+          //   $("#sidebar").removeClass("closed");
+          //   $("#content").removeClass("full");
+          //   $("#header").removeClass("full");
+          //   $("#footer").removeClass("full");
+          // }
         }
 
         // toggle sidebar

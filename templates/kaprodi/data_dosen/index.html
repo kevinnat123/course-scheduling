@@ -8,7 +8,9 @@
       </div>
       <!-- PROGRAM STUDI -->
       <div class="form-group row">
-        <label for="input_prodi" class="col-2 col-form-label text-end"
+        <label
+          for="input_prodi"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Program Studi<span class="text-danger" aria-hidden="true"
             >*</span
           ></label
@@ -29,10 +31,12 @@
       <!-- PROGRAM STUDI END -->
       <!-- NIP + STATUS -->
       <div class="form-group row">
-        <label for="input_nip" class="col-2 col-form-label text-end"
+        <label
+          for="input_nip"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >NIP<span class="text-danger" aria-hidden="true">*</span></label
         >
-        <div class="col-2">
+        <div class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
           <input
             type="text"
             class="form-control numberOnly"
@@ -41,41 +45,60 @@
             placeholder="Input NIP"
           />
         </div>
-        <div class="col d-flex justify-content-end align-items-center">
-          <label for="rbStatus" class="col-form-label text-end"
-            >Status<span class="text-danger" aria-hidden="true">*</span></label
-          >
-          <input
-            type="radio"
-            name="rbStatus"
-            id="TETAP"
-            value="TETAP"
-            class="ms-5 me-2"
-          /><label class="form-check-label ms-2" for="TETAP"> Tetap </label>
-          <input
-            type="radio"
-            name="rbStatus"
-            id="TIDAK_TETAP"
-            value="TIDAK_TETAP"
-            class="ms-5 me-2"
-          /><label class="form-check-label ms-2" for="TIDAK_TETAP">
-            Tidak Tetap
-          </label>
-          <input
-            type="radio"
-            name="rbStatus"
-            id="TIDAK_AKTIF"
-            value="TIDAK_AKTIF"
-            class="ms-5 me-2"
-          /><label class="form-check-label ms-2" for="TIDAK_AKTIF">
-            Tidak Aktif
-          </label>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="rbStatus"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+        >
+          Status<span class="text-danger" aria-hidden="true">*</span>
+        </label>
+
+        <div class="col">
+          <div class="d-flex flex-wrap gap-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="rbStatus"
+                id="TETAP"
+                value="TETAP"
+              />
+              <label class="form-check-label" for="TETAP">Tetap</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="rbStatus"
+                id="TIDAK_TETAP"
+                value="TIDAK_TETAP"
+              />
+              <label class="form-check-label" for="TIDAK_TETAP"
+                >Tidak Tetap</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="rbStatus"
+                id="TIDAK_AKTIF"
+                value="TIDAK_AKTIF"
+              />
+              <label class="form-check-label" for="TIDAK_AKTIF"
+                >Tidak Aktif</label
+              >
+            </div>
+          </div>
         </div>
       </div>
       <!-- NIP + STATUS END -->
       <!-- NAMA -->
       <div class="form-group row">
-        <label for="input_nama" class="col-2 col-form-label text-end"
+        <label
+          for="input_nama"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Nama<span class="text-danger" aria-hidden="true">*</span></label
         >
         <div class="col">
@@ -91,7 +114,9 @@
       <!-- NAMA END -->
       <!-- PAKAR -->
       <div class="form-group row">
-        <label for="input_pakar" class="col-2 col-form-label text-end"
+        <label
+          for="input_pakar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Pakar&ensp;</label
         >
         <div class="col input-group">
@@ -112,13 +137,18 @@
         </div>
       </div>
       <div class="form-group row" id="field_pakar" hidden>
-        <label for="input_pakar" class="col-2 col-form-label"></label>
+        <label
+          for="input_pakar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+        ></label>
         <div class="col" id="list_pakar"></div>
       </div>
       <!-- PAKAR END -->
       <!-- MATKUL AJAR -->
       <div class="form-group row">
-        <label for="input_matkul_ajar" class="col-2 col-form-label text-end"
+        <label
+          for="input_matkul_ajar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Matkul Ajar&ensp;</label
         >
         <div class="col input-group">
@@ -139,13 +169,18 @@
         </div>
       </div>
       <div class="form-group row" id="field_matkul_ajar" hidden>
-        <label for="input_matkul_ajar" class="col-2 col-form-label"></label>
+        <label
+          for="input_matkul_ajar"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+        ></label>
         <div class="col" id="list_matkul_ajar"></div>
       </div>
       <!-- MATKUL AJAR END -->
       <!-- PREFERENSI -->
       <div class="form-group row">
-        <label for="cbPreferensi" class="col-2 col-form-label text-end"
+        <label
+          for="cbPreferensi"
+          class="col-10 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Preferensi&ensp;</label
         >
         <div class="col d-flex align-items-center">
@@ -154,7 +189,9 @@
       </div>
 
       <div class="form-group row preferensi_detail" hidden>
-        <label for="input_hindari_hari" class="col-2 col-form-label text-end"
+        <label
+          for="input_hindari_hari"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
           >Hindari Hari&ensp;</label
         >
         <div class="col d-flex align-items-center">
