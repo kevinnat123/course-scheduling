@@ -441,7 +441,7 @@
           <div class="form-group row align-items-center">
             <label for=${
               "bidang_minat" + kode_prodi + bidang_minat + angkatan
-            } class="col-2 col-form-label text-end fw-bold">
+            } class="col-12 col-sm-3 col-md-3 col-lg-2 col-xl-2 col-xxl-2 col-form-label fw-bold">
                 Bidang Minat
             </label>
             <div class="col">
@@ -460,7 +460,7 @@
           <div class="form-group row align-items-center">
             <label for=${
               "prodi" + kode_prodi + bidang_minat + angkatan
-            } class="col-2 col-form-label text-end fw-bold">
+            } class="col-12 col-sm-3 col-md-3 col-lg-2 col-xl-2 col-xxl-2 col-form-label fw-bold">
                 Program Studi
             </label>
             <div class="col">
@@ -488,7 +488,7 @@
                 <div class="form-group row d-flex justify-content-center">
                   <button
                     type="button"
-                    class="btn btn-success col-3 btn-edit"
+                    class="btn btn-success col-5 col-sm-5 col-md-4 col-lg-4 col-xl-3 col-xxl-3 btn-edit"
                     style="display: none"
                     onclick="editData()"
                   >
@@ -497,7 +497,7 @@
                   <label class="col-1"></label>
                   <button
                     type="button"
-                    class="btn btn-danger col-3 btn-hapus"
+                    class="btn btn-danger col-5 col-sm-5 col-md-4 col-lg-4 col-xl-3 col-xxl-3 btn-hapus"
                     style="display: none"
                     onclick="hapusData()"
                   >
@@ -518,37 +518,62 @@
                         </button>
                     </div>
 
-                    <label for="${
-                      "angkatan" + kode_prodi + bidang_minat + angkatan
-                    }" class="col-2 col-form-label text-end fw-bold">
-                        Angkatan
-                    </label>
-                    <div class="col-2">
-                        <input type="text" class="form-control text-center" id="${
-                          "angkatan" + kode_prodi + bidang_minat + angkatan
-                        }"
-                            value="${
-                              data.angkatan
-                            }" autocomplete="off" disabled />
+                    <!-- ANGKATAN -->
+                    <div class="col-12 col-md-6">
+                      <div class="row align-items-center">
+                        <label
+                          for="${
+                            "angkatan" + kode_prodi + bidang_minat + angkatan
+                          }"
+                          class="col-12 col-sm-3 col-md-6 col-lg-4 col-form-label fw-bold"
+                        >
+                          Angkatan
+                        </label>
+                        <div class="col-12 col-sm-3 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+                          <input
+                            type="text"
+                            class="form-control text-center"
+                            id="${
+                              "angkatan" + kode_prodi + bidang_minat + angkatan
+                            }"
+                            value="${data.angkatan}"
+                            autocomplete="off"
+                            disabled
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    <div class="col"></div>
-
-                    <label for="${
-                      "jumlah_mahasiswa" + kode_prodi + bidang_minat + angkatan
-                    }" class="col-4 col-form-label text-end">
-                        Jumlah Mahasiswa Aktif
-                    </label>
-                    <div class="col-2">
-                        <input type="text" class="form-control numberOnly" id="${
-                          "jumlah_mahasiswa" +
-                          kode_prodi +
-                          bidang_minat +
-                          angkatan
-                        }"
-                            value="${
-                              data.jumlah_mahasiswa
-                            }" autocomplete="off" disabled />
+                    <!-- JUMLAH MAHASISWA -->
+                    <div class="col-12 col-md-6">
+                      <div class="row align-items-center">
+                        <label
+                          for="${
+                            "jumlah_mahasiswa" +
+                            kode_prodi +
+                            bidang_minat +
+                            angkatan
+                          }"
+                          class="col-12 col-sm-3 col-md-8 col-lg-7 col-form-label fw-bold"
+                        >
+                          Jumlah Mahasiswa Aktif
+                        </label>
+                        <div class="col-12 col-sm-3 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+                          <input
+                            type="text"
+                            class="form-control numberOnly text-end"
+                            id="${
+                              "jumlah_mahasiswa" +
+                              kode_prodi +
+                              bidang_minat +
+                              angkatan
+                            }"
+                            value="${data.jumlah_mahasiswa}"
+                            autocomplete="off"
+                            disabled
+                          />
+                        </div>
+                      </div>
                     </div>
                 </div>
 
