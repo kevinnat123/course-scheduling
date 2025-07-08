@@ -197,25 +197,29 @@ def rand_dosen_pakar(list_dosen_pakar: list, dict_beban_sks_dosen: dict = {}, ex
         return list_dosen_pakar[0]
 
 def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = [], forAsisten: bool = False, kapasitas_ruangan_dosen: int = 0):
-    toChecked = [data_matkul["prodi"], "GENERAL"]
-    toChecked.extend(data_matkul.get("bidang", []))
+    prodi = [data_matkul["prodi"], "GENERAL"]
+    bidang = data_matkul.get("bidang", [])
     ruangan_prodi = [
         ruangan for ruangan in list_ruangan
-        if any(plot in ruangan["plot"] for plot in data_matkul.get('bidang', [])) and
+        if any(plot in ruangan["plot"] for plot in bidang) and
             ruangan["kode"] not in excluded_room
     ]
     if not ruangan_prodi:
         ruangan_prodi = [
             ruangan for ruangan in list_ruangan
-            if any(plot in ruangan["plot"] for plot in toChecked) and
+            if any(plot in ruangan["plot"] for plot in prodi) and
                 ruangan["kode"] not in excluded_room
         ]
-    
+    if not ruangan_prodi: 
+        ruangan_prodi = [
+            ruangan for ruangan in list_ruangan
+            if any(plot in ruangan["plot"] for plot in prodi)
+        ]
+
     if not forAsisten:
         kandidat_ruangan = [
             ruangan for ruangan in ruangan_prodi 
             if ruangan['tipe_ruangan'] == data_matkul['tipe_kelas']
-            # if ruangan["tipe_ruangan"] in ([data_matkul["tipe_kelas"]] if data_matkul.get("asistensi", None) else [data_matkul["tipe_kelas"], "RAPAT"])
         ]
 
         if data_matkul.get("asistensi", None):
@@ -235,8 +239,9 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
             if ruangan["tipe_ruangan"] == data_matkul.get("tipe_kelas_asistensi", "TEORI") and
                 ruangan["kapasitas"] >= kapasitas_ruangan_dosen
         ]
-
-    # max_room_capacity = max([ ruangan["kapasitas"] for ruangan in kandidat_ruangan ])
+    
+    if not kandidat_ruangan:
+        return random.choice(ruangan_prodi)
     
     if len(kandidat_ruangan) > 1:
         bobot_kandidat_ruangan = [
@@ -252,7 +257,7 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
             k=1)[0]
         return ruangan_terpilih
     elif len(kandidat_ruangan) == 1:
-        return kandidat_ruangan[0]    
+        return kandidat_ruangan[0]
 
 def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
     pilihan_hari_dosen = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT"]
