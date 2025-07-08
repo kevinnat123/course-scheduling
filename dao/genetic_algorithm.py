@@ -193,7 +193,7 @@ def rand_dosen_pakar(list_dosen_pakar: list, dict_beban_sks_dosen: dict = {}, ex
         return random.choice([ dosen for dosen in kandidat_dosen if dosen['nip'] not in excluded_dosen ] or kandidat_dosen)
     elif len(list_dosen_pakar) == 1:
         return list_dosen_pakar[0]
-    
+
 def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = [], forAsisten: bool = False, kapasitas_ruangan_dosen: int = 0):
     toChecked = [data_matkul["prodi"], "GENERAL"]
     toChecked.extend(data_matkul.get("bidang", []))
@@ -251,7 +251,7 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
         return ruangan_terpilih
     elif len(kandidat_ruangan) == 1:
         return kandidat_ruangan[0]    
- 
+
 def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
     pilihan_hari_dosen = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT"]
     pilihan_hari_asisten = copy.deepcopy(pilihan_hari_dosen)
