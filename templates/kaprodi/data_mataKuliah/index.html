@@ -212,7 +212,7 @@
             class="form-control"
             id="input_dosen_ajar"
             autocomplete="off"
-            placeholder="Tekan 'F9' untuk lihat list dosen | Input kata kunci"
+            placeholder="Tekan 'F9' atau '`' untuk lihat list dosen | Input kata kunci"
           />
           <button
             type="button"
@@ -926,7 +926,7 @@
   });
 
   $("#input_dosen_ajar").on("keydown", async function (event) {
-    if (event.key === "F9") {
+    if (event.key === "F9" || event.key === "`") {
       event.preventDefault();
       $("#modal-dosen").modal("show");
       $("#table_lov_dosen_filter input").focus(); // focus ke field search saat modal matkul dibuka
@@ -998,7 +998,7 @@
   });
 
   $("#input_bidang").on("keydown", async function (event) {
-    if (event.key === "F9") {
+    if (event.key === "F9" || event.key === "`") {
       event.preventDefault();
       $("#modal-bidang").modal("show");
       $("#table_lov_bidang_filter input").focus(); // focus ke field search saat modal matkul dibuka
