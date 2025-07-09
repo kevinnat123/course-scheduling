@@ -55,6 +55,10 @@
         outline: none;
       }
 
+      .tooltip-icon {
+        cursor: pointer;
+      }
+
       .hover-element {
         cursor: pointer;
       }
@@ -570,6 +574,18 @@
         adjustSidebar(); // Jalankan saat halaman pertama kali dimuat
 
         hideLoading();
+        // Loop tiap label dengan class .tooltip
+        $(".tooltip-icon").each(function () {
+          const id = $(this).attr("id");
+          const title = tooltips[id] || "Info";
+
+          $(this).attr("data-bs-toggle", "tooltip");
+          $(this).attr("data-bs-placement", "bottom");
+          $(this).attr("title", title);
+
+          // Inisialisasi Bootstrap Tooltip
+          new bootstrap.Tooltip(this);
+        });
       });
     </script>
 
