@@ -1,4 +1,4 @@
-import random, copy
+import random, copy, traceback
 
 class JadwalKuliah:
     def __init__(
@@ -209,11 +209,12 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
             ruangan for ruangan in list_ruangan
             if any(plot in ruangan["plot"] for plot in prodi) and
                 ruangan["kode"] not in excluded_room
-        ]
-    if not ruangan_prodi: 
-        ruangan_prodi = [
+        ] or [
             ruangan for ruangan in list_ruangan
             if any(plot in ruangan["plot"] for plot in prodi)
+        ] or [
+            ruangan for ruangan in list_ruangan
+            if "GENERAL" in ruangan["plot"]
         ]
 
     if not forAsisten:
@@ -241,7 +242,11 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
         ]
     
     if not kandidat_ruangan:
-        return random.choice(ruangan_prodi)
+        if ruangan_prodi:
+            return random.choice(ruangan_prodi)
+        else:
+            print("💣 Random Ruangan Return Random List Ruangan (tanpa cek plot)")
+            return random.choice(list_ruangan)
     
     if len(kandidat_ruangan) > 1:
         bobot_kandidat_ruangan = [
@@ -292,7 +297,6 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
 
     jadwal = filtered_jadwal
 
-    # LOOP PERTAMA:
     # - REPAIR DOSEN DENGAN SKS BERLEBIH (DONE)
     # - REPAIR JADWAL DOSEN BENTROK (DONE)
     # - PENUHI KAPASITAS KELAS KALAU BERKURANG
@@ -414,91 +418,6 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                         'jam_selesai': sesi_dosen.jam_selesai,
                     })
 
-                # # NEW BACKUP (NOT DONE)
-                # sukses = False
-                # outer_attempt = 1
-                # while not sukses and outer_attempt <= max_attempt:
-                #     # CEK BENTROK DOSEN
-                #     conflict = True
-                #     attempt = 1
-                #     excluded_dosen = []
-                #     while conflict and attempt <= max_attempt:
-                #         for sesi_lain in jadwal_dosen[sesi_dosen.kode_dosen]:
-                #             if sesi_dosen.hari == sesi_lain['hari']:
-                #                 if sesi_dosen.jam_mulai < sesi_lain['jam_selesai'] and sesi_dosen.jam_selesai > sesi_lain['jam_mulai']:
-                #                     conflict = True
-                #                     excluded_dosen.append(sesi.kode_dosen)
-
-                #                     dosen_pakar = [
-                #                         dosen for dosen in dosen_list
-                #                         if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") and 
-                #                             ((
-                #                                 (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) or 
-                #                                 len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
-                #                             ) if matkul.get('bidang') or matkul.get('dosen_ajar') 
-                #                             else True) and dosen["nip"] not in excluded_dosen and
-                #                             dosen['status'] != "TIDAK_AKTIF"
-                #                     ]
-                                    
-                #                     if dosen_pakar:
-                #                         dosen_pengganti = rand_dosen_pakar(
-                #                             list_dosen_pakar=dosen_pakar, 
-                #                             dict_beban_sks_dosen=beban_dosen, 
-                #                             excluded_dosen=excluded_dosen
-                #                         )
-                #                         sesi_dosen.kode_dosen = dosen_pengganti["nip"]
-                #                         attempt = 0
-                #                     else: attempt = max_attempt
-                #                     break
-                #                 else: conflict = False
-                #             else: conflict = False
-                        
-                #         if not conflict: break
-                #         attempt += 1
-                        
-                #     # CEK BENTROK RUANGAN
-                #     conflict = True
-                #     attempt = 1
-                #     excluded_room = []
-                #     while conflict and attempt <= max_attempt:
-                #         for sesi_lain in jadwal_ruangan[sesi_dosen.kode_ruangan]:
-                #             if sesi_dosen.hari == sesi_lain['hari']:
-                #                 if sesi_dosen.jam_mulai < sesi_lain['jam_selesai'] and sesi_dosen.jam_selesai > sesi_lain['jam_mulai']:
-                #                     conflict = True
-                #                     excluded_room.append(sesi.kode_ruangan)
-
-                #                     ruang_pengganti = rand_ruangan(
-                #                         list_ruangan=ruang_list,
-                #                         data_matkul=matkul,
-                #                         excluded_room=excluded_room
-                #                     )
-                #                     if ruang_pengganti["kode"] not in excluded_room:
-                #                         sesi.kode_ruangan = ruang_pengganti["kode"]
-                #                         sesi_dosen.kapasitas = ruang_pengganti['kapasitas']
-                #                         sesi_dosen.tipe_kelas = ruang_pengganti['tipe_ruangan']
-                #                         attempt = 0
-                #                     else:
-                #                         # GANTI HARI - SESUAIKAN DENGAN ALL PREFERENSI DOSEN
-                #                         print("GANTI HARI")
-                #                     break
-                #                 else: conflict = False
-                #             else: conflict = False
-                        
-                #         if not conflict: 
-                #             for team_schedule in jadwal:
-                #                 if team_schedule.kode_matkul == sesi.kode_matkul:
-                #                     team_schedule.kode_ruangan = sesi.kode_ruangan
-                #             break
-                #         attempt += 1
-
-                #     outer_attempt += 1
-                #     # if sukses:
-                #     #     beban_dosen[dosen['nip']] += sesi_dosen.sks_akademik
-                #     #     jadwal_ruangan[sesi_dosen.kode_ruangan].append({'hari': sesi_dosen.hari, 'jam_mulai': sesi_dosen.jam_mulai, 'jam_selesai': sesi_dosen.jam_selesai})
-                #     #     jadwal_dosen[sesi_dosen.kode_dosen].append({'hari': sesi_dosen.hari, 'jam_mulai': sesi_dosen.jam_mulai, 'jam_selesai': sesi_dosen.jam_selesai})
-                #     continue
-
-    # LOOP KEDUA:
     # - TRY DISTRIBUSI SKS
     for sesi_dosen in jadwal:
         if sesi_dosen.kode_dosen != "AS":
@@ -559,7 +478,6 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                             beban_dosen[sesi_dosen.kode_dosen] += jadwal_b.sks_akademik
                             break  # break setelah tukar sesi
 
-    # LOOP KEDUA:
     # - REPAIR JADWAL ASISTEN KALAU BENTRO K DENGAN KELAS LAIN (DONE)
     for sesi_asisten in jadwal:
         if sesi_asisten.kode_dosen == "AS": # KODE ASISTEN
@@ -1221,6 +1139,7 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 break
     except Exception as e:
         print(f"{'[ GA ]':<25} Error: {e}")
+        print(traceback.print_exc())
         return { 'status': False, 'message': e }
     
     return { 'status': True, 'data': convertOutputToDict(best_individual_global) }
