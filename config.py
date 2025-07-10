@@ -2,7 +2,7 @@ import os
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 
-MONGO_DB = 'db_course_scheduling'
+MONGO_DB = os.getenv("MONGO_DB", "db_course_scheduling")
 MONGO_USERS_COLLECTION = 'users'
 MONGO_URLS_COLLECTION = 'urls'
 MONGO_LECTURERS_COLLECTION = 'lecturers'
