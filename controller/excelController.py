@@ -67,6 +67,9 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         'align': 'center',
         'bg_color': '#b9ebc6',
     })
+    format_warning = workbook.add_format({
+        'bg_color': "#ffd438"
+    })
     format_error = workbook.add_format({
         'bg_color': '#ff0000'
     })
@@ -86,9 +89,9 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     
     for nip, sks in dict(sorted(beban_dosen.items())).items():
         nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
-        worksheet.write(row_idx, 0, nip)
-        worksheet.write(row_idx, 1, nama_dosen)
-        worksheet.write(row_idx, 2, sks)
+        worksheet.write(row_idx, 0, nip, format_warning if sks == 0 else None)
+        worksheet.write(row_idx, 1, nama_dosen, format_warning if sks == 0 else None)
+        worksheet.write(row_idx, 2, sks, format_warning if sks == 0 else None)
         row_idx += 1
         worksheet.set_column("A:A", 15)
         worksheet.set_column("B:B", 50)
