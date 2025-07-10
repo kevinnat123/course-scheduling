@@ -71,6 +71,29 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         'bg_color': '#ff0000'
     })
 
+    # Data beban dosen
+    worksheet = workbook.add_worksheet("Beban SKS Dosen")
+    beban_dosen = {dosen["nip"]: 0 for dosen in dosen_list}
+    for sesi in jadwal_list:
+        if sesi['kode_dosen'] != "AS":
+            beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
+    # Tulis data beban dosen
+    row_idx = 0
+    worksheet.write(row_idx, 0, "NIP", format_header)
+    worksheet.write(row_idx, 1, "Nama", format_header)
+    worksheet.write(row_idx, 2, "Beban SKS", format_header)
+    row_idx += 1
+    
+    for nip, sks in dict(sorted(beban_dosen.items())).items():
+        nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
+        worksheet.write(row_idx, 0, nip)
+        worksheet.write(row_idx, 1, nama_dosen)
+        worksheet.write(row_idx, 2, sks)
+        row_idx += 1
+        worksheet.set_column("A:A", 15)
+        worksheet.set_column("B:B", 50)
+        worksheet.set_column("C:C", 10)
+
     # Loop setiap group dan tulis ke sheet terpisah
     for program_studi in sorted(grouped.keys()):
         sheet_name = program_studi[:31]  # Sheet name max 31 chars
