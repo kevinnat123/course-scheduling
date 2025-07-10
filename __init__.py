@@ -108,9 +108,6 @@ def create_app():
             print(f"{'':<25} ⚠️ Autentikasi user gagal")
             abort(401)
         elif current_user.is_authenticated:
-            print(session['user']['last_update'])
-            print(current_user.last_update)
-            print(current_user.last_update != session['user']['last_update'])
             if current_user.last_update != session['user']['last_update']:
                 logout_user()
                 session.clear()
