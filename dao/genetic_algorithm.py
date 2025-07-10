@@ -1350,10 +1350,10 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
                 print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n") if find_missing_course(gen_best_individual, matakuliah_list) else print("\n")
 
-            if best_fitness_global == 1000:
+            if gen_best_fitness == 1000:
                 print(f"All Lecturers Have A Schedule {not is_some_lecture_not_scheduled(jadwal_list=best_individual_global, matakuliah_list=matakuliah_list, dosen_list=dosen_list)}")
                 # Kalo semua dosen udah di schedule: return
-                if not is_some_lecture_not_scheduled(jadwal_list=best_individual_global, matakuliah_list=matakuliah_list, dosen_list=dosen_list):
+                if not is_some_lecture_not_scheduled(jadwal_list=gen_best_individual, matakuliah_list=matakuliah_list, dosen_list=dosen_list):
                     break
 
         print("===== ===== ===== ===== ===== FINAL RES ===== ===== ===== ===== =====")
