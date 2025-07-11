@@ -37,36 +37,189 @@
 
 <div class="container-fluid mt-4" id="main-window">
   <div class="card">
-    <div class="card-body d-flex justify-content-between align-items-center">
-      <div class="text-label">
-        <label
-          >Jadwal Semester {{' '.join(semester_ajaran_depan.split('_'))}}</label
-        >
+    <div class="card-body row align-items-center">
+      <!-- Label -->
+      <div class="col-12 col-md-5">
+        <label class="form-label">
+          Jadwal Semester {{ ' '.join(semester_ajaran_depan.split('_')) }}
+        </label>
       </div>
-      <div class="button-group">
-        <button
-          type="button"
-          class="btn btn-primary me-2"
-          onclick="generate_jadwal()"
-        >
-          Generate
-        </button>
-        <button
-          type="button"
-          class="btn btn-success"
-          onclick="download_excel_by()"
-        >
-          Download Excel
-        </button>
+
+      <!-- Tombol -->
+      <div class="col-12 col-md-7">
+        <div class="row g-2 justify-content-end">
+          <!-- Button 1: selalu di atas -->
+          <div class="col-12 col-lg-4 order-1" id="div_generate">
+            <button
+              type="button"
+              class="btn btn-primary w-100"
+              onclick="generate_jadwal()"
+            >
+              Generate
+            </button>
+          </div>
+
+          <!-- Button 2: di bawah untuk <992, sejajar untuk ≥992 -->
+          <div class="col-6 col-lg-4 order-2 order-lg-2">
+            <button
+              type="button"
+              class="btn btn-success w-100"
+              onclick="download_excel_by()"
+            >
+              Download Excel
+            </button>
+          </div>
+
+          <!-- Button 3: di bawah untuk <992, sejajar untuk ≥992 -->
+          <div class="col-6 col-lg-4 order-3 order-lg-3">
+            <button
+              type="button"
+              class="btn btn-info w-100"
+              onclick="evaluate_jadwal()"
+              id="btn_eval"
+            >
+              Eval Jadwal
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary w-100"
+              onclick="switch_display()"
+              id="btn_kembali"
+              hidden
+            >
+              Kembali
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- <div class="card">
-    <div class="card-body" id="setting_prodi_done"></div>
-  </div> -->
-
   <div class="card-wrapper" id="setting_prodi_done"></div>
+
+  <div class="card" id="detail_evaluasi" hidden>
+    <div class="card-body">
+      <div class="form-group row align-items-center">
+        <label
+          for="score"
+          class="col col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Skor Jadwal</label
+        >
+        <div class="col-3 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="score"
+            disabled
+          />
+        </div>
+        <span class="col"> / 1000</span>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="count_dosen_kosong"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Jumlah Dosen Tidak Mengajar</label
+        >
+        <div class="col-2 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="count_dosen_kosong"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="form-group row align-items-center" id="field_dosen">
+        <label
+          for="input_dosen"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+          >Dosen Tidak Mengajar</label
+        >
+        <div class="col" id="list_dosen"></div>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="bentrok_dosen"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Dosen Bertabrakan</label
+        >
+        <div class="col-2 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="bentrok_dosen"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="bentrok_ruangan"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Ruangan Bertabrakan</label
+        >
+        <div class="col-2 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="bentrok_ruangan"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="bentrok_dosen_asdos"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Dosen & Asisten Bertabrakan</label
+        >
+        <div class="col-2 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="bentrok_dosen_asdos"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="form-group row align-items-center">
+        <label
+          for="solo_team_teaching"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
+          >Solo Team Teaching</label
+        >
+        <div class="col-2 col-sm-2 col-md-1">
+          <input
+            type="text"
+            class="form-control text-end"
+            id="solo_team_teaching"
+            disabled
+          />
+        </div>
+      </div>
+      <div class="align-items-center">
+        <label for="table_pelanggaran_preferensi"
+          >Pelanggaran Preferensi Dosen</label
+        >
+        <div class="table-responsive">
+          <table
+            class="table table-bordered table-stripped table-hover w-100"
+            id="table_pelanggaran_preferensi"
+          >
+            <thead>
+              <th>NIP</th>
+              <th>Kode Matkul</th>
+              <th>Hari</th>
+              <th>Jam Mulai</th>
+              <th>Jam Selesai</th>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %} {% block script %}
 <script>
@@ -151,8 +304,10 @@
       success: async function (res) {
         console.log("res ajax", res);
 
-        if (res.status) export_to_excel("Jadwal_Kuliah");
-        else {
+        if (res.status) {
+          export_to_excel("Jadwal_Kuliah");
+          switch_display(res.score);
+        } else {
           if (res.reason === "exist") {
             await Swal.fire({
               icon: "info",
@@ -255,5 +410,109 @@
       popUpTimer("error", error.status, error.statusText);
     }
   }
+
+  async function evaluate_jadwal() {
+    console.log("clicked");
+    $.ajax({
+      type: "GET",
+      url: "/generate_jadwal/evaluate_jadwal",
+      cache: false,
+      beforeSend: () => {
+        showLoading();
+      },
+      complete: () => {
+        hideLoading();
+      },
+      success: async function (res) {
+        console.log("res ajax", res);
+
+        if (res.data) {
+          switch_display(res.data);
+        } else {
+          popUpTimer("error", res.message);
+        }
+      },
+    });
+  }
+
+  async function switch_display(data = undefined) {
+    console.warn(data);
+    $("#setting_prodi_done")[0].toggleAttribute("hidden");
+    $("#detail_evaluasi")[0].toggleAttribute("hidden");
+    $("#div_generate")[0].toggleAttribute("hidden");
+    $("#btn_eval")[0].toggleAttribute("hidden");
+    $("#btn_kembali")[0].toggleAttribute("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    $.fn.dataTable
+      .tables({
+        visible: true,
+        api: true,
+      })
+      .columns.adjust();
+
+    if (!$("#detail_evaluasi").is("[hidden]") && data) {
+      await $("#detail_evaluasi input").val("");
+      await $("#detail_evaluasi span.badge").remove();
+      $("#field_dosen")[0].toggleAttribute("hidden");
+      await preferensi_tab.clear().draw(false);
+
+      Object.entries(data).forEach(async ([key, value]) => {
+        if (key == "pelanggaran_preferensi") {
+          preferensi_tab.rows.add(value).draw(false);
+        } else if (key == "solo_team_teaching") {
+          $("#" + key).val(Object.keys(value).length);
+        } else if (key == "dosen_not_set") {
+          $("#count_dosen_kosong").val(value.length);
+          if (value.length > 0) {
+            $("#field_dosen")[0].toggleAttribute("hidden");
+            await value.forEach((kode) => {
+              addBadge("field_dosen", "list_dosen", kode);
+            });
+          }
+        } else {
+          $("#" + key).val(value);
+        }
+      });
+      if (data.score < 900) {
+        $("#score").addClass("text-danger");
+      } else {
+        $("#score").removeClass("text-danger");
+      }
+      // v_toko_tab.ajax.reload(null, false);
+    }
+  }
+
+  let preferensi_tab = $("#table_pelanggaran_preferensi").DataTable({
+    scrollX: true,
+    scrollY: "50vh",
+    scrollCollapse: true,
+    paging: false,
+    responsive: true,
+    ordering: false,
+    info: false,
+    columns: [
+      {
+        data: "kode_dosen",
+        defaultContent: "",
+      },
+      {
+        data: "kode_matkul",
+        defaultContent: "",
+      },
+      {
+        data: "hari",
+        defaultContent: "",
+      },
+      {
+        data: "jam_mulai",
+        defaultContent: "",
+      },
+      {
+        data: "jam_selesai",
+        defaultContent: "",
+      },
+    ],
+  });
 </script>
 {% endblock %}
