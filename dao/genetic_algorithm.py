@@ -479,7 +479,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 preferensi_hari_dosen = [d for d in pilihan_hari_dosen if d not in dosen['preferensi'].get('hindari_hari', [])]
                 preferensi_jam_dosen = [j for j in list(range(7, 19 + 1)) if j not in dosen['preferensi'].get('hindari_jam', [])]
             else:
-                preferensi_hari_dosen, preferensi_jam_dosen = pilihan_hari_dosen, list(range(7, 19+1))
+                preferensi_hari_dosen, preferensi_jam_dosen = pilihan_hari_dosen, list(range(7, 19 + 1))
                 
             jadwal_found = next(
                 (
@@ -487,6 +487,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                     if sesi.hari in preferensi_hari_dosen
                         and all(jam in preferensi_jam_dosen for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1))
                         and sesi.kode_matkul[:5] in matkul_ajar_dosen
+                        and sesi.kode_dosen != "AS"
                 ), None
             )
             if jadwal_found:
@@ -1285,7 +1286,7 @@ def crossover(parent1: object, parent2: object):
     child2 = parent2[:titik2] + parent1[titik1:]
     return child1, child2
 
-def mutasi(individu, dosen_list, matakuliah_list, ruang_list, peluang_mutasi=0.1):
+def mutasi(individu, matakuliah_list, ruang_list, peluang_mutasi=0.1):
     """
     Melakukan mutasi pada individu (jadwal) secara acak berdasarkan peluang yang ditentukan.
 
@@ -1305,7 +1306,7 @@ def mutasi(individu, dosen_list, matakuliah_list, ruang_list, peluang_mutasi=0.1
     pilihan_hari_dosen = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT"]
     pilihan_hari_asisten = copy.deepcopy(pilihan_hari_dosen)
     pilihan_hari_asisten.append("SABTU")
-    pilihan_waktu = list(range(7, 20))
+    pilihan_waktu = list(range(7, 19+1))
 
     for sesi in individu:
         if random.random() < peluang_mutasi:
@@ -1324,31 +1325,14 @@ def mutasi(individu, dosen_list, matakuliah_list, ruang_list, peluang_mutasi=0.1
             elif attr == 'ruang':
                 kode_matkul = sesi.kode_matkul[:-1] if sesi.kode_dosen != "AS" else sesi.kode_matkul[:-4]
                 matkul = next((matkul for matkul in matakuliah_list if matkul['kode'] == kode_matkul), None)
-                if sesi.kode_dosen != "AS":
-                    calon_ruang_pengganti = [
-                        r for r in ruang_list if 
-                            (matkul['prodi'] in r['plot'] or 'GENERAL' in r['plot']) and
-                            r['kapasitas'] >= 35 and
-                            (
-                                r['tipe_ruangan'] == sesi.tipe_kelas or 
-                                (r['tipe_ruangan'] == "RAPAT" if not matkul.get('asistensi') else False)
-                            )
-                    ]
-                else:
-                    calon_ruang_pengganti = [
-                        r for r in ruang_list if 
-                            (matkul['prodi'] in r['plot'] or 'GENERAL' in r['plot']) and
-                            r['kapasitas'] >= sesi.kapasitas and
-                            r['tipe_ruangan'] == matkul['tipe_kelas_asistensi']
-                    ]
-                bobot_calon_ruang_pengganti = [
-                    (len(set(r['plot']) & set(matkul.get('bidang') or []))*10 or 1)
-                    for r in calon_ruang_pengganti
-                ]
-                ruang_pengganti = random.choices(
-                    population=calon_ruang_pengganti, 
-                    weights=bobot_calon_ruang_pengganti, 
-                    k=1)[0]
+                kapasitas_ruangan_dosen = next((sesi_dosen.kapasitas for sesi_dosen in individu if sesi_dosen.kode_matkul == sesi.kode_matkul[:-3]), 0) if sesi.kode_dosen == "AS" else 0
+                
+                ruang_pengganti = rand_ruangan(
+                    list_ruangan=ruang_list,
+                    data_matkul=matkul,
+                    forAsisten=True if sesi.kode_dosen == "AS" else False,
+                    kapasitas_ruangan_dosen=kapasitas_ruangan_dosen
+                )
                 sesi.kode_ruangan = ruang_pengganti['kode']
     return individu
 
@@ -1392,8 +1376,8 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
 
                 child1, child2 = crossover(parent1, parent2)
 
-                child1 = mutasi(child1, dosen_list, matakuliah_list, ruang_list, peluang_mutasi)
-                child2 = mutasi(child2, dosen_list, matakuliah_list, ruang_list, peluang_mutasi)
+                child1 = mutasi(child1, matakuliah_list, ruang_list, peluang_mutasi)
+                child2 = mutasi(child2, matakuliah_list, ruang_list, peluang_mutasi)
 
                 child1 = repair_jadwal(child1, matakuliah_list, dosen_list, ruang_list)
                 child2 = repair_jadwal(child2, matakuliah_list, dosen_list, ruang_list)
