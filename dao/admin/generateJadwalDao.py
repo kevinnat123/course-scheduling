@@ -82,7 +82,7 @@ class generateJadwalDao:
             collection_name = db_jadwal, 
             filter          = {'u_id': u_id}
         )
-        return result['data'] if result and result.get('status') else []
+        return result['data'] if result and result.get('status') else {}
     
     def upload_jadwal(self, jadwal):
         print(f"{'[ DAO ]':<25} Upload Jadwal")
