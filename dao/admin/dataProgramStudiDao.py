@@ -12,7 +12,7 @@ class dataProgramStudiDao:
         self.connection = Database(MONGO_DB)
 
     def get_prodi(self):
-        print(f"{'[ DAO ]':<25} Get Program Studi")
+        print(f"{'[ DAO ]':<25} Get Program Studi {session['user']['list_prodi']}")
         if session['user']['role'] == "ADMIN":
             result = self.connection.find_many(
                 collection_name = db_prodi, 
@@ -106,6 +106,13 @@ class dataProgramStudiDao:
                 data            = params
             )
 
+            if session['user']['role'] == "ADMIN":
+                if params["status_aktif"]:
+                    session['user']['list_prodi'].append(params["program_studi"])
+                else:
+                    session["user"]["list_prodi"].remove(params["program_studi"])
+                session.modified = True
+                    
             if res['status'] == True:
                 result.update({ 'message': res['message'] })
             else:
@@ -224,6 +231,13 @@ class dataProgramStudiDao:
                 unset_data      = unset
             )
             
+            if session['user']['role'] == "ADMIN":
+                if params["status_aktif"]:
+                    session['user']['list_prodi'].append(params["program_studi"])
+                else:
+                    session["user"]["list_prodi"].remove(old_program_studi)
+                session.modified = True
+                    
             if res['status'] == True:
                 result.update({ 'message': res['message'] })
             else:
