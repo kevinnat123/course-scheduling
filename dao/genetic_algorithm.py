@@ -968,7 +968,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
 def generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi):
     return [generate_jadwal(matakuliah_list, dosen_list, ruang_list) for _ in range(ukuran_populasi)]
 
-def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False):
+def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False, return_detail=False):
     penalti = 0
     jadwal_dosen = {}
     jadwal_ruangan = {}
@@ -989,7 +989,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     hitung_kelas_asisten_missing = 0
     hitung_diluar_jam_kerja = 0
     hitung_solo_team = {}
-    pelanggaran_preferensi = {}
+    pelanggaran_preferensi = []
     mata_kuliah_minus = {}
 
     detail_jadwal_matkul = {}
@@ -1049,18 +1049,14 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                 if preferensi_dosen:
                     hindari_hari = preferensi_dosen.get("hindari_hari", [])
                     hindari_jam = preferensi_dosen.get("hindari_jam", [])
-                    # if info_dosen["nip"] == "67002": print(sesi.hari, sesi.jam_mulai, sesi.jam_selesai, hindari_hari, hindari_jam)
                     
                     pelanggaran_hari = sesi.hari in hindari_hari
                     pelanggaran_jam = any(jam in hindari_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1))
                     if pelanggaran_hari and pelanggaran_jam:
-                        if info_dosen['nip'] not in pelanggaran_preferensi: pelanggaran_preferensi[info_dosen['nip']] = []
-                        pelanggaran_preferensi[info_dosen['nip']].append([sesi.hari, sesi.jam_mulai, sesi.jam_selesai])
+                        pelanggaran_preferensi.append({"kode_dosen": sesi.kode_dosen, "kode_matkul": sesi.kode_matkul, "hari": sesi.hari, "jam_mulai": sesi.jam_mulai, "jam_selesai": sesi.jam_selesai})
                         penalti += (BOBOT_PENALTI['melanggar_preferensi'] * 2)
                     elif pelanggaran_hari or pelanggaran_jam:
-                        if info_dosen['nip'] not in pelanggaran_preferensi: pelanggaran_preferensi[info_dosen['nip']] = []
-                        if (hindari_hari and sesi.hari in hindari_hari): pelanggaran_preferensi[info_dosen['nip']].append(sesi.hari)
-                        elif (hindari_jam and any(jam in hindari_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1))): pelanggaran_preferensi[info_dosen['nip']].append([sesi.jam_mulai, sesi.jam_selesai])
+                        pelanggaran_preferensi.append({"kode_dosen": sesi.kode_dosen, "kode_matkul": sesi.kode_matkul, "hari": sesi.hari, "jam_mulai": sesi.jam_mulai, "jam_selesai": sesi.jam_selesai})
                         penalti += (BOBOT_PENALTI['melanggar_preferensi'])
 
                 # CEK SOLO TEAM
@@ -1101,13 +1097,10 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                                     pelanggaran_jam = any(jam in hindari_jam for jam in range(sesi_team.jam_mulai, sesi_team.jam_selesai + 1))
 
                                     if pelanggaran_hari and pelanggaran_jam:
-                                        if info_team['nip'] not in pelanggaran_preferensi: pelanggaran_preferensi[info_team['nip']] = []
-                                        pelanggaran_preferensi[info_team['nip']].append(sesi_team.hari)
+                                        pelanggaran_preferensi.append({"kode_dosen": sesi_team.kode_dosen, "kode_matkul": sesi_team.kode_matkul, "hari": sesi_team.hari, "jam_mulai": sesi_team.jam_mulai, "jam_selesai": sesi_team.jam_selesai})
                                         penalti += (BOBOT_PENALTI['melanggar_preferensi'] * 2)
                                     elif pelanggaran_hari or pelanggaran_jam:
-                                        if info_team['nip'] not in pelanggaran_preferensi: pelanggaran_preferensi[info_team['nip']] = []
-                                        if (hindari_hari and sesi.hari in hindari_hari): pelanggaran_preferensi[info_dosen['nip']].append(sesi.hari)
-                                        elif (hindari_jam and any(jam in hindari_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1))): pelanggaran_preferensi[info_dosen['nip']].append([sesi.jam_mulai, sesi.jam_selesai])
+                                        pelanggaran_preferensi.append({"kode_dosen": sesi_team.kode_dosen, "kode_matkul": sesi_team.kode_matkul, "hari": sesi_team.hari, "jam_mulai": sesi_team.jam_mulai, "jam_selesai": sesi_team.jam_selesai})
                                         penalti += (BOBOT_PENALTI['melanggar_preferensi'])
                 
                 # HITUNG TOTAL KAPASITAS
@@ -1156,6 +1149,17 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
         pelanggaran_preferensi = {k: v for k, v in pelanggaran_preferensi.items() if v}
         print(f"{'':<41}solo team : {hitung_solo_team}")
         print(f"{'':<28}pelanggaran preferensi : {pelanggaran_preferensi}")
+
+    if return_detail:
+        data_return = {
+            "score": max(0, 1000 - penalti),
+            "bentrok_dosen": hitung_dosen_bentrok,
+            "bentrok_ruangan": hitung_ruangan_bentrok,
+            "bentrok_dosen_asdos": hitung_asdos_nabrak_dosen,
+            "solo_team_teaching": {k: v for k, v in hitung_solo_team.items() if v},
+            "pelanggaran_preferensi": pelanggaran_preferensi
+        }
+        return data_return
 
     return max(0, 1000 - penalti)
 
@@ -1348,9 +1352,9 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 print(f"{f'[Gen {gen}]':<10}[({len(populasi)} population)]")
                 print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {gen_best_fitness:<5}BEST ALLTIME: {best_fitness_global}")
                 hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-                print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n") if find_missing_course(gen_best_individual, matakuliah_list) else print("\n")
+                print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n" if find_missing_course(gen_best_individual, matakuliah_list) else "\n") 
 
-            if gen_best_fitness == 1000:
+            if gen > 15 and gen_best_fitness == 1000:
                 print(f"All Lecturers Have A Schedule {not is_some_lecture_not_scheduled(jadwal_list=best_individual_global, matakuliah_list=matakuliah_list, dosen_list=dosen_list)}")
                 # Kalo semua dosen udah di schedule: return
                 if not is_some_lecture_not_scheduled(jadwal_list=gen_best_individual, matakuliah_list=matakuliah_list, dosen_list=dosen_list):
@@ -1362,9 +1366,10 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, True)
         print(f"{f'':<10}All Lecturers Have A Schedule {not is_some_lecture_not_scheduled(jadwal_list=best_individual_global, matakuliah_list=matakuliah_list, dosen_list=dosen_list)}")
         print(f"{'':<10}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n" if find_missing_course(best_individual_global, matakuliah_list) else "\n") 
+        score_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, return_detail=True)
     except Exception as e:
         print(f"{'[ GA ]':<25} Error: {e}")
         print(traceback.print_exc())
         return { 'status': False, 'message': e }
     
-    return { 'status': True, 'data': convertOutputToDict(best_individual_global) }
+    return { 'status': True, 'data': convertOutputToDict(best_individual_global), 'score': score_fitness }
