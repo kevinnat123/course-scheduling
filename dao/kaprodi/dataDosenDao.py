@@ -180,17 +180,19 @@ class dataDosenDao:
                     params['preferensi'].pop('value', None)
 
                     # params['preferensi'] = {k: v for k, v in params['preferensi'].items() if v}
+                    preferensi = []
                     for k, v in dict(params['preferensi']).items():
+                        preferensi.append(k)
                         if v:
-                            continue
+                            params[f'preferensi.{k}'] = v
                         else:
                             unset[f'preferensi.{k}'] = ""
-                            params['preferensi'].pop(k, None)
+                        params["preferensi"].pop(k, None)
 
-                    if not params['preferensi']:
-                        params.pop('preferensi', None)
-                        unset = {k: v for k, v in unset.items() if not k.startswith('preferensi.')}
-                        unset['preferensi'] = ""
+                    if all(f"preferensi.{k}" in unset for k in preferensi):
+                        for k in preferensi:
+                            unset.pop(f"preferensi.{k}")
+                        unset["preferensi"] = ""
                 else:
                     params.pop('preferensi', None)
                     unset['preferensi'] = ""
@@ -209,6 +211,8 @@ class dataDosenDao:
 
             params = {k: v for k, v in params.items() if v}
                 
+            print(params)
+            print(unset)
             res = self.connection.update_one(
                 collection_name = db_dosen, 
                 filter          = {'nip': params['nip']}, 

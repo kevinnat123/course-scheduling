@@ -253,6 +253,158 @@
           </div>
         </div>
       </div>
+      <div class="form-group row preferensi_detail" hidden>
+        <label
+          for="input_hindari_jam"
+          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
+          >Hindari Jam&ensp;</label
+        >
+        <div class="col d-flex align-items-center">
+          <div class="checkbox-group">
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="7"
+                value="7"
+              />
+              <label for="7" class="form-check-label">7</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="8"
+                value="8"
+              />
+              <label for="8" class="form-check-label">8</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="9"
+                value="9"
+              />
+              <label for="9" class="form-check-label">9</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="10"
+                value="10"
+              />
+              <label for="10" class="form-check-label">10</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="11"
+                value="11"
+              />
+              <label for="11" class="form-check-label">11</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="12"
+                value="12"
+              />
+              <label for="12" class="form-check-label">12</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="13"
+                value="13"
+              />
+              <label for="13" class="form-check-label">13</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="14"
+                value="14"
+              />
+              <label for="14" class="form-check-label">14</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="15"
+                value="15"
+              />
+              <label for="15" class="form-check-label">15</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="16"
+                value="16"
+              />
+              <label for="16" class="form-check-label">16</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="17"
+                value="17"
+              />
+              <label for="17" class="form-check-label">17</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="18"
+                value="18"
+              />
+              <label for="18" class="form-check-label">18</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                name="cbJam"
+                id="19"
+                value="19"
+              />
+              <label for="19" class="form-check-label">19</label>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- PREFERENSI END -->
       <!-- FORM ACTION -->
       <div class="col text-end">
@@ -464,10 +616,15 @@
           addBadge("field_matkul_ajar", "list_matkul_ajar", element);
         });
       $(".preferensi_detail").attr("hidden", data.preferensi ? false : true);
-      if (data.preferensi && data.preferensi.hindari_hari) {
-        data.preferensi.hindari_hari.forEach((element) => {
-          $("#" + element).prop("checked", true);
-        });
+      if (data.preferensi) {
+        if (data.preferensi.hindari_hari)
+          data.preferensi.hindari_hari.forEach((element) => {
+            $("#" + element).prop("checked", true);
+          });
+        if (data.preferensi.hindari_jam)
+          data.preferensi.hindari_jam.forEach((element) => {
+            $("#" + element).prop("checked", true);
+          });
       }
     }
 
@@ -533,6 +690,7 @@
       preferensi: {
         value: getCheckedItemValue("cbPreferensi")[0],
         hindari_hari: getCheckedItemValue("cbHari"),
+        hindari_jam: getCheckedItemValue("cbJam"),
       },
     };
 
@@ -607,6 +765,7 @@
       preferensi: {
         value: getCheckedItemValue("cbPreferensi")[0],
         hindari_hari: getCheckedItemValue("cbHari"),
+        hindari_jam: getCheckedItemValue("cbJam"),
       },
     };
 
