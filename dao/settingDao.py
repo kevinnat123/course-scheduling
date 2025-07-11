@@ -51,7 +51,7 @@ class settingDao:
                         filter          = { 'u_id': session['user']['u_id'] }, 
                         update_data     = { 
                             'username': username,
-                            'password': generate_password_hash(newPassword),
+                            'password': generate_password_hash(newPassword, method='pbkdf2:sha256'),
                             'last_update': datetime.now().strftime("%d-%b-%Y")
                         }
                     )
