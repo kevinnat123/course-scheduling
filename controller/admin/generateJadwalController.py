@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, request, jsonify, session, abort
 from dao.admin.generateJadwalDao import generateJadwalDao
 from dao import genetic_algorithm as ga
+from dao.genetic_algorithm import JadwalKuliah
 from flask_login import login_required
 from global_func import CustomError
 
@@ -66,7 +67,7 @@ def generate_jadwal():
         print(f"{'[ CONTRO ERROR ]':<25} Error: {e}")
         return jsonify({ 'status': False, 'message': 'Terjadi kesalahan sistem. Harap hubungi Admin.' })
 
-    return jsonify({ 'status': True, 'data': best_schedule })
+    return jsonify({ 'status': True, 'score': best_schedule['score'] })
 
 @generateJadwal.route("/generate_jadwal/upload_jadwal", methods=['POST'])
 @login_required
@@ -77,6 +78,33 @@ def upload_jadwal():
         data = dao.upload_jadwal(req['jadwal'])
 
     return jsonify( data )
+
+@generateJadwal.route("/generate_jadwal/evaluate_jadwal", methods=["GET"])
+@login_required
+def evaluate_jadwal():
+    print(f"{'[ CONTROLLER ]':<25} Evaluate Jadwal (Fitness)")
+
+    if session['user']['role'] == "ADMIN":
+        isCreated = dao.get_jadwal()
+        if not isCreated and not isCreated.get('jadwal'):
+            return jsonify({ 'status': False, 'message': 'Jadwal belum dibuat!'})
+        elif isCreated and isCreated.get('jadwal'):
+            data_jadwal = isCreated["jadwal"]
+        
+        object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in data_jadwal]
+        data_matkul = dao.get_open_matkul()
+        data_dosen = dao.get_dosen()
+        data_ruang = dao.get_kelas()
+        data = ga.hitung_fitness(
+            jadwal=object_jadwal,
+            matakuliah_list=data_matkul,
+            dosen_list=data_dosen,
+            ruang_list=data_ruang,
+            return_detail=True
+        )
+        print("con hitung fitness", data)
+
+    return jsonify({ 'data': data })
 
 @generateJadwal.route("/generate_jadwal/get_simpanan_prodi", methods=["GET"])
 @login_required
