@@ -47,11 +47,17 @@ class dataMataKuliahDao:
     
     def get_matkul_by_prodi(self, prodi=""):
         print(f"{'[ DAO ]':<25} Get Matkul By Prodi (prodi: {prodi})")
-        result = self.connection.find_many(
-            collection_name = db_matkul, 
-            filter          = {'prodi': prodi}, 
-            sort            = [ ("kode", 1) ]
-        )
+        if session['user']['role'] == "KEPALA PROGRAM STUDI":
+            result = self.connection.find_many(
+                collection_name = db_matkul, 
+                filter          = {'prodi': prodi}, 
+                sort            = [ ("kode", 1) ]
+            )
+        elif session['user']['role'] == "ADMIN":
+            result = self.connection.find_many(
+                collection_name = db_matkul, 
+                sort            = [ ("kode", 1) ]
+            )
         if result and result.get('status'):
             for matkul in result['data']:
                 matkul.setdefault('kelompok', None)

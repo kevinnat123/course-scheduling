@@ -35,6 +35,8 @@ def mataKuliah_get_kelompok():
 def mataKuliah_get_matkul():
     print(f"{'[ CONTROLLER ]':<25} Get Matkul")
     data = dao.get_matkul()
+    for matkul in data:
+        matkul["asistensi"] = "Ada" if matkul["asistensi"] == True else None
     return jsonify({ 'data': data })
 
 @mataKuliah.route("/data_mata_kuliah/get_matkul_by_prodi", methods=['GET'])

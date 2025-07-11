@@ -1007,6 +1007,9 @@
   async function setMatkul(data) {
     let greenFlag = true;
     let jmlSks = await countSksinDatatable();
+    let final_sks = await (jmlSks + data.sks_akademik);
+
+    if (final_sks > 50) return popUpTimer("error", "Beban SKS Sangat Tinggi!");
 
     if (
       matkul_tab
@@ -1015,8 +1018,6 @@
         .find((matkul) => matkul.kode === data.kode)
     )
       return popUpTimer("error", "Mata Kuliah ini sudah ditambahkan!");
-
-    let final_sks = await (jmlSks + data.sks_akademik);
 
     if (final_sks > maks_sks) {
       await Swal.fire({

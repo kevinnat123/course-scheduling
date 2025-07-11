@@ -25,6 +25,7 @@ class dataDosenDao:
         elif session['user']['role'] == "ADMIN":
             result = self.connection.find_many(
                 collection_name = db_dosen, 
+                filter          = { 'status': {'$ne': 'TIDAK_AKTIF'} }, 
                 sort            = [ ("status", 1), ("nip", 1) ]
             )
         if result and result.get('status'):
