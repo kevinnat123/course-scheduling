@@ -69,7 +69,7 @@ class dataProgramStudiDao:
                     collection_name = db_user,
                     filter          = {
                         'nama': params['kepala_program_studi'],
-                        'program_studi': { "$ne": { params['program_studi'] } }
+                        'program_studi': { "$ne": params['program_studi'] }
                     }
                 )
                 if not kaprodi_isExist['status']:
@@ -166,7 +166,7 @@ class dataProgramStudiDao:
                         collection_name = db_user,
                         filter          = {
                             'nama': params['kepala_program_studi'],
-                            'program_studi': { "$ne": { params['program_studi'] } }
+                            'program_studi': { "$ne": params['program_studi'] }
                         }
                     )
                     if not kaprodi_isExist['status']:
