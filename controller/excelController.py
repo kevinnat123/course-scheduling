@@ -52,11 +52,16 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     workbook = xlsxwriter.Workbook(output)
 
     # 🔹 Group berdasarkan program_studi
-    grouped = defaultdict(list)
+    jadwal_prodi = defaultdict(list)
     for jadwal in jadwal_list:
-        grouped[jadwal['program_studi']].append(jadwal)
+        jadwal_prodi[jadwal['program_studi']].append(jadwal)
 
     # Format header
+    format_title = workbook.add_format({
+        'align': 'center',
+        'valign': 'vcenter',
+        'bold': True
+    })
     format_header = workbook.add_format({
         'align': 'center',
         'bg_color': '#99CCFF',
@@ -74,31 +79,57 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         'bg_color': '#ff0000'
     })
 
-    # Data beban dosen
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # Sheet 1 - Beban SKS Dosen
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     worksheet = workbook.add_worksheet("Beban SKS Dosen")
     beban_dosen = {dosen["nip"]: 0 for dosen in dosen_list}
     for sesi in jadwal_list:
         if sesi['kode_dosen'] != "AS":
             beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
     # Tulis data beban dosen
-    row_idx = 0
+    worksheet.merge_range("A1:C1", "Dosen Tetap", format_title)
+    worksheet.merge_range("E1:G1", "Dosen Tidak Tetap", format_title)
+
+    row_idx = 1
+    worksheet.set_column("A:A", 15)
+    worksheet.set_column("B:B", 50)
+    worksheet.set_column("C:C", 10)
     worksheet.write(row_idx, 0, "NIP", format_header)
     worksheet.write(row_idx, 1, "Nama", format_header)
     worksheet.write(row_idx, 2, "Beban SKS", format_header)
-    row_idx += 1
-    
-    for nip, sks in dict(sorted(beban_dosen.items())).items():
-        nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
-        worksheet.write(row_idx, 0, nip, format_warning if sks == 0 else None)
-        worksheet.write(row_idx, 1, nama_dosen, format_warning if sks == 0 else None)
-        worksheet.write(row_idx, 2, sks, format_warning if sks == 0 else None)
-        row_idx += 1
-        worksheet.set_column("A:A", 15)
-        worksheet.set_column("B:B", 50)
-        worksheet.set_column("C:C", 10)
 
-    # Loop setiap group dan tulis ke sheet terpisah
-    for program_studi in sorted(grouped.keys()):
+    worksheet.set_column("E:E", 15)
+    worksheet.set_column("F:F", 50)
+    worksheet.set_column("G:G", 10)
+    worksheet.write(row_idx, 4, "NIP", format_header)
+    worksheet.write(row_idx, 5, "Nama", format_header)
+    worksheet.write(row_idx, 6, "Beban SKS", format_header)
+    
+    row_idx += 1
+    row_tetap, row_tidak_tetap = row_idx, row_idx
+    for nip, sks in dict(sorted(beban_dosen.items())).items():
+        data_dosen = next((d for d in dosen_list if d['nip'] == nip), None)
+        if data_dosen["status"] == "TETAP":
+            initial_col = 0
+            row_idx = row_tetap
+        elif data_dosen["status"] == "TIDAK_TETAP":
+            initial_col = 4
+            row_idx = row_tidak_tetap
+
+        worksheet.write(row_idx, initial_col, nip, format_warning if sks == 0 else None)
+        worksheet.write(row_idx, initial_col+1, data_dosen["nama"], format_warning if sks == 0 else None)
+        worksheet.write(row_idx, initial_col+2, sks, format_warning if sks == 0 else None)
+
+        if data_dosen["status"] == "TETAP":
+            row_tetap += 1
+        elif data_dosen["status"] == "TIDAK_TETAP":
+            row_tidak_tetap += 1
+
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # Sheet Jadwal Mata Kuliah per Program Studi
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    for program_studi in sorted(jadwal_prodi.keys()):
         sheet_name = program_studi[:31]  # Sheet name max 31 chars
         worksheet = workbook.add_worksheet(sheet_name)
 
@@ -112,12 +143,11 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
 
         # Control Area
         control_solo_teaching = {}
-        control_preferensi = {}
         old_kode_dosen, old_nama_dosen = None, None
 
         # Sort dan tulis data
-        # sorted_group = sorted(grouped[program_studi], key=lambda x: (x.kode_ruangan, x.hari, x.jam_mulai))
-        sorted_group = sorted(grouped[program_studi], key=lambda x: x['kode_matkul'])
+        # sorted_group = sorted(grojadwal_prodiuped[program_studi], key=lambda x: (x.kode_ruangan, x.hari, x.jam_mulai))
+        sorted_group = sorted(jadwal_prodi[program_studi], key=lambda x: x['kode_matkul'])
         for jadwal in sorted_group:
             for col_idx, attr in enumerate(fixed_headers):
                 status = True
@@ -169,26 +199,26 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         for col_idx, width in enumerate(col_widths):
             worksheet.set_column(col_idx, col_idx, width + 2)
 
-        # Data beban dosen
-        beban_dosen = {}
-        for sesi in sorted_group:
-            if sesi['kode_dosen'] != "AS":
-                if sesi['kode_dosen'] not in beban_dosen: beban_dosen[sesi['kode_dosen']] = 0
-                beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
-        # Tulis data beban dosen
-        start_col = len(fixed_headers) + 2
-        row_idx = 0
-        worksheet.write(row_idx, start_col, "NIP", format_header)
-        worksheet.write(row_idx, start_col + 1, "Nama", format_header)
-        worksheet.write(row_idx, start_col + 2, "Beban SKS", format_header)
-        row_idx += 1
+        # # Data beban dosen
+        # beban_dosen = {}
+        # for sesi in sorted_group:
+        #     if sesi['kode_dosen'] != "AS":
+        #         if sesi['kode_dosen'] not in beban_dosen: beban_dosen[sesi['kode_dosen']] = 0
+        #         beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
+        # # Tulis data beban dosen
+        # start_col = len(fixed_headers) + 2
+        # row_idx = 0
+        # worksheet.write(row_idx, start_col, "NIP", format_header)
+        # worksheet.write(row_idx, start_col + 1, "Nama", format_header)
+        # worksheet.write(row_idx, start_col + 2, "Beban SKS", format_header)
+        # row_idx += 1
         
-        for nip, sks in dict(sorted(beban_dosen.items())).items():
-            nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
-            worksheet.write(row_idx, start_col, nip)
-            worksheet.write(row_idx, start_col + 1, nama_dosen)
-            worksheet.write(row_idx, start_col + 2, sks)
-            row_idx += 1
+        # for nip, sks in dict(sorted(beban_dosen.items())).items():
+        #     nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
+        #     worksheet.write(row_idx, start_col, nip)
+        #     worksheet.write(row_idx, start_col + 1, nama_dosen)
+        #     worksheet.write(row_idx, start_col + 2, sks)
+        #     row_idx += 1
 
     # Simpan workbook
     workbook.close()
