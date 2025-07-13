@@ -573,6 +573,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                             beban_dosen[sesi_dosen.kode_dosen] += jadwal_b.sks_akademik
                             break  # break setelah tukar sesi
 
+    # CEK SOLO TEAM
     for sesi in jadwal:
         if sesi.kode_dosen != "AS":
             info_matkul = next((matkul for matkul in matakuliah_list if matkul["kode"] in sesi.kode_matkul), None)
