@@ -840,18 +840,15 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
 
         dosen_pakar = [
             dosen for dosen in dosen_list
-            if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                and (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
+            if (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
                 and dosen['status'] != "TIDAK_AKTIF"
         ] or [
             dosen for dosen in dosen_list
-            if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                and len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
+            if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
                 and dosen['status'] != "TIDAK_AKTIF"
         ] or [
             dosen for dosen in dosen_list
-            if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                and dosen['status'] != "TIDAK_AKTIF"
+            if dosen['status'] != "TIDAK_AKTIF"
         ]
         kandidat_ruangan = [
             ruang for ruang in ruang_list
