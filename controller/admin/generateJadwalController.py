@@ -102,7 +102,6 @@ def evaluate_jadwal():
             ruang_list=data_ruang,
             return_detail=True
         )
-        print("con hitung fitness", data)
 
     return jsonify({ 'data': data })
 
