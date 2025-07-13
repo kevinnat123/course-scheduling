@@ -3,9 +3,9 @@ import random, copy, traceback
 class JadwalKuliah:
     def __init__(
             self, 
-            kode_matkul, kode_dosen, sks_akademik, kode_ruangan, kapasitas, 
-            hari, jam_mulai, jam_selesai, 
-            tipe_kelas, program_studi):
+            kode_matkul:str, kode_dosen:str, sks_akademik:int, kode_ruangan:str, kapasitas:int, 
+            hari:str, jam_mulai:int, jam_selesai:int, 
+            tipe_kelas:str, program_studi:str, team_teaching:bool=False):
         self.kode_matkul = kode_matkul
         self.kode_dosen = kode_dosen
         self.sks_akademik = sks_akademik
@@ -16,6 +16,7 @@ class JadwalKuliah:
         self.jam_selesai = jam_selesai
         self.tipe_kelas = tipe_kelas  # 'TEORI' atau 'PRAKTIKUM'
         self.program_studi = program_studi
+        self.team_teaching = team_teaching
 
 # TO BE CHECKED:
 # (15)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok           (DONE)
@@ -124,6 +125,8 @@ def angka_ke_huruf(n: int):
 
     if 1 <= int(n) <= 26:
         return chr(64 + n)  # Karena ord('A') = 65
+    elif 27 <= int(n) <= 52:
+        return "A" + chr(64 + n - 26)
     else:
         return None  # Diluar jangkauan 1-26
 
@@ -194,8 +197,12 @@ def rand_dosen_pakar(list_dosen_pakar: list, dict_beban_sks_dosen: dict = {}, ex
     Random dosen by beban sks
 
     Args:
+        list_dosen_pakar (list): list dosen yang sudah di sort berdasarkan pakar + prodi
+        dict_beban_sks_dosen (dict): Optional, dictionary beban sks dosen, untuk tujuan distribusi sks
+        excluded_dosen (list): Opsional, nip dosen dosen yang diabaikan
 
     Returns:
+        object: Dosen yang terpilih dari populasi.
     """
     if len(list_dosen_pakar) > 1:
         list_beban_sks_dosen = [
@@ -345,18 +352,15 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 if beban_dosen[dosen['nip']] > (12 - sesi_dosen.sks_akademik):
                     dosen_pakar = [
                         dosen for dosen in dosen_list
-                        if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                            and (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
+                        if (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
                             and dosen['status'] != "TIDAK_AKTIF"
                     ] or [
                         dosen for dosen in dosen_list
-                        if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                            and len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
+                        if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
                             and dosen['status'] != "TIDAK_AKTIF"
                     ] or [
                         dosen for dosen in dosen_list
-                        if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                            and dosen['status'] != "TIDAK_AKTIF"
+                        if dosen['status'] != "TIDAK_AKTIF"
                     ]
                     if dosen_pakar:
                         sesi_dosen.kode_dosen = rand_dosen_pakar(list_dosen_pakar=dosen_pakar, dict_beban_sks_dosen=beban_dosen)["nip"]
@@ -589,18 +593,15 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
 
             dosen_pakar = [
                 dosen for dosen in dosen_list
-                if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                    and (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
+                if (dosen.get('nama') or '') in (matkul.get('dosen_ajar') or []) 
                     and dosen['status'] != "TIDAK_AKTIF"
             ] or [
                 dosen for dosen in dosen_list
-                if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                    and len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
+                if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
                     and dosen['status'] != "TIDAK_AKTIF"
             ] or [
                 dosen for dosen in dosen_list
-                if (dosen.get("prodi") == matkul['prodi'] or dosen['status'] == "TIDAK_TETAP") 
-                    and dosen['status'] != "TIDAK_AKTIF"
+                if dosen['status'] != "TIDAK_AKTIF"
             ]
 
             sukses = False
