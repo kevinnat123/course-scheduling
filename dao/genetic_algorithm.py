@@ -49,7 +49,7 @@ def is_some_lecture_not_scheduled(jadwal_list=None, matakuliah_list=[], dosen_li
     set_dosen = set()
     set_dosen_tetap = set()
     for dosen in dosen_list:
-        if dosen["status"] == "TETAP" and dosen["prodi"] == "S1 TEKNIK INFOMATIKA":
+        if dosen["status"] == "TETAP":
             set_dosen_tetap.add(dosen["nip"])
     all_dosen_tetap_scheduled = all(dosen in scheduled_dosen for dosen in set_dosen_tetap)
     # for matkul in matakuliah_list:
