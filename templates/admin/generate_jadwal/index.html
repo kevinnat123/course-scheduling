@@ -469,6 +469,8 @@
             await value.forEach((kode) => {
               addBadge("field_dosen", "list_dosen", kode);
             });
+          } else {
+            $("#field_dosen").prop("hidden", true);
           }
         } else {
           $("#" + key).val(value);
