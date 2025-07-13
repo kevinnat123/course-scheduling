@@ -1066,8 +1066,10 @@
   });
 
   async function changedProdi(program_studi) {
-    $("#field_dosen_ajar span.badge").remove();
-    $("#field_dosen_ajar").attr("hidden", true);
+    if (prodi) {
+      $("#field_dosen_ajar span.badge").remove();
+      $("#field_dosen_ajar").attr("hidden", true);
+    }
 
     dosen_lov.ajax.reload();
     bidang_lov.ajax.reload();
@@ -1086,6 +1088,7 @@
       },
       success: async function (res) {
         let kelompok = res.data;
+        console.log(kelompok);
 
         if (kelompok.length) {
           $("#input_kelompok").prop("disabled", false);

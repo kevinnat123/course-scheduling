@@ -1010,8 +1010,10 @@
   });
 
   async function changedProdi(program_studi = undefined) {
-    $("#field_matkul_ajar span.badge").remove();
-    $("#field_matkul_ajar").attr("hidden", true);
+    if (prodi) {
+      $("#field_matkul_ajar span.badge").remove();
+      $("#field_matkul_ajar").attr("hidden", true);
+    }
 
     matkul_lov.ajax.reload();
     pakar_lov.ajax.reload();
