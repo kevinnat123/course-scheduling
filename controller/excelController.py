@@ -40,6 +40,7 @@ def get_current_datetime():
 def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     print(f"{'[ CONTROLLER ]':<25} Building File Excel By Jadwal")
     output = BytesIO()
+    take_all_lecture_4_this = ["PEMBIMBINGAN INDUSTRI"]
 
     fixed_headers = [
         'kode_matkul', 'nama_matkul',
@@ -82,10 +83,14 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     # Sheet 1 - Beban SKS Dosen
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    worksheet = workbook.add_worksheet("Beban SKS Dosen")
+    worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
     beban_dosen = {dosen["nip"]: 0 for dosen in dosen_list}
     for sesi in jadwal_list:
-        if sesi['kode_dosen'] != "AS":
+        matkul = next((m for m in matakuliah_list if m['kode'] == sesi["kode_matkul"][:5]), {})
+        # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+        # IF TAKE_ALL_LECTURE => Ga Usa Hitung SKS
+        # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+        if sesi['kode_dosen'] != "AS" and not any(special_name in matkul["nama"] for special_name in take_all_lecture_4_this):
             beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
     # Tulis data beban dosen
     worksheet.merge_range("A1:C1", "Dosen Tetap", format_title)
@@ -150,6 +155,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         sorted_group = sorted(jadwal_prodi[program_studi], key=lambda x: x['kode_matkul'])
         for jadwal in sorted_group:
             for col_idx, attr in enumerate(fixed_headers):
+                value = None
                 status = True
                 if attr == "nama_matkul":
                     kode_matkul = jadwal['kode_matkul']
@@ -177,9 +183,10 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
                     value = jadwal[attr]
 
                 if (
-                    (attr == "jam_mulai" and int(value) < 7) or 
+                    jadwal["kode_ruangan"] != "ONLINE" and
+                    ((attr == "jam_mulai" and int(value) < 7) or 
                     (attr == "jam_selesai" and int(value) > 19) or 
-                    not status
+                    not status)
                 ):
                     worksheet.write(row_idx, col_idx, value, format_error)
                 else:
