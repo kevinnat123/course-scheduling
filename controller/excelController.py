@@ -9,6 +9,8 @@ import random
 from dao.admin.generateJadwalDao import generateJadwalDao
 from dao.kaprodi.dataMataKuliahDao import dataMataKuliahDao
 from dao.kaprodi.dataDosenDao import dataDosenDao
+from dao import genetic_algorithm as ga
+from dao.genetic_algorithm import JadwalKuliah
 export = Blueprint('export', __name__)
 dao = generateJadwalDao()
 matkul = dataMataKuliahDao()
@@ -40,7 +42,6 @@ def get_current_datetime():
 def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     print(f"{'[ CONTROLLER ]':<25} Building File Excel By Jadwal")
     output = BytesIO()
-    take_all_lecture_4_this = ["PEMBIMBINGAN INDUSTRI"]
 
     fixed_headers = [
         'kode_matkul', 'nama_matkul',
@@ -84,14 +85,10 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     # Sheet 1 - Beban SKS Dosen
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
-    beban_dosen = {dosen["nip"]: 0 for dosen in dosen_list}
-    for sesi in jadwal_list:
-        matkul = next((m for m in matakuliah_list if m['kode'] == sesi["kode_matkul"][:5]), {})
-        # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-        # IF TAKE_ALL_LECTURE => Ga Usa Hitung SKS
-        # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-        if sesi['kode_dosen'] != "AS" and not any(special_name in matkul["nama"] for special_name in take_all_lecture_4_this):
-            beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
+    object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in jadwal_list]
+    beban_dosen = {}
+    for dosen in dosen_list:
+        beban_dosen[dosen["nip"]] = ga.hitung_beban_sks_dosen(jadwal=object_jadwal, nip=dosen["nip"])
     # Tulis data beban dosen
     worksheet.merge_range("A1:C1", "Dosen Tetap", format_title)
     worksheet.merge_range("E1:G1", "Dosen Tidak Tetap", format_title)
