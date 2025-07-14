@@ -86,7 +86,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
     object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in jadwal_list]
-    beban_dosen = ga.hitung_beban_sks_dosen(jadwal=object_jadwal, dosen_list=dosen_list)
+    beban_dosen = ga.hitung_beban_sks_dosen(jadwal=object_jadwal, dosen_list=dosen_list, matakuliah_list=matakuliah_list)
     # Tulis data beban dosen
     worksheet.merge_range("A1:C1", "Dosen Tetap", format_title)
     worksheet.merge_range("E1:G1", "Dosen Tidak Tetap", format_title)
