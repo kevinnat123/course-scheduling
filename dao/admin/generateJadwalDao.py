@@ -62,8 +62,14 @@ class generateJadwalDao:
             for matkul in list_matkul:
                 for data in resultData:
                     jumlah_kelas = next((data.get('jumlah_kelas') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
+                    jumlah_kelas_internasional = next((data.get('jumlah_kelas_internasional') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
+                    jumlah_dosen_internasional = next((data.get('jumlah_dosen_internasional') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
                     if jumlah_kelas:
                         matkul['jumlah_kelas'] = int(jumlah_kelas)
+                    if jumlah_kelas_internasional:
+                        matkul['jumlah_kelas_internasional'] = int(jumlah_kelas_internasional)
+                    if jumlah_dosen_internasional:
+                        matkul['jumlah_dosen_internasional'] = int(jumlah_dosen_internasional)
                     matkul['jumlah_mahasiswa'] = data['jumlah_mahasiswa']
             dt['list_matkul'] = [matkul for matkul in list_matkul]
         return list_matkul
