@@ -135,6 +135,8 @@
               <th>SKS A</th>
               <th>SKS B</th>
               <th>Jumlah Kelas</th>
+              <th>Jumlah Kelas Inter</th>
+              <th>Jumlah Dosen Inter</th>
             </thead>
             <tbody></tbody>
             <tfoot>
@@ -590,6 +592,8 @@
                         <th>SKS A</th>
                         <th>SKS B</th>
                         <th>Jumlah Kelas</th>
+                        <th>Jumlah Kelas Inter</th>
+                        <th>Jumlah Dosen Inter</th>
                     </thead>
                     <tbody></tbody>
                       <tfoot>
@@ -639,6 +643,18 @@
         },
         {
           data: "jumlah_kelas",
+          width: "50px",
+          className: "text-end",
+          defaultContent: "",
+        },
+        {
+          data: "jumlah_kelas_internasional",
+          width: "50px",
+          className: "text-end",
+          defaultContent: "",
+        },
+        {
+          data: "jumlah_dosen_internasional",
           width: "50px",
           className: "text-end",
           defaultContent: "",
@@ -1157,7 +1173,7 @@
       },
       {
         data: "kode",
-        width: "75px",
+        width: "50px",
         defaultContent: "",
       },
       {
@@ -1167,19 +1183,29 @@
       },
       {
         data: "sks_akademik",
-        width: "50px",
+        width: "25px",
         className: "text-end",
         defaultContent: "",
       },
       {
         data: "sks_bayar",
-        width: "50px",
+        width: "25px",
         className: "text-end",
         defaultContent: "",
       },
       {
         data: "jumlah_kelas",
-        width: "50px",
+        width: "25px",
+        defaultContent: "",
+      },
+      {
+        data: "jumlah_kelas_internasional",
+        width: "25px",
+        defaultContent: "",
+      },
+      {
+        data: "jumlah_dosen_internasional",
+        width: "25px",
         defaultContent: "",
       },
     ],
@@ -1209,7 +1235,13 @@
           let columnData = matkul_tab.column(index).dataSrc();
           if (columnData === null) return;
 
-          if (columnData == "jumlah_kelas")
+          input_field = [
+            "jumlah_kelas",
+            "jumlah_kelas_internasional",
+            "jumlah_dosen_internasional",
+          ];
+
+          if (input_field.includes(columnData))
             $(this).html(
               `<input type="text" class="form-control text-end numberOnly"value="${
                 data[columnData] || ""

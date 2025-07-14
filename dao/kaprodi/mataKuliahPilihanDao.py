@@ -38,8 +38,14 @@ class mataKuliahPilihanDao:
                 for matkul in list_matkul:
                     matkul.setdefault('jumlah_kelas', None)
                     jumlah_kelas = next((data.get('jumlah_kelas') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
+                    jumlah_kelas_internasional = next((data.get('jumlah_kelas_internasional') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
+                    jumlah_dosen_internasional = next((data.get('jumlah_dosen_internasional') for data in data['list_matkul'] if data['kode'] == matkul['kode']), None)
                     if jumlah_kelas:
                         matkul['jumlah_kelas'] = int(jumlah_kelas)
+                    if jumlah_kelas_internasional:
+                        matkul['jumlah_kelas_internasional'] = int(jumlah_kelas_internasional)
+                    if jumlah_dosen_internasional:
+                        matkul['jumlah_dosen_internasional'] = int(jumlah_dosen_internasional)
                 data['list_matkul'] = [matkul for matkul in list_matkul]
 
         return result['data'] if result and result.get('status') else []
@@ -98,6 +104,16 @@ class mataKuliahPilihanDao:
                         dt.pop('jumlah_kelas', None)
                     elif dt.get('jumlah_kelas'):
                         dt['jumlah_kelas'] = int(dt['jumlah_kelas'])
+                    
+                    if not dt.get('jumlah_kelas_internasional') or dt.get('jumlah_kelas_internasional') == "0":
+                        dt.pop('jumlah_kelas_internasional', None)
+                    elif dt.get('jumlah_kelas_internasional'):
+                        dt['jumlah_kelas_internasional'] = int(dt['jumlah_kelas_internasional'])
+
+                    if not dt.get('jumlah_dosen_internasional') or dt.get('jumlah_dosen_internasional') == "0":
+                        dt.pop('jumlah_dosen_internasional', None)
+                    elif dt.get('jumlah_dosen_internasional'):
+                        dt['jumlah_dosen_internasional'] = int(dt['jumlah_dosen_internasional'])
             
             u_id = (session['academic_details']['tahun_ajaran_berikutnya'].replace("/","-") + "_" + session['academic_details']['semester_depan'] + "_" + prodi).upper()
             u_id = u_id + ("_" + bidang_minat if params.get('bidang_minat') else '') + "_" + str(params['angkatan'])
@@ -147,7 +163,15 @@ class mataKuliahPilihanDao:
                 raise CustomError({ 'message': 'Belum ada matkul yang dibuka untuk semester ini!', 'target': 'input_matkul' })
 
             list_matkul = params.pop('list_matkul', [])
-            params['list_matkul'] = [{"kode": matkul["kode"], "jumlah_kelas": matkul["jumlah_kelas"]} for matkul in list_matkul]
+            params['list_matkul'] = [
+                {
+                    "kode": matkul["kode"], 
+                    "jumlah_kelas": matkul["jumlah_kelas"], 
+                    "jumlah_kelas_internasional": matkul["jumlah_kelas_internasional"],
+                    "jumlah_dosen_internasional": matkul["jumlah_dosen_internasional"]
+                } 
+                for matkul in list_matkul
+            ]
             params = {k: v for k, v in params.items() if v}
 
             prodi = params['prodi'].split()[0] + ''.join(hrf[0] for hrf in params['prodi'].split()[1:])
@@ -167,6 +191,16 @@ class mataKuliahPilihanDao:
                         dt.pop('jumlah_kelas', None)
                     elif dt.get('jumlah_kelas'):
                         dt['jumlah_kelas'] = int(dt['jumlah_kelas'])
+                    
+                    if not dt.get('jumlah_kelas_internasional') or dt.get('jumlah_kelas_internasional') == "0":
+                        dt.pop('jumlah_kelas_internasional', None)
+                    elif dt.get('jumlah_kelas_internasional'):
+                        dt['jumlah_kelas_internasional'] = int(dt['jumlah_kelas_internasional'])
+
+                    if not dt.get('jumlah_dosen_internasional') or dt.get('jumlah_dosen_internasional') == "0":
+                        dt.pop('jumlah_dosen_internasional', None)
+                    elif dt.get('jumlah_dosen_internasional'):
+                        dt['jumlah_dosen_internasional'] = int(dt['jumlah_dosen_internasional'])
             
             u_id = (session['academic_details']['tahun_ajaran_berikutnya'].replace("/","-") + "_" + session['academic_details']['semester_depan'] + "_" + prodi).upper()
             u_id = u_id + ("_" + bidang_minat if params.get('bidang_minat') else '') + "_" + str(params['angkatan'])
