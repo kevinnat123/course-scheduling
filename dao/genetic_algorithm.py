@@ -5,7 +5,7 @@ class JadwalKuliah:
             self, 
             kode_matkul:str, kode_dosen:str, sks_akademik:int, kode_ruangan:str, kapasitas:int, 
             hari:str, jam_mulai:int, jam_selesai:int, 
-            tipe_kelas:str, program_studi:str, team_teaching:bool=False):
+            tipe_kelas:str, program_studi:str):
         self.kode_matkul = kode_matkul
         self.kode_dosen = kode_dosen
         self.sks_akademik = sks_akademik
@@ -14,9 +14,8 @@ class JadwalKuliah:
         self.hari = hari
         self.jam_mulai = jam_mulai
         self.jam_selesai = jam_selesai
-        self.tipe_kelas = tipe_kelas  # 'TEORI' atau 'PRAKTIKUM'
+        self.tipe_kelas = tipe_kelas  # 'TEORI' atau 'PRAKTIKUM' atau 'INTERNATIONAL'
         self.program_studi = program_studi
-        self.team_teaching = team_teaching
 
 # TO BE CHECKED:
 # (15)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok           (DONE)
@@ -146,6 +145,40 @@ def find_missing_course(jadwal, matakuliah_list):
             missing.append(kode)
 
     return missing
+
+def hitung_beban_sks_dosen(jadwal, dosen_list, matakuliah_list):
+    beban_dosen = {}
+    for dosen in dosen_list:
+        nip = dosen["nip"]
+        mataKuliah = {}
+        sbs = []
+        seen_mataKuliah = set()
+        for sesi in jadwal:
+            if sesi.kode_dosen != nip:
+                continue
+            matkul = next((matkul for matkul in matakuliah_list if matkul["kode"] == sesi.kode_matkul[:5]), None)
+            if matkul.get("take_all_lecture"):
+                continue
+
+            if sesi.kode_matkul[:5] not in mataKuliah: mataKuliah[sesi.kode_matkul[:5]] = {"sks": 0, "jml_kelas": 0}
+            count_dosen = len([
+                team for team in jadwal 
+                if team.kode_matkul == sesi.kode_matkul and team.kode_dosen != sesi.kode_dosen
+            ]) + 1
+
+            if f"{sesi.kode_matkul[:5]}{count_dosen}" not in seen_mataKuliah:
+                sks = sesi.sks_akademik / count_dosen
+                mataKuliah[sesi.kode_matkul[:5]]["sks"] += sks
+            seen_mataKuliah.add(f"{sesi.kode_matkul[:5]}{count_dosen}")
+
+            mataKuliah[sesi.kode_matkul[:5]]["jml_kelas"] += 1
+            
+        for matkul, detail in mataKuliah.items():
+            sbs.append(((1/3) * detail["sks"]) * ((2 * detail["jml_kelas"]) + 1))
+        
+        beban_dosen[nip] = sum(sbs)
+
+    return beban_dosen
 
 def sync_team_teaching(sesi_dosen, jadwal, jadwal_dosen, jadwal_ruangan):
     for sesi_lain in jadwal:
@@ -1042,12 +1075,14 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
 
     for dosen in dosen_list:
         if dosen['nip'] not in jadwal_dosen: jadwal_dosen[dosen['nip']] = []
-        if dosen['nip'] not in beban_dosen: beban_dosen[dosen['nip']] = 0
+        
+    beban_dosen = hitung_beban_sks_dosen(jadwal=jadwal, dosen_list=dosen_list, matakuliah_list=matakuliah_list)
 
     for ruangan in ruang_list:
         if ruangan['kode'] not in jadwal_ruangan: jadwal_ruangan[ruangan['kode']] = []
 
     # COUNTER
+    hitung_dosen_overdose = 0
     hitung_ruangan_bentrok = 0
     hitung_dosen_bentrok = 0
     hitung_asdos_nabrak_dosen = 0
@@ -1070,6 +1105,12 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     # (10)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja          (DONE)
     # (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas  (DONE)
     # (5)   Tidak Sesuai dengan permintaan / request dosen              >> melanggar_preferensi      (DONE)
+
+    # CEK PELANGGARAN BEBAN SKS DOSEN
+    for nip, beban_sks in beban_dosen.items():
+        if beban_sks > 12:
+            hitung_dosen_overdose += 1
+            penalti += BOBOT_PENALTI['dosen_overdosis']
 
     seen_course = set()
     for sesi in jadwal:
@@ -1104,11 +1145,6 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                             penalti += BOBOT_PENALTI['dosen_bentrok']
                             hitung_dosen_bentrok += 1
                 jadwal_dosen[sesi.kode_dosen].append({'hari': sesi.hari, 'jam_mulai': sesi.jam_mulai, 'jam_selesai': sesi.jam_selesai})
-
-                # CEK PELANGGARAN BEBAN SKS DOSEN
-                beban_dosen[sesi.kode_dosen] += sesi.sks_akademik
-                if beban_dosen[sesi.kode_dosen] > 12:
-                    penalti += BOBOT_PENALTI['dosen_overdosis']
 
                 # CEK PELANGGARAN PREFERENSI DOSEN
                 preferensi_dosen = info_dosen.get("preferensi", None)
@@ -1204,6 +1240,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                 mata_kuliah_minus[kode_matkul] = kekurangan_kapasitas
 
     if detail:
+        if hitung_dosen_overdose: print(f"{'':<10}{'Dosen Overdose':<40} : {hitung_dosen_overdose}")
         if hitung_dosen_bentrok: print(f"{'':<10}{'Bentrok Dosen':<40} : {hitung_dosen_bentrok}")
         if hitung_ruangan_bentrok: print(f"{'':<10}{'Bentrok Ruangan':<40} : {hitung_ruangan_bentrok}")
         if hitung_asdos_nabrak_dosen: print(f"{'':<10}{'Bentrok Dosen-Asdos':<40} : {hitung_asdos_nabrak_dosen}")
@@ -1221,6 +1258,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
         isAllDosenSet, whoNotSet = is_some_lecture_not_scheduled(jadwal, matakuliah_list, dosen_list)
         data_return = {
             "score": max(0, 1000 - penalti),
+            "dosen_overdose": hitung_dosen_overdose,
             "bentrok_dosen": hitung_dosen_bentrok,
             "bentrok_ruangan": hitung_ruangan_bentrok,
             "bentrok_dosen_asdos": hitung_asdos_nabrak_dosen,
