@@ -286,6 +286,7 @@
       success: async function (res) {
         if (res.status == false) popUpTimer("error", res.message);
         else {
+          $("#input-kelompok_baru").val("");
           await popUpTimer("success", res.message);
         }
       },
@@ -365,6 +366,7 @@
       success: async function (res) {
         if (res.status == false) popUpTimer("error", res.message);
         else {
+          $("#input-pakar_baru").val("");
           await popUpTimer("success", res.message);
         }
       },
