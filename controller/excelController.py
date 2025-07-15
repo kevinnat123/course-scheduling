@@ -274,6 +274,7 @@ def export_ruangan_to_excel(jadwal_list, matakuliah_list, dosen_list):
         row_idx += 1
 
         # Sort dan tulis data
+        merged_ranges = set()
         sorted_group = sorted(grouped[ruangan], key=lambda x: (x['tipe_kelas'], x['kode_ruangan'], x['hari'], x['jam_mulai']))
         for jadwal in sorted_group:
             format_data = workbook.add_format({
@@ -297,11 +298,14 @@ def export_ruangan_to_excel(jadwal_list, matakuliah_list, dosen_list):
             value = ''
             for text in full:
                 value += (" " + text)
-            worksheet.merge_range(
-                col + start_row + ":" + col + end_row, 
-                value, 
-                format_data
-            )
+            cell_range = col + start_row + ":" + col + end_row
+            if cell_range not in merged_ranges:
+                worksheet.merge_range(
+                    cell_range, 
+                    value, 
+                    format_data
+                )
+                merged_ranges.add(cell_range)
 
     # Simpan workbook
     workbook.close()
