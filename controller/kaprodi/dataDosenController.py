@@ -23,6 +23,13 @@ def dosen_dosen_index():
                 list_prodi = session['user']['list_prodi']
             )
     
+@dosen.route("/data_dosen/get_display_dosen", methods=['GET'])
+@login_required
+def dosen_get_display_dosen():
+    print(f"{'[ CONTROLLER ]':<25} Get Display Dosen")
+    data = dao.get_display_dosen()
+    return jsonify({ 'data': data })
+    
 @dosen.route("/data_dosen/get_dosen", methods=['GET'])
 @login_required
 def dosen_get_dosen():
