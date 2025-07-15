@@ -117,6 +117,16 @@
               <label for="PRAKTIKUM" class="form-check-label">Praktikum</label>
             </div>
           </div>
+          <div class="form-check form-check-inline">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              name="cbHari"
+              id="ONLINE"
+              value="ONLINE"
+            />
+            <label for="ONLINE" class="form-check-label">Online Class</label>
+          </div>
         </div>
       </div>
       <!-- TIPE KELAS END -->
@@ -149,7 +159,7 @@
           <div class="row align-items-center">
             <label
               for="input_sksB"
-              class="col-5 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-5 col-xxl-4 col-form-label"
             >
               SKS Bayar<span class="text-danger">*</span>
             </label>
@@ -167,6 +177,57 @@
         </div>
       </div>
       <!-- SKS END -->
+      <!-- SPECIAL -->
+      <div class="form-group row">
+        <!-- Online -->
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="ONLINE"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+            >
+              Mata Kuliah Online
+            </label>
+            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <div class="form-check form-check-inline">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  name="cbOnline"
+                  id="ONLINE"
+                  value="ONLINE"
+                />
+                <!-- <label for="ONLINE" class="form-check-label">Online</label> -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Take All Dosen -->
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="TAKE_ALL_LECTURE"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-5 col-xxl-4 col-form-label"
+            >
+              Assign Semua Dosen Tetap
+            </label>
+            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <div class="form-check form-check-inline">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  name="cbTakeAllLecture"
+                  id="TAKE_ALL_LECTURE"
+                  value="TAKE_ALL_LECTURE"
+                />
+                <!-- <label for="ONLINE" class="form-check-label">Online</label> -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- SPECIAL END -->
       <!-- BIDANG -->
       <div class="form-group row">
         <label
@@ -233,28 +294,44 @@
       <!-- DOSEN AJAR END -->
       <!-- ASISTENSI -->
       <div class="form-group row">
-        <label
-          for="cbAsistensi"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
-          >Asistensi&ensp;</label
-        >
-        <div class="col d-flex align-items-center">
-          <input type="checkbox" class="form-check-input" name="cbAsistensi" />
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="cbAsistensi"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
+              >Asistensi&ensp;</label
+            >
+            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <div class="form-check form-check-inline">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  name="cbAsistensi"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <label
-          for="cbIntegratedClass"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label text-end asistensi_detail"
-          hidden
-          >Kelas Gabungan</label
-        >
-        <div class="col d-flex align-items-center">
-          <input
-            type="checkbox"
-            class="form-check-input asistensi_detail"
-            name="cbIntegratedClass"
-            hidden
-          />
+        <div class="col-12 col-md-6">
+          <div class="row align-items-center">
+            <label
+              for="cbIntegratedClass"
+              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-5 col-xxl-4 col-form-label asistensi_detail"
+              hidden
+              >Kelas Gabungan</label
+            >
+            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
+              <div class="form-check form-check-inline">
+                <input
+                  type="checkbox"
+                  class="form-check-input asistensi_detail"
+                  name="cbIntegratedClass"
+                  hidden
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -555,6 +632,11 @@
       $("#input_sksA").val(data.sks_akademik);
       $("#input_sksB").val(data.sks_bayar);
       $("#" + data.tipe_kelas).prop("checked", true);
+      $("input[name='cbOnline']").prop("checked", data.kelas_online);
+      $("input[name='cbTakeAllLecture']").prop(
+        "checked",
+        data.take_all_lecture
+      );
       if (data.bidang)
         data.bidang.forEach((element) => {
           addBadge("field_bidang", "list_bidang", element);
@@ -663,6 +745,10 @@
       sks_bayar: Number($("#input_sksB").val()),
       prodi: $("#input_prodi").val(),
       tipe_kelas: getCheckedItemValue("rbTipeKelas")[0],
+      kelas_online: getCheckedItemValue("cbOnline")[0] ? true : false,
+      take_all_lecture: getCheckedItemValue("cbTakeAllLecture")[0]
+        ? true
+        : false,
       bidang: retrieveBadgeValues("list_bidang"),
       dosen_ajar: retrieveBadgeValues("list_dosen_ajar"),
       asistensi: getCheckedItemValue("cbAsistensi")[0] ? true : false,
@@ -778,6 +864,10 @@
       sks_bayar: Number($("#input_sksB").val()),
       prodi: $("#input_prodi").val(),
       tipe_kelas: getCheckedItemValue("rbTipeKelas")[0],
+      kelas_online: getCheckedItemValue("cbOnline")[0] ? true : false,
+      take_all_lecture: getCheckedItemValue("cbTakeAllLecture")[0]
+        ? true
+        : false,
       bidang: retrieveBadgeValues("list_bidang"),
       dosen_ajar: retrieveBadgeValues("list_dosen_ajar"),
       asistensi: getCheckedItemValue("cbAsistensi")[0] ? true : false,
