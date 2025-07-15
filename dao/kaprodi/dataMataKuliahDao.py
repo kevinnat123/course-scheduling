@@ -66,7 +66,7 @@ class dataMataKuliahDao:
         return result['data'] if result and result.get('status') else []
     
     def get_matkul_by_kode(self, list_kode=[]):
-        print(f"{'[ DAO ]':<25} Get Matkul By Kode (list_kode: {str(list_kode)})")
+        print(f"{'[ DAO ]':<25} Get Matkul By Kode")
         result = self.connection.find_many(
             collection_name = db_matkul, 
             filter          = { 'kode': {'$in': list_kode} }, 
