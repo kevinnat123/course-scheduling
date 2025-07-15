@@ -135,9 +135,9 @@ def switch_koor_matkul(jadwal:list, dosen_list:list, matakuliah_list):
     for sesi in jadwal:
         if sesi.kode_dosen == "AS":
             continue
-        if sesi.kode_matkul in seen_kode_matkul:
+        if sesi.kode_matkul[:5] in seen_kode_matkul:
             continue
-        seen_kode_matkul.add(sesi.kode_matkul)
+        seen_kode_matkul.add(sesi.kode_matkul[:5])
 
         matkul = next((matkul for matkul in matakuliah_list if matkul["kode"] == sesi.kode_matkul[:5]), None)
         dosen = next((dosen for dosen in dosen_list if dosen["nip"] == sesi.kode_dosen), None)
@@ -287,15 +287,19 @@ def define_dosen_pakar(dosen_list:list, data_matkul: dict):
         dosen for dosen in dosen_list
         if (dosen.get("nama") or "") in (data_matkul.get("dosen_ajar") or []) 
             and dosen["status"] != "TIDAK_AKTIF"
-    ] or [
-        dosen for dosen in dosen_list
-        if len(set(dosen.get("pakar") or []) & set(data_matkul.get("bidang") or [])) > 0
-            and dosen["status"] != "TIDAK_AKTIF"
-    ] or [
-        dosen for dosen in dosen_list
-        if dosen.get("prodi") == data_matkul.get("prodi")
-            and dosen["status"] not in ["TIDAK_AKTIF", "TIDAK_TETAP"]
     ]
+    if not dosen_pakar:
+        dosen_pakar = [
+            dosen for dosen in dosen_list
+            if len(set(dosen.get("pakar") or []) & set(data_matkul.get("bidang") or [])) > 0
+                and dosen["status"] != "TIDAK_AKTIF"
+        ]
+    if not dosen_pakar:
+        dosen_pakar = [
+            dosen for dosen in dosen_list
+            if dosen.get("prodi") == data_matkul.get("prodi")
+                and dosen["status"] not in ["TIDAK_AKTIF", "TIDAK_TETAP"]
+        ]
     return dosen_pakar
 
 def rand_dosen_pakar(list_dosen_pakar: list, dict_beban_sks_dosen: dict = {}, excluded_dosen: list = []):
@@ -327,14 +331,16 @@ def rand_dosen_pakar(list_dosen_pakar: list, dict_beban_sks_dosen: dict = {}, ex
                 if any(sks_dosen == 0 for sks_dosen in list_beban_sks_dosen) 
                 else False
             )
-        ] or [
-            dosen for dosen in list_dosen_pakar
-            if (
-                dict_beban_sks_dosen[dosen['nip']] < beban_sks_tertinggi_saat_ini 
-                if any(sks_dosen < beban_sks_tertinggi_saat_ini for sks_dosen in list_beban_sks_dosen) 
-                else dict_beban_sks_dosen[dosen['nip']] <= beban_sks_tertinggi_saat_ini 
-            )
         ]
+        if not kandidat_dosen:
+            kandidat_dosen = [
+                dosen for dosen in list_dosen_pakar
+                if (
+                    dict_beban_sks_dosen[dosen['nip']] < beban_sks_tertinggi_saat_ini 
+                    if any(sks_dosen < beban_sks_tertinggi_saat_ini for sks_dosen in list_beban_sks_dosen) 
+                    else dict_beban_sks_dosen[dosen['nip']] <= beban_sks_tertinggi_saat_ini 
+                )
+            ]
         first = [dosen for dosen in kandidat_dosen if dosen["nip"] not in excluded_dosen]
         second = [dosen for dosen in first if dosen.get("preferensi")]
         
@@ -348,23 +354,31 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
         ruangan for ruangan in list_ruangan
         if ruangan["kode"] not in excluded_room
             and any(plot in ruangan["plot"] for plot in data_matkul.get("bidang", []))
-    ] or [
-        ruangan for ruangan in list_ruangan
-        if any(plot in ruangan["plot"] for plot in data_matkul.get("bidang", []))
-    ] or [
-        ruangan for ruangan in list_ruangan
-        if ruangan["kode"] not in excluded_room
-            and any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
-    ] or [
-        ruangan for ruangan in list_ruangan
-        if any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
     ]
+    if not ruangan_utama:
+        ruangan_utama = [
+            ruangan for ruangan in list_ruangan
+            if any(plot in ruangan["plot"] for plot in data_matkul.get("bidang", []))
+        ]
+    if not ruangan_utama:
+        ruangan_utama = [
+            ruangan for ruangan in list_ruangan
+            if ruangan["kode"] not in excluded_room
+                and any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
+        ]
+    if not ruangan_utama:
+        ruangan_utama = [
+            ruangan for ruangan in list_ruangan
+            if any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
+        ]
 
     if not forAsisten:
         kandidat_ruangan = [
             ruangan for ruangan in ruangan_utama 
             if ruangan['tipe_ruangan'] == data_matkul['tipe_kelas']
-        ] or ruangan_utama
+        ]
+        if not kandidat_ruangan:
+            kandidat_ruangan = ruangan_utama
 
         if data_matkul.get("asistensi", None):
             if data_matkul.get("tipe_kelas_asistensi", "PRAKTIKUM") == "PRAKTIKUM":
@@ -382,10 +396,14 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, excluded_room: list = []
             ruangan for ruangan in ruangan_utama 
             if ruangan["tipe_ruangan"] == data_matkul.get("tipe_kelas_asistensi", "TEORI") and
                 ruangan["kapasitas"] >= kapasitas_ruangan_dosen
-        ] or [
-            ruangan for ruangan in ruangan_utama 
-            if ruangan["kapasitas"] >= kapasitas_ruangan_dosen
-        ] or ruangan_utama
+        ]
+        if not kandidat_ruangan:
+            kandidat_ruangan = [
+                ruangan for ruangan in ruangan_utama 
+                if ruangan["kapasitas"] >= kapasitas_ruangan_dosen
+            ]
+        if not kandidat_ruangan:
+            kandidat_ruangan = ruangan_utama
     
     if not kandidat_ruangan:
         if ruangan_utama:
@@ -442,14 +460,18 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 matkul["kode"] for matkul in matakuliah_list 
                 if matkul["nama"] in dosen.get("matkul_ajar", [])
                     and matkul["prodi"] == dosen["prodi"]
-            ] or [
-                matkul["kode"] for matkul in matakuliah_list 
-                if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
-                    and matkul["prodi"] == dosen["prodi"]
-            ] or [
-                matkul["kode"] for matkul in matakuliah_list 
-                if matkul["prodi"] == dosen["prodi"]
             ]
+            if not matkul_ajar_dosen:
+                matkul_ajar_dosen = [
+                    matkul["kode"] for matkul in matakuliah_list 
+                    if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
+                        and matkul["prodi"] == dosen["prodi"]
+                ]
+            if not matkul_ajar_dosen:
+                matkul_ajar_dosen = [
+                    matkul["kode"] for matkul in matakuliah_list 
+                    if matkul["prodi"] == dosen["prodi"]
+                ]
 
             if dosen.get('preferensi'):
                 preferensi_hari_dosen = [d for d in pilihan_hari_dosen if d not in dosen['preferensi'].get('hindari_hari', [])]
