@@ -242,6 +242,7 @@ def export_ruangan_to_excel(jadwal_list, matakuliah_list, dosen_list):
     # 🔹 Group berdasarkan program_studi
     grouped = defaultdict(list)
     for jadwal in jadwal_list:
+        if jadwal["tipe_kelas"] == "ONLINE": continue
         grouped[jadwal['kode_ruangan']].append(jadwal)
 
     # Format header
