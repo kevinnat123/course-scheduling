@@ -641,7 +641,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
             # CHECK LANGGAR PREFERENSI
             # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
             if sesi.hari not in preferensi_hari: conflict = True
-            if any(jam not in preferensi_hari for jam in range(sesi.jam_mulai, sesi.jam_selesai)): conflict = True
+            if any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)): conflict = True
         else:
             sesi_dosen = next((sesi_dosen for sesi_dosen in jadwal if f"{sesi_dosen.kode_matkul}-AS" == sesi.kode_matkul), None)
             preferensi_hari = pilihan_hari_asisten[pilihan_hari_dosen.index(sesi_dosen.hari):]
