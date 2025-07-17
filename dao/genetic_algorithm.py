@@ -499,7 +499,49 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         jadwal_dosen[sesi.kode_dosen].append({"hari": sesi.hari, "jam_mulai": sesi.jam_mulai, "jam_selesai": sesi.jam_selesai})
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # REPAIR JADWAL BENTROK DOSEN x ASISTEN
+    # CARIKAN JADWAL U/ DOSEN TETAP YANG MASIH TIDAK BERBEBAN
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    for dosen in dosen_list:
+        if dosen["status"] == "TETAP" and beban_dosen[dosen['nip']] == 0:
+            hindari_hari = dosen.get("preferensi", {}).get("hindari_hari", [])
+            hindari_jam = dosen.get("preferensi", {}).get("hindari_jam", [])
+            preferensi_hari = [d for d in pilihan_hari_dosen if d not in hindari_hari]
+            preferensi_jam = [j for j in list(range(7, 19 + 1)) if j not in hindari_jam]
+
+            matkul_ajar_dosen = list(dosen.get("matkul_ajar", []))
+            if not matkul_ajar_dosen:
+                matkul_ajar_dosen = [
+                    matkul["kode"] for matkul in matakuliah_list 
+                    if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
+                ]
+            if not matkul_ajar_dosen:
+                matkul_ajar_dosen = [
+                    matkul["kode"] for matkul in matakuliah_list 
+                    if matkul["prodi"] == dosen["prodi"]
+                ]
+
+            list_matkul_ajar = [
+                sesi
+                for kode in matkul_ajar_dosen
+                    if kode in jadwal_by_matkul
+                        for sesi in jadwal_by_matkul[kode]
+            ]
+
+            if not list_matkul_ajar: continue
+            for sesi in list_matkul_ajar:
+                if sesi.kode_matkul[5:] == "A": 
+                    if dosen["prodi"] != matkul_by_kode.get(sesi.kode_matkul[:5], {}).get("prodi"):
+                        continue
+                if sesi.hari not in preferensi_hari: continue
+                if any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)): continue
+                old_dosen = sesi.kode_dosen
+                sesi.kode_dosen = dosen["nip"]
+                beban_dosen[old_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=old_dosen, matakuliah_list=matakuliah_list)
+                beban_dosen[sesi.kode_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=sesi.kode_dosen, matakuliah_list=matakuliah_list)
+                break
+
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # REPAIR JADWAL BENTROK DOSEN x ASISTEN x RUANGAN
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     seen_kode_matkul = set()
     for sesi in jadwal:
@@ -573,7 +615,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
             if sesi.hari not in preferensi_hari: conflict = True
             if any(jam not in preferensi_hari for jam in range(sesi.jam_mulai, sesi.jam_selesai)): conflict = True
         else:
-            sesi_dosen = next((sesi_dosen for sesi_dosen in jadwal if sesi_dosen.kode_matkul == sesi.kode_matkul[:6]), None)
+            sesi_dosen = next((sesi_dosen for sesi_dosen in jadwal if f"{sesi_dosen.kode_matkul}-AS" == sesi.kode_matkul), None)
             preferensi_hari = pilihan_hari_asisten[pilihan_hari_dosen.index(sesi_dosen.hari):]
             preferensi_jam = list(range(7, 19 + 1))
 
@@ -660,46 +702,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         })
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # CARIKAN JADWAL U/ DOSEN TETAP YANG MASIH TIDAK BERBEBAN
-    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    for dosen in dosen_list:
-        if dosen["status"] == "TETAP" and beban_dosen[dosen['nip']] == 0:
-            hindari_hari = dosen.get("preferensi", {}).get("hindari_hari", [])
-            hindari_jam = dosen.get("preferensi", {}).get("hindari_jam", [])
-            preferensi_hari = [d for d in pilihan_hari_dosen if d not in hindari_hari]
-            preferensi_jam = [j for j in list(range(7, 19 + 1)) if j not in hindari_jam]
-
-            matkul_ajar_dosen = list(dosen.get("matkul_ajar", []))
-            if not matkul_ajar_dosen:
-                matkul_ajar_dosen = [
-                    matkul["kode"] for matkul in matakuliah_list 
-                    if len(set(dosen.get('pakar') or []) & set(matkul.get('bidang') or [])) > 0
-                ]
-            if not matkul_ajar_dosen:
-                matkul_ajar_dosen = [
-                    matkul["kode"] for matkul in matakuliah_list 
-                    if matkul["prodi"] == dosen["prodi"]
-                ]
-
-            list_matkul_ajar = [
-                sesi
-                for kode in matkul_ajar_dosen
-                    if kode in jadwal_by_matkul
-                        for sesi in jadwal_by_matkul[kode]
-            ]
-
-            if not list_matkul_ajar: continue
-            for sesi in list_matkul_ajar:
-                if sesi.hari not in preferensi_hari: continue
-                if any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)): continue
-                old_dosen = sesi.kode_dosen
-                sesi.kode_dosen = dosen["nip"]
-                beban_dosen[old_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=old_dosen, matakuliah_list=matakuliah_list)
-                beban_dosen[sesi.kode_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=sesi.kode_dosen, matakuliah_list=matakuliah_list)
-                break
-
-    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # DISTRIBUSI SKS ULANG
+    # DISTRIBUSI SKS ULANG - CEK KOOR
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     for sesi in jadwal:
         if sesi.kode_dosen == "AS":
@@ -732,6 +735,10 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 for sesi_over in jadwal_beban_tertinggi:
                     if sesi_over.hari in hindari_hari or any(jam in hindari_jam for jam in list(range(sesi_over.jam_mulai, sesi_over.jam_selesai))):
                         continue
+
+                    if sesi_over.kode_matkul[5:] == "A":
+                        if dosen_by_nip.get(sesi.kode_dosen, {}).get("prodi") != matkul_by_kode.get(sesi_over.kode_matkul[:5], {}).get("prodi"):
+                            continue
                     
                     conflict = False
                     for jadwal_dosen_current in jadwal_dosen.get(sesi.kode_dosen, []):
@@ -760,7 +767,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                     break
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # CEK SOLO TEAM
+    # CEK SOLO TEAM - CEK KOOR IF TEAM ELSE NP
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     for sesi in jadwal:
         if not sesi.team_teaching or sesi.tipe_kelas == "ONLINE":
@@ -781,10 +788,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
             if not sesi_team:
                 continue
 
-            if sesi.kode_matkul[5:] == "A":
-                dosen_pakar = dosen_by_matkul.get(sesi.kode_matkul[:5], {}).get("koordinator")
-            else:
-                dosen_pakar = dosen_by_matkul.get(sesi.kode_matkul[:5], {}).get("pakar")
+            dosen_pakar = dosen_by_matkul.get(sesi.kode_matkul[:5], {}).get("pakar")
 
             sukses = False
             excluded_dosen = []
