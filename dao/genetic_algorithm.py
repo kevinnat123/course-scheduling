@@ -730,6 +730,8 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         matkul = matkul_by_kode.get(sesi.kode_matkul[:5])
         if dosen_by_nip.get(sesi.kode_dosen, {}).get("prodi") != matkul.get("prodi") or dosen_by_nip.get(sesi.kode_dosen, {}).get("status") not in ["TETAP", "TIDAK_TETAP"]:
             continue
+        if sesi.kode_matkul[5:] == "A": 
+            continue
         dosen = dosen_by_nip.get(sesi.kode_dosen)
         if matkul.get("take_all_lecture") or matkul.get("kelas_online"): continue
 
@@ -1054,10 +1056,6 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
             continue
         
         index_kelas = 1
-        if index_kelas == 1:
-            dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("koordinator")
-        else:
-            dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("pakar")
 
         kandidat_ruangan = [
             ruang for ruang in ruang_list
@@ -1069,6 +1067,11 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
         else:
             putaran_kelas = int(matkul['jumlah_mahasiswa'] or 0)
         while putaran_kelas > 0:
+            if index_kelas == 1:
+                dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("koordinator")
+            else:
+                dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("pakar")
+                
             jumlah_dosen = matkul.get('jumlah_dosen', 1)
             hitung_dosen = 1
             while hitung_dosen <= jumlah_dosen:
@@ -1259,6 +1262,11 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 if any(plot in ruang["plot"] for plot in [matkul["prodi"], "GENERAL"])
             ]
         while putaran_inter > 0:
+            if index_kelas == 1:
+                dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("koordinator")
+            else:
+                dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("pakar")
+                
             jumlah_dosen = int(matkul.get('jumlah_dosen_internasional') or 1)
             hitung_dosen = 1
             while hitung_dosen <= jumlah_dosen:
