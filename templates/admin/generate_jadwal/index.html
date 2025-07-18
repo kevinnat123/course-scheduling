@@ -115,7 +115,7 @@
         </div>
         <span class="col"> / 1000</span>
       </div>
-      <div class="form-group row align-items-center">
+      <div class="form-group row align-items-center" id="dosen_overdose_div">
         <label
           for="dosen_overdose"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -130,7 +130,7 @@
           />
         </div>
       </div>
-      <div class="form-group row align-items-center">
+      <div class="form-group row align-items-center" id="dosen_not_set_div">
         <label
           for="count_dosen_kosong"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -156,7 +156,7 @@
         >
         <div class="col" id="list_dosen"></div>
       </div>
-      <div class="form-group row align-items-center">
+      <div class="form-group row align-items-center" id="bentrok_dosen_div">
         <label
           for="bentrok_dosen"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -171,7 +171,7 @@
           />
         </div>
       </div>
-      <div class="form-group row align-items-center">
+      <div class="form-group row align-items-center" id="bentrok_ruangan_div">
         <label
           for="bentrok_ruangan"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -186,7 +186,10 @@
           />
         </div>
       </div>
-      <div class="form-group row align-items-center">
+      <div
+        class="form-group row align-items-center"
+        id="bentrok_dosen_asdos_div"
+      >
         <label
           for="bentrok_dosen_asdos"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -201,7 +204,10 @@
           />
         </div>
       </div>
-      <div class="form-group row align-items-center">
+      <div
+        class="form-group row align-items-center"
+        id="solo_team_teaching_div"
+      >
         <label
           for="solo_team_teaching"
           class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
@@ -216,7 +222,7 @@
           />
         </div>
       </div>
-      <div class="align-items-center">
+      <div class="align-items-center" id="pelanggaran_preferensi_div">
         <label for="table_pelanggaran_preferensi"
           >Pelanggaran Preferensi Dosen</label
         >
@@ -476,6 +482,15 @@
       await preferensi_tab.clear().draw(false);
 
       Object.entries(data).forEach(async ([key, value]) => {
+        if (typeof value != "object") {
+          if (!value) $("#" + key + "_div").prop("hidden", true);
+          else $("#" + key + "_div").prop("hidden", false);
+        } else {
+          if (Object.keys(data[key]).length === 0)
+            $("#" + key + "_div").prop("hidden", true);
+          else $("#" + key + "_div").prop("hidden", false);
+        }
+
         if (key == "pelanggaran_preferensi") {
           preferensi_tab.rows.add(value).draw(false);
         } else if (key == "solo_team_teaching") {

@@ -57,7 +57,7 @@ def generate_jadwal():
             if best_schedule and best_schedule.get('status') == False:
                 raise CustomError({ 'message': best_schedule.get('message') })
             
-            dao.upload_jadwal(best_schedule['data'])
+            dao.upload_jadwal(best_schedule['data'], best_schedule["score"])
         else:
             raise CustomError({ 'message': 'Anda tidak berhak generate jadwal!\nSilahkan hubungi Admin! '})
     except CustomError as e:
@@ -88,21 +88,9 @@ def evaluate_jadwal():
         if not isCreated and not isCreated.get('jadwal'):
             return jsonify({ 'status': False, 'message': 'Jadwal belum dibuat!'})
         elif isCreated and isCreated.get('jadwal'):
-            data_jadwal = isCreated["jadwal"]
+            return jsonify({ 'data': isCreated["report"] })
         
-        object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in data_jadwal]
-        data_matkul = dao.get_open_matkul()
-        data_dosen = dao.get_dosen()
-        data_ruang = dao.get_kelas()
-        data = ga.hitung_fitness(
-            jadwal=object_jadwal,
-            matakuliah_list=data_matkul,
-            dosen_list=data_dosen,
-            ruang_list=data_ruang,
-            return_detail=True
-        )
-
-    return jsonify({ 'data': data })
+    return jsonify({ 'status': False, 'message': 'No Access!'})
 
 @generateJadwal.route("/generate_jadwal/get_simpanan_prodi", methods=["GET"])
 @login_required
