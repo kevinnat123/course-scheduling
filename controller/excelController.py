@@ -230,7 +230,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
                     worksheet.write(row_idx, col_idx, value, format_error)
                 elif attr == "kode_ruangan" and kode_matkul in report_fitness["list_ruang_bentrok"]:
                     worksheet.write(row_idx, col_idx, value, format_error)
-                elif (attr == "kode_dosen" or attr == "nama_dosen") and kode_dosen in report_fitness["list_dosen_bentrok"]:
+                elif (attr == "kode_dosen" or attr == "nama_dosen") and any(kode_dosen == err.get(kode_matkul, "") for err in report_fitness["list_dosen_bentrok"]):
                     worksheet.write(row_idx, col_idx, value, format_error)
                 else:
                     worksheet.write(row_idx, col_idx, value, format_as if jadwal['kode_dosen'] == "AS" else None)
