@@ -155,9 +155,11 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
         last_row = row + len(data_dosen)
         for nip in data_dosen:
             row += 1
-            if beban_dosen[nip] == 0 and row == last_row:
+            if beban_dosen[nip] > 20:
+                format = format_error
+            elif beban_dosen[nip] == 0 and row == last_row:
                 format = format_warning_with_bottom
-            elif beban_dosen[nip] == 0:
+            elif beban_dosen[nip] == 0 or beban_dosen[nip] > 12:
                 format = format_warning
             elif row == last_row:
                 format = format_bottom
