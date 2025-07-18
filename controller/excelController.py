@@ -53,12 +53,39 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
 
     workbook = xlsxwriter.Workbook(output)
 
-    # Format header
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # Format Used
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    format_header_with_top_bottom = workbook.add_format({
+        'align': 'center',
+        'bg_color': '#99CCFF',
+        'valign': 'vcenter',
+        'bold': True,
+        'top': 1,
+        'bottom': 1
+    })
+    format_header_with_top = workbook.add_format({
+        'align': 'center',
+        'bg_color': '#99CCFF',
+        'valign': 'vcenter',
+        'bold': True,
+        'top': 1,
+    })
     format_header = workbook.add_format({
         'align': 'center',
         'bg_color': '#99CCFF',
         'valign': 'vcenter',
-        'bold': True
+        'bold': True,
+    })
+    format_header_with_bottom = workbook.add_format({
+        'align': 'center',
+        'bg_color': '#99CCFF',
+        'valign': 'vcenter',
+        'bold': True,
+        'bottom': 1,
+    })
+    format_bottom = workbook.add_format({
+        'bottom': 1,
     })
     format_as = workbook.add_format({
         'align': 'center',
@@ -67,29 +94,43 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     format_warning = workbook.add_format({
         'bg_color': "#ffd438"
     })
+    format_warning_with_bottom = workbook.add_format({
+        'bg_color': "#ffd438",
+        'bottom': 1
+    })
     format_error = workbook.add_format({
         'bg_color': '#ff0000'
     })
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # Sheet 1 - Beban SKS Dosen
+    # Data Source
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
     object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in jadwal_list]
-    
-    # 🔹 Group Dosen berdasarkan program_studi
+    # Grouping jadwal by prodi
+    jadwal_prodi = defaultdict(list)
+    for jadwal in jadwal_list:
+        jadwal_prodi[jadwal['program_studi']].append(jadwal)
+    # Grouping dosen by prodi
     dosen_by_prodi = defaultdict(list)
     for dosen in dosen_list:
         prodi = dosen.get("prodi") or "TIDAK_TETAP"
         dosen_by_prodi[prodi].append(dosen["nip"])
-
+    # Grouping dosen by NIP
     dosen_by_nip = {d['nip']: d for d in dosen_list}
+    # Hitung beban sks dosen
     beban_dosen = ga.hitung_beban_sks_dosen_all(
         jadwal=object_jadwal, 
         dosen_list=dosen_list, 
         matakuliah_list=matakuliah_list
     )
-    
+    # Grouping dosen by NIP
+    matkul_by_kode = {m['kode']: m for m in matakuliah_list}
+
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # Sheet 1 - Beban SKS Dosen
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
+
     # Set Ukuran Kolom
     worksheet.set_column("A:A", 15)
     worksheet.set_column("B:B", 50)
@@ -102,31 +143,35 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     for prodi, data_dosen in dosen_by_prodi.items():
         if prodi == "TIDAK_TETAP":
             row, col = 1, 4
-            worksheet.merge_range(f"E{row}:G{row}", "Dosen Tidak Tetap", format_header)
+            worksheet.merge_range(f"E{row}:G{row}", "Dosen Tidak Tetap", format_header_with_top)
         else:
             col = 0
-            worksheet.merge_range(f"A{row}:C{row}", f"Dosen Tetap - {prodi}", format_header)
-        worksheet.write(row, col, "NIP", format_header)
-        worksheet.write(row, col + 1, "Nama", format_header)
-        worksheet.write(row, col + 2, "Beban SKS", format_header)
+            worksheet.merge_range(f"A{row}:C{row}", f"Dosen Tetap - {prodi}", format_header_with_top)
+        worksheet.write(row, col, "NIP", format_header_with_bottom)
+        worksheet.write(row, col + 1, "Nama", format_header_with_bottom)
+        worksheet.write(row, col + 2, "Beban SKS", format_header_with_bottom)
 
+        last_row = row + len(data_dosen)
         for nip in data_dosen:
             row += 1
-            worksheet.write(row, col, nip, format_warning if beban_dosen[nip] == 0 else None)
-            worksheet.write(row, col+1, dosen_by_nip[nip]["nama"], format_warning if beban_dosen[nip] == 0 else None)
-            worksheet.write(row, col+2, beban_dosen[nip], format_warning if beban_dosen[nip] == 0 else None)
+            if beban_dosen[nip] == 0 and row == last_row:
+                format = format_warning_with_bottom
+            elif beban_dosen[nip] == 0:
+                format = format_warning
+            elif row == last_row:
+                format = format_bottom
+            else:
+                format = None
+            worksheet.write(row, col, nip, format)
+            worksheet.write(row, col+1, dosen_by_nip[nip]["nama"], format)
+            worksheet.write(row, col+2, beban_dosen[nip], format)
 
         if prodi != "TIDAK_TETAP":
             row += 3 # 1 buat space, 1 buat merge_range
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # Sheet Jadwal Mata Kuliah per Program Studi
+    # Sheet 2 etc - Jadwal Mata Kuliah per Program Studi
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # 🔹 Group Jadwal berdasarkan program_studi
-    jadwal_prodi = defaultdict(list)
-    for jadwal in jadwal_list:
-        jadwal_prodi[jadwal['program_studi']].append(jadwal)
-
     for program_studi in sorted(jadwal_prodi.keys()):
         sheet_name = program_studi[:31]  # Sheet name max 31 chars
         worksheet = workbook.add_worksheet(sheet_name)
@@ -136,7 +181,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
 
         # Tulis header kolom
         for col_idx, header in enumerate(fixed_headers):
-            worksheet.write(row_idx, col_idx, header.replace('_', ' '), format_header)
+            worksheet.write(row_idx, col_idx, header.replace('_', ' '), format_header_with_top_bottom)
         row_idx += 1
 
         # Control Area
@@ -147,16 +192,17 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         # sorted_group = sorted(grojadwal_prodiuped[program_studi], key=lambda x: (x.kode_ruangan, x.hari, x.jam_mulai))
         sorted_group = sorted(jadwal_prodi[program_studi], key=lambda x: x['kode_matkul'])
         for jadwal in sorted_group:
+            kode_matkul = jadwal['kode_matkul']
+            data_matkul = matkul_by_kode.get(kode_matkul, {})
+            kode_dosen = jadwal['kode_dosen']
+            data_dosen = dosen_by_nip.get(kode_dosen, {})
+
             for col_idx, attr in enumerate(fixed_headers):
                 value = None
                 status = True
                 if attr == "nama_matkul":
-                    kode_matkul = jadwal['kode_matkul']
-                    data_matkul = next((m for m in matakuliah_list if m['kode'] == kode_matkul[:-1] or m['kode'] == kode_matkul[:-4]), {})
                     value = data_matkul.get("nama")
                 elif attr == "nama_dosen":
-                    kode_dosen = jadwal['kode_dosen']
-                    data_dosen = next((d for d in dosen_list if d['nip'] == kode_dosen), {})
                     value = data_dosen.get("nama") if kode_dosen != "AS" else "ASISTEN"
 
                     if data_matkul.get("team_teaching"):
@@ -166,9 +212,8 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
 
                         if not status: worksheet.write(row_idx - 1, col_idx, old_nama_dosen, format_error)
                 elif attr == "kapasitas":
-                    value = jadwal['kode_matkul']
-                    if value[-2:] == "AS":
-                        kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if sesi['kode_matkul'] == value[:-3]), None)
+                    if kode_dosen == "AS":
+                        kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if f"{sesi['kode_matkul']}-AS" == kode_matkul), None)
                         value = kapasitas_dosen
                     else:
                         value = jadwal[attr]
