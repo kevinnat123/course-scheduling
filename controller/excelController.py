@@ -25,12 +25,13 @@ def export_to_excel():
     downloadBy = req['downloadBy']
     data_jadwal = dao.get_jadwal()
     jadwal = data_jadwal['jadwal']
+    report_fitness = data_jadwal["report"]
 
     data_dosen = dosen.get_dosen()
     data_matkul = matkul.get_matkul()
 
     if downloadBy == "jadwal_kuliah":
-        excel = export_jadwal_to_excel(jadwal, data_matkul, data_dosen)
+        excel = export_jadwal_to_excel(jadwal, data_matkul, data_dosen, report_fitness)
     elif downloadBy == "jadwal_ruangan":
         excel = export_ruangan_to_excel(jadwal, data_matkul, data_dosen)
     return send_file(excel, as_attachment=True, download_name=f"{filename}.xls")
@@ -39,7 +40,7 @@ def get_current_datetime():
     # return datetime.now().strftime('%d-%m-%Y %I-%M-%S')  # 12-hour format
     return datetime.now().strftime('%d-%m-%Y %H-%M-%S')  # 24-hour format
 
-def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
+def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitness):
     print(f"{'[ CONTROLLER ]':<25} Building File Excel By Jadwal")
     output = BytesIO()
 
@@ -193,7 +194,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         sorted_group = sorted(jadwal_prodi[program_studi], key=lambda x: x['kode_matkul'])
         for jadwal in sorted_group:
             kode_matkul = jadwal['kode_matkul']
-            data_matkul = matkul_by_kode.get(kode_matkul, {})
+            data_matkul = matkul_by_kode.get(kode_matkul[:5], {})
             kode_dosen = jadwal['kode_dosen']
             data_dosen = dosen_by_nip.get(kode_dosen, {})
 
@@ -227,6 +228,10 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
                     not status)
                 ):
                     worksheet.write(row_idx, col_idx, value, format_error)
+                elif attr == "kode_ruangan" and kode_matkul in report_fitness["list_ruang_bentrok"]:
+                    worksheet.write(row_idx, col_idx, value, format_error)
+                elif (attr == "kode_dosen" or attr == "nama_dosen") and kode_dosen in report_fitness["list_dosen_bentrok"]:
+                    worksheet.write(row_idx, col_idx, value, format_error)
                 else:
                     worksheet.write(row_idx, col_idx, value, format_as if jadwal['kode_dosen'] == "AS" else None)
 
@@ -243,27 +248,6 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
         # Set lebar kolom
         for col_idx, width in enumerate(col_widths):
             worksheet.set_column(col_idx, col_idx, width + 2)
-
-        # # Data beban dosen
-        # beban_dosen = {}
-        # for sesi in sorted_group:
-        #     if sesi['kode_dosen'] != "AS":
-        #         if sesi['kode_dosen'] not in beban_dosen: beban_dosen[sesi['kode_dosen']] = 0
-        #         beban_dosen[sesi['kode_dosen']] += sesi['sks_akademik']
-        # # Tulis data beban dosen
-        # start_col = len(fixed_headers) + 2
-        # row_idx = 0
-        # worksheet.write(row_idx, start_col, "NIP", format_header)
-        # worksheet.write(row_idx, start_col + 1, "Nama", format_header)
-        # worksheet.write(row_idx, start_col + 2, "Beban SKS", format_header)
-        # row_idx += 1
-        
-        # for nip, sks in dict(sorted(beban_dosen.items())).items():
-        #     nama_dosen = next((d['nama'] for d in dosen_list if d['nip'] == nip), None)
-        #     worksheet.write(row_idx, start_col, nip)
-        #     worksheet.write(row_idx, start_col + 1, nama_dosen)
-        #     worksheet.write(row_idx, start_col + 2, sks)
-        #     row_idx += 1
 
     # Simpan workbook
     workbook.close()
