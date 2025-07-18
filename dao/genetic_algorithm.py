@@ -331,7 +331,7 @@ def define_dosen_pakar_koor(dosen_list:list, data_matkul: dict):
 
 def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_dosen: dict = {}, excluded_dosen: list = []):
     """
-    Random dosen by beban sks
+    Random dosen by Status, Prodi, beban sks
 
     Args:
         list_dosen_pakar (list): list dosen yang sudah di sort berdasarkan pakar + prodi
@@ -361,8 +361,7 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_d
         # 3. Dosen dengan beban < beban maksimum yang ada
         if not kandidat_dosen:
             list_beban_sks_dosen = [
-                dict_beban_sks_dosen[d["nip"]] for d in list_dosen_pakar 
-                if d["nip"] not in excluded_dosen
+                dict_beban_sks_dosen[d["nip"]] for d in list_dosen_pakar
             ]
             max_beban = max(list_beban_sks_dosen or [0])
 
@@ -377,18 +376,19 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_d
                     if dict_beban_sks_dosen[dosen['nip']] <= max_beban 
                 ]
 
-            # 3a. Prioritaskan dosen prodi / tidak tetap dengan total beban sks < 12
+            # 3a. Prioritaskan dosen prodi / tidak tetap dengan total beban sks <= 12
+            sks_matkul = (1/3 * data_matkul["sks_akademik"]) * 2
             prioritize = [
-                dosen for dosen in kandidat_dosen
-                if (dosen.get("prodi") == data_matkul.get("prodi") or dosen["status"] == "TIDAK_TETAP")
-                and dict_beban_sks_dosen[dosen['nip']] + data_matkul["sks_akademik"] < 12
+                d for d in kandidat_dosen
+                if (d.get("prodi") == data_matkul.get("prodi") or d["status"] == "TIDAK_TETAP")
+                and dict_beban_sks_dosen[d["nip"]] + sks_matkul <= 12
             ]
             if prioritize:
                 kandidat_dosen = prioritize
 
         if kandidat_dosen:
-            preferred_and_available = [dosen for dosen in kandidat_dosen if dosen.get("preferensi")]
-            preferred_and_available = [dosen for dosen in preferred_and_available if dosen["nip"] not in excluded_dosen]
+            preferred = [dosen for dosen in kandidat_dosen if dosen.get("preferensi")]
+            preferred_and_available = [dosen for dosen in preferred if dosen["nip"] not in excluded_dosen]
             return random.choice(preferred_and_available or kandidat_dosen)
 
         # If kandidat_dosen masih kosong, return random dari list_dosen_pakar yang ada
@@ -461,12 +461,18 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
             return random.choice(list_ruangan)
     
     if len(kandidat_ruangan) > 1:
+        kapasitas_ruangan = [r["kapasitas"] for r in kandidat_ruangan]
+        max_kapasitas = max(kapasitas_ruangan)
+
         bobot_kandidat_ruangan = [
-            (len(set(ruangan.get("plot", [])) & set(bidang))*10 or 1) * 
-                (10 if data_matkul["prodi"] in ruangan.get("plot", []) else 1) * 
-                (ruangan["kapasitas"] / 10)
-            for ruangan in kandidat_ruangan
+            (len(set(r.get("plot", [])) & set(bidang))*10 or 1) * 
+                (10 if data_matkul["prodi"] in r.get("plot", []) else 1) * 
+                (1 if r["kapasitas"] > max_kapasitas*0.66 else 0) #(r["kapasitas"] / 10)
+            for r in kandidat_ruangan
         ]
+        # bobot_kandidat_ruangan = [
+        #     (1 if r["kapasitas"] > max_kapasitas*0.66 else 0) for r in kandidat_ruangan
+        # ]
 
         ruangan_terpilih = random.choices(
             population=kandidat_ruangan, 
@@ -1461,6 +1467,8 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     pelanggaran_preferensi = []
     mata_kuliah_minus = {}
 
+    set_ruang_bentrok = set()
+    set_dosen_bentrok = set()
     detail_jadwal_matkul = {}
 
     # TO BE CHECKED:
@@ -1504,6 +1512,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                 for sesi_lain in jadwal_ruangan[sesi.kode_ruangan]:
                     if sesi.hari == sesi_lain['hari']:
                         if sesi.jam_mulai < sesi_lain['jam_selesai'] and sesi.jam_selesai > sesi_lain['jam_mulai']:
+                            set_ruang_bentrok.add(sesi.kode_matkul)
                             penalti += BOBOT_PENALTI['ruangan_bentrok']
                             hitung_ruangan_bentrok += 1
                 jadwal_ruangan[sesi.kode_ruangan].append({'hari': sesi.hari, 'jam_mulai': sesi.jam_mulai, 'jam_selesai': sesi.jam_selesai})
@@ -1519,6 +1528,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                     for sesi_lain in jadwal_dosen[sesi.kode_dosen]:
                         if sesi.hari == sesi_lain['hari']:
                             if sesi.jam_mulai < sesi_lain['jam_selesai'] and sesi.jam_selesai > sesi_lain['jam_mulai']:
+                                set_dosen_bentrok.add(frozenset({sesi.kode_matkul: sesi.kode_dosen}.items()))
                                 penalti += BOBOT_PENALTI['dosen_bentrok']
                                 hitung_dosen_bentrok += 1
                     jadwal_dosen[sesi.kode_dosen].append({'hari': sesi.hari, 'jam_mulai': sesi.jam_mulai, 'jam_selesai': sesi.jam_selesai})
@@ -1635,6 +1645,11 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
         if whoNotSet: print(f"{'':<10}{'dosen tidak mengajar':<40} : {whoNotSet}")
 
     if return_detail:
+        list_dosen_bentrok = list()
+        list_ruang_bentrok = list(set_ruang_bentrok)
+        for item in set_dosen_bentrok:
+            d = dict(item)
+            list_dosen_bentrok.append(d)
         data_return = {
             "score": max(0, 1000 - penalti),
             "dosen_overdose": hitung_dosen_overdose,
@@ -1643,7 +1658,9 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
             "bentrok_dosen_asdos": hitung_asdos_nabrak_dosen,
             "solo_team_teaching": {k: v for k, v in hitung_solo_team.items() if v},
             "pelanggaran_preferensi": pelanggaran_preferensi,
-            "dosen_not_set": whoNotSet
+            "dosen_not_set": whoNotSet,
+            "list_ruang_bentrok": list_ruang_bentrok,
+            "list_dosen_bentrok": list_dosen_bentrok
         }
         return data_return
 
