@@ -699,7 +699,18 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 if all(hari in excluded_day for hari in preferensi_hari):
                     excluded_day = []
                     excluded_room.append(sesi.kode_ruangan)
-                    ruang_pengganti = rand_ruangan(list_ruangan=ruang_list, data_matkul=matkul, bidang=bidang, excluded_room=excluded_room)
+
+                    isAsisten = True if sesi.kode_dosen == "AS" else False
+                    kapasitas_dosen = next((sd.kapasitas for sd in jadwal_by_matkul.get(sesi.kode_matkul[:5], []) if f"{sd.kode_matkul}-AS" == sesi.kode_matkul), 0) if isAsisten else 0
+                    
+                    ruang_pengganti = rand_ruangan(
+                        list_ruangan=ruang_list, 
+                        data_matkul=matkul, 
+                        bidang=bidang, 
+                        excluded_room=excluded_room,
+                        forAsisten=isAsisten,
+                        kapasitas_ruangan_dosen=kapasitas_dosen
+                    )
 
                     sesi.kode_ruangan = ruang_pengganti["kode"]
                     sesi.kapasitas = ruang_pengganti["kapasitas"]
@@ -1091,8 +1102,9 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 
                 if hitung_dosen == 1:
                     sukses = False
+                    attempt = 1
                     excluded_room = []
-                    while not sukses:
+                    while not sukses and attempt <= max_attempt:
                         if all(ruang["kode"] in excluded_room for ruang in kandidat_ruangan):
                             break
                         
@@ -1128,6 +1140,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                                     jam_selesai_dosen = jam + matkul['sks_akademik']
                                     break
                             if sukses: break
+                        attempt += 1
                 else:
                     sukses = False
                     while not sukses:
@@ -1287,7 +1300,8 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 if hitung_dosen == 1:
                     sukses = False
                     excluded_room = []
-                    while not sukses:
+                    attempt = 1
+                    while not sukses and attempt <= max_attempt:
                         if all(ruang["kode"] in excluded_room for ruang in kandidat_ruangan):
                             break
                         
@@ -1324,6 +1338,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                                     jam_selesai_dosen = jam + matkul['sks_akademik']
                                     break
                             if sukses: break
+                        attempt += 1
                 else:
                     sukses = False
                     while not sukses:
@@ -1419,6 +1434,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                             ruang_asisten = rand_ruangan(
                                 list_ruangan=ruang_list, 
                                 data_matkul=matkul, 
+                                bidang=bidang,
                                 excluded_room=excluded_room, 
                                 forAsisten=True, 
                                 kapasitas_ruangan_dosen=sesi_dosen.kapasitas
@@ -1812,10 +1828,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         for matkul in matakuliah_list:
             kode_dosen = set(dosen["nip"] for dosen in dosen_list if dosen["nama"] in matkul.get("dosen_ajar", []))
             if kode_dosen: matkul["dosen_ajar"] = kode_dosen
-
-        dosen_by_nip = {d['nip']: d for d in dosen_list}
-        matkul_by_kode = {m['kode']: m for m in matakuliah_list}
-        ruang_by_kode = {r['kode']: r for r in ruang_list}
         
         populasi = generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi)
         populasi = [repair_jadwal(j, matakuliah_list, dosen_list, ruang_list) for j in populasi]
