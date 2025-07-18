@@ -53,17 +53,7 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
 
     workbook = xlsxwriter.Workbook(output)
 
-    # 🔹 Group berdasarkan program_studi
-    jadwal_prodi = defaultdict(list)
-    for jadwal in jadwal_list:
-        jadwal_prodi[jadwal['program_studi']].append(jadwal)
-
     # Format header
-    format_title = workbook.add_format({
-        'align': 'center',
-        'valign': 'vcenter',
-        'bold': True
-    })
     format_header = workbook.add_format({
         'align': 'center',
         'bg_color': '#99CCFF',
@@ -86,49 +76,57 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list):
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     worksheet = workbook.add_worksheet("BEBAN SKS DOSEN")
     object_jadwal = [JadwalKuliah(**dict_jadwal) for dict_jadwal in jadwal_list]
-    beban_dosen = ga.hitung_beban_sks_dosen_all(jadwal=object_jadwal, dosen_list=dosen_list, matakuliah_list=matakuliah_list)
-    # Tulis data beban dosen
-    worksheet.merge_range("A1:C1", "Dosen Tetap", format_title)
-    worksheet.merge_range("E1:G1", "Dosen Tidak Tetap", format_title)
+    
+    # 🔹 Group Dosen berdasarkan program_studi
+    dosen_by_prodi = defaultdict(list)
+    for dosen in dosen_list:
+        prodi = dosen.get("prodi") or "TIDAK_TETAP"
+        dosen_by_prodi[prodi].append(dosen["nip"])
 
-    row_idx = 1
+    dosen_by_nip = {d['nip']: d for d in dosen_list}
+    beban_dosen = ga.hitung_beban_sks_dosen_all(
+        jadwal=object_jadwal, 
+        dosen_list=dosen_list, 
+        matakuliah_list=matakuliah_list
+    )
+    
+    # Set Ukuran Kolom
     worksheet.set_column("A:A", 15)
     worksheet.set_column("B:B", 50)
     worksheet.set_column("C:C", 10)
-    worksheet.write(row_idx, 0, "NIP", format_header)
-    worksheet.write(row_idx, 1, "Nama", format_header)
-    worksheet.write(row_idx, 2, "Beban SKS", format_header)
-
     worksheet.set_column("E:E", 15)
     worksheet.set_column("F:F", 50)
     worksheet.set_column("G:G", 10)
-    worksheet.write(row_idx, 4, "NIP", format_header)
-    worksheet.write(row_idx, 5, "Nama", format_header)
-    worksheet.write(row_idx, 6, "Beban SKS", format_header)
     
-    row_idx += 1
-    row_tetap, row_tidak_tetap = row_idx, row_idx
-    for nip, sks in dict(sorted(beban_dosen.items())).items():
-        data_dosen = next((d for d in dosen_list if d['nip'] == nip), None)
-        if data_dosen["status"] == "TETAP":
-            initial_col = 0
-            row_idx = row_tetap
-        elif data_dosen["status"] == "TIDAK_TETAP":
-            initial_col = 4
-            row_idx = row_tidak_tetap
+    row = 1
+    for prodi, data_dosen in dosen_by_prodi.items():
+        if prodi == "TIDAK_TETAP":
+            row, col = 1, 4
+            worksheet.merge_range(f"E{row}:G{row}", "Dosen Tidak Tetap", format_header)
+        else:
+            col = 0
+            worksheet.merge_range(f"A{row}:C{row}", f"Dosen Tetap - {prodi}", format_header)
+        worksheet.write(row, col, "NIP", format_header)
+        worksheet.write(row, col + 1, "Nama", format_header)
+        worksheet.write(row, col + 2, "Beban SKS", format_header)
 
-        worksheet.write(row_idx, initial_col, nip, format_warning if sks == 0 else None)
-        worksheet.write(row_idx, initial_col+1, data_dosen["nama"], format_warning if sks == 0 else None)
-        worksheet.write(row_idx, initial_col+2, sks, format_warning if sks == 0 else None)
+        for nip in data_dosen:
+            row += 1
+            worksheet.write(row, col, nip, format_warning if beban_dosen[nip] == 0 else None)
+            worksheet.write(row, col+1, dosen_by_nip[nip]["nama"], format_warning if beban_dosen[nip] == 0 else None)
+            worksheet.write(row, col+2, beban_dosen[nip], format_warning if beban_dosen[nip] == 0 else None)
 
-        if data_dosen["status"] == "TETAP":
-            row_tetap += 1
-        elif data_dosen["status"] == "TIDAK_TETAP":
-            row_tidak_tetap += 1
+        if prodi != "TIDAK_TETAP":
+            row += 3 # 1 buat space, 1 buat merge_range
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     # Sheet Jadwal Mata Kuliah per Program Studi
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    # 🔹 Group Jadwal berdasarkan program_studi
+    jadwal_prodi = defaultdict(list)
+    for jadwal in jadwal_list:
+        jadwal_prodi[jadwal['program_studi']].append(jadwal)
+
     for program_studi in sorted(jadwal_prodi.keys()):
         sheet_name = program_studi[:31]  # Sheet name max 31 chars
         worksheet = workbook.add_worksheet(sheet_name)
