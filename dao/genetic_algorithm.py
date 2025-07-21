@@ -1882,10 +1882,15 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             gen_best_individual = populasi[fitness_scores.index(gen_best_fitness)]
             
             if gen_best_fitness >= best_fitness_global:
-                # gen_fitness_report = hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, return_detail=True)
-                print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
-                best_fitness_global = gen_best_fitness
-                best_individual_global = copy.deepcopy(gen_best_individual)
+                gen_fitness_report = hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, return_detail=True)
+                dosen_bentrok = gen_fitness_report.get("bentrok_dosen") > 0
+                ruangan_bentrok = gen_fitness_report.get("bentrok_ruangan") > 0
+                asisten_bentrok = gen_fitness_report.get("bentrok_dosen_asdos") > 0
+                solo_team = len(gen_fitness_report.get("solo_team_teaching", {}).keys()) > 0
+                if not (dosen_bentrok or ruangan_bentrok or asisten_bentrok or solo_team):
+                    print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
+                    best_fitness_global = gen_best_fitness
+                    best_individual_global = copy.deepcopy(gen_best_individual)
 
             if gen_best_fitness == 1000:
                 isSomeDosenNotSet, whoNotSet = is_some_lecture_not_scheduled(gen_best_individual, matakuliah_list, dosen_list)
@@ -1904,7 +1909,7 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         print(f"{f'[Last Gen {gen}]':<10}[({len(populasi)} population)]")
         print(f"{f'BEST ALLTIME':<25}: {best_fitness_global}")
         if best_fitness_global != 1000:
-            # best_individual_global = repair_jadwal(best_individual_global, matakuliah_list, dosen_list, ruang_list)
+            best_individual_global = repair_jadwal(best_individual_global, matakuliah_list, dosen_list, ruang_list)
             report_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, detail=True, return_detail=True)
             print(f"{f'REPAIRED BEST ALLTIME':<25}: {report_fitness['score']}")
         else:
