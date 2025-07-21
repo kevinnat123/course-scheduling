@@ -119,9 +119,9 @@
           </div>
           <div class="form-check form-check-inline">
             <input
-              type="checkbox"
+              type="radio"
               class="form-check-input"
-              name="cbHari"
+              name="rbTipeKelas"
               id="ONLINE"
               value="ONLINE"
             />
@@ -179,30 +179,6 @@
       <!-- SKS END -->
       <!-- SPECIAL -->
       <div class="form-group row">
-        <!-- Online -->
-        <div class="col-12 col-md-6">
-          <div class="row align-items-center">
-            <label
-              for="ONLINE"
-              class="col-12 col-sm-5 col-md-8 col-lg-6 col-xl-4 col-xxl-4 col-form-label"
-            >
-              Mata Kuliah Online
-            </label>
-            <div class="col-5 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2">
-              <div class="form-check form-check-inline">
-                <input
-                  type="checkbox"
-                  class="form-check-input"
-                  name="cbOnline"
-                  id="ONLINE"
-                  value="ONLINE"
-                />
-                <!-- <label for="ONLINE" class="form-check-label">Online</label> -->
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Take All Dosen -->
         <div class="col-12 col-md-6">
           <div class="row align-items-center">
@@ -226,6 +202,11 @@
             </div>
           </div>
         </div>
+
+        <!-- Online -->
+        <!-- <div class="col-12 col-md-6">
+          
+        </div> -->
       </div>
       <!-- SPECIAL END -->
       <!-- BIDANG -->
@@ -745,7 +726,6 @@
       sks_bayar: Number($("#input_sksB").val()),
       prodi: $("#input_prodi").val(),
       tipe_kelas: getCheckedItemValue("rbTipeKelas")[0],
-      kelas_online: getCheckedItemValue("cbOnline")[0] ? true : false,
       take_all_lecture: getCheckedItemValue("cbTakeAllLecture")[0]
         ? true
         : false,
@@ -864,7 +844,6 @@
       sks_bayar: Number($("#input_sksB").val()),
       prodi: $("#input_prodi").val(),
       tipe_kelas: getCheckedItemValue("rbTipeKelas")[0],
-      kelas_online: getCheckedItemValue("cbOnline")[0] ? true : false,
       take_all_lecture: getCheckedItemValue("cbTakeAllLecture")[0]
         ? true
         : false,
