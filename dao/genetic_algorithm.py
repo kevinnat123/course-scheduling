@@ -1,4 +1,3 @@
-# TESTING LIST OF OBJECT SUKSES (OUTPUT BLM DI CEK)
 import random, copy, traceback
 
 class JadwalKuliah:
@@ -20,10 +19,10 @@ class JadwalKuliah:
         self.team_teaching = team_teaching
 
 # TO BE CHECKED:
+# (20)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok          (DONE)
+# (20)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok            (DONE)
+# (20)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen       (DONE)
 # (15)  Dosen Tetap Tidak Mengajar                                  >> dosen_nganggur           (DONE)
-# (15)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok          (DONE)
-# (15)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok            (DONE)
-# (15)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen       (DONE)
 # (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib               (DONE)
 # (15)  Solo Team_Teaching                                          >> solo_team
 # (15)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja         (DONE)
@@ -31,10 +30,10 @@ class JadwalKuliah:
 # (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas (DONE)
 # (5)   Tidak Sesuai dengan permintaan / request dosen              >> melanggar_preferensi     (DONE)
 BOBOT_PENALTI = {
+    "ruangan_bentrok": 20,
+    "dosen_bentrok": 20,
+    "asdos_nabrak_dosen": 20,
     "dosen_nganggur": 15,
-    "ruangan_bentrok": 15,
-    "dosen_bentrok": 15,
-    "asdos_nabrak_dosen": 15,
     "kelas_gaib": 15,
     "solo_team": 15,
     "diluar_jam_kerja": 15,
@@ -398,57 +397,62 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_d
         return list_dosen_pakar[0]
 
 def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], excluded_room: list = [], forAsisten: bool = False, kapasitas_ruangan_dosen: int = 0):
+    if not bidang:
+        bidang = data_matkul.get("bidang", [])
     ruangan_utama = [
-        ruangan for ruangan in list_ruangan
-        if ruangan["kode"] not in excluded_room
-            and any(plot in ruangan["plot"] for plot in bidang)
+        r for r in list_ruangan
+        if r["kode"] not in excluded_room
+            and any(plot in r["plot"] for plot in bidang)
     ]
     if not ruangan_utama:
         ruangan_utama = [
-            ruangan for ruangan in list_ruangan
-            if any(plot in ruangan["plot"] for plot in bidang)
+            r for r in list_ruangan
+            if any(plot in r["plot"] for plot in bidang)
         ]
     if not ruangan_utama:
         ruangan_utama = [
-            ruangan for ruangan in list_ruangan
-            if ruangan["kode"] not in excluded_room
-                and any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
+            r for r in list_ruangan
+            if r["kode"] not in excluded_room
+                and any(plot in r["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
         ]
     if not ruangan_utama:
         ruangan_utama = [
-            ruangan for ruangan in list_ruangan
-            if any(plot in ruangan["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
+            r for r in list_ruangan
+            if any(plot in r["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
         ]
 
     if not forAsisten:
         kandidat_ruangan = [
-            ruangan for ruangan in ruangan_utama 
-            if ruangan['tipe_ruangan'] == data_matkul['tipe_kelas']
+            r for r in ruangan_utama 
+            if r['tipe_ruangan'] == data_matkul['tipe_kelas']
         ]
         if not kandidat_ruangan:
             kandidat_ruangan = ruangan_utama
 
-        if data_matkul.get("asistensi", None):
-            if data_matkul.get("tipe_kelas_asistensi", "PRAKTIKUM") == "PRAKTIKUM":
+        if data_matkul.get("asistensi", False):
+            if data_matkul.get("tipe_kelas_asistensi", None) == "PRAKTIKUM":
+                max_kapasitas_lab = max(
+                    [ 
+                        r["kapasitas"] for r in list_ruangan 
+                        if r["tipe_ruangan"] == "PRAKTIKUM" 
+                    ] or [40]
+                )
                 kandidat_ruangan = [
-                    ruangan for ruangan in kandidat_ruangan 
-                    if ruangan["kapasitas"] < max(
-                        [ 
-                            ruangan["kapasitas"] for ruangan in list_ruangan 
-                            if ruangan["tipe_ruangan"] == "PRAKTIKUM" 
-                        ] or [40]
-                    )
+                    r for r in kandidat_ruangan 
+                    if r["kapasitas"] < max_kapasitas_lab
                 ]
+                if not kandidat_ruangan:
+                    kandidat_ruangan = ruangan_utama
     elif forAsisten:
         kandidat_ruangan = [
-            ruangan for ruangan in ruangan_utama 
-            if ruangan["tipe_ruangan"] == data_matkul.get("tipe_kelas_asistensi", "TEORI") and
-                ruangan["kapasitas"] >= kapasitas_ruangan_dosen
+            r for r in ruangan_utama 
+            if r["tipe_ruangan"] == data_matkul["tipe_kelas_asistensi"] and
+                r["kapasitas"] >= kapasitas_ruangan_dosen
         ]
         if not kandidat_ruangan:
             kandidat_ruangan = [
-                ruangan for ruangan in ruangan_utama 
-                if ruangan["kapasitas"] >= kapasitas_ruangan_dosen
+                r for r in ruangan_utama 
+                if r["kapasitas"] >= kapasitas_ruangan_dosen
             ]
         if not kandidat_ruangan:
             kandidat_ruangan = ruangan_utama
@@ -465,9 +469,10 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
         max_kapasitas = max(kapasitas_ruangan)
 
         bobot_kandidat_ruangan = [
-            (len(set(r.get("plot", [])) & set(bidang))*10 or 1) * 
+            ((len(set(r.get("plot", [])) & set(bidang))*10 or 1) * 
                 (10 if data_matkul["prodi"] in r.get("plot", []) else 1) * 
-                (1 if r["kapasitas"] > max_kapasitas*0.66 else 0) #(r["kapasitas"] / 10)
+                (1 if r["kapasitas"] > max_kapasitas*0.66 else 0)) #(r["kapasitas"] / 10))
+            if r["tipe_ruangan"] not in ["RAPAT"] else 1
             for r in kandidat_ruangan
         ]
         # bobot_kandidat_ruangan = [
@@ -503,7 +508,11 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         for m in matakuliah_list
         for dosen_pakar, dosen_koordinator in [define_dosen_pakar_koor(dosen_list=dosen_list, data_matkul=m)]
     }
-    beban_dosen = hitung_beban_sks_dosen_all(jadwal=jadwal, dosen_list=dosen_list, matakuliah_list=matakuliah_list)
+    beban_dosen = hitung_beban_sks_dosen_all(
+        jadwal=jadwal, 
+        dosen_list=dosen_list, 
+        matakuliah_list=matakuliah_list
+    )
     jadwal_by_dosen = {d['nip']: [] for d in dosen_list}
     jadwal_by_matkul = {m['kode']: [] for m in matakuliah_list}
     jadwal_by_ruangan = {r['kode']: [] for r in ruang_list}
@@ -646,7 +655,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
             if any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)): conflict = True
         else:
             sesi_dosen = next((sesi_dosen for sesi_dosen in jadwal if f"{sesi_dosen.kode_matkul}-AS" == sesi.kode_matkul), None)
-            preferensi_hari = pilihan_hari_asisten[pilihan_hari_dosen.index(sesi_dosen.hari):]
+            preferensi_hari = pilihan_hari_asisten
             preferensi_jam = list(range(7, 19 + 1))
 
         # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
@@ -747,7 +756,12 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         if matkul.get("take_all_lecture") or matkul.get("kelas_online"): continue
 
         if matkul and dosen:
-            beban_pengajar_matkul = {nip: beban_dosen[nip] for nip in matkul.get("dosen_ajar", []) if dosen_by_nip.get(nip, {}).get("prodi") == matkul.get("prodi")}
+            beban_pengajar_matkul = {
+                nip: beban_dosen[nip] 
+                for nip in matkul.get("dosen_ajar", []) 
+                if dosen_by_nip.get(nip, {}).get("prodi") == matkul.get("prodi") 
+                    or dosen_by_nip.get(nip, {}).get("status") == "TIDAK_TETAP"
+            }
 
             if not beban_pengajar_matkul:
                 continue
@@ -1194,7 +1208,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
 
             # Penentuan kelas asistensi yang tidak terintegrasi dengan kelas dosen
             if matkul.get('asistensi') and not matkul.get('integrated_class'):
-                suggested_hari_asisten = pilihan_hari_asisten[pilihan_hari_dosen.index(hari_dosen):]
+                suggested_hari_asisten = pilihan_hari_asisten
                 hari_asisten = random.choice(suggested_hari_asisten)
 
                 ruang_asisten = rand_ruangan(
@@ -1392,7 +1406,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
 
             # Penentuan kelas asistensi yang tidak terintegrasi dengan kelas dosen
             if matkul.get('asistensi') and not matkul.get('integrated_class'):
-                suggested_hari_asisten = pilihan_hari_asisten[pilihan_hari_dosen.index(hari_dosen):]
+                suggested_hari_asisten = pilihan_hari_asisten
                 hari_asisten = random.choice(suggested_hari_asisten)
 
                 ruang_asisten = rand_ruangan(
@@ -1496,10 +1510,10 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     detail_jadwal_matkul = {}
 
     # TO BE CHECKED:
+    # (20)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok           (DONE)
+    # (20)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok             (DONE)
+    # (20)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen        (DONE)
     # (15)  Dosen Tetap Tidak Mengajar                                  >> dosen_nganggur           (DONE)
-    # (15)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok           (DONE)
-    # (15)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok             (DONE)
-    # (15)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen        (DONE)
     # (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib                (DONE)
     # (15)  Solo Team_Teaching                                          >> solo_team
     # (10)  Beban SKS Dosen melebihi 12 sks                             >> dosen_overdosis           (DONE)
@@ -1863,7 +1877,7 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             gen_best_individual = populasi[fitness_scores.index(gen_best_fitness)]
             
             if gen_best_fitness >= best_fitness_global:
-                print(f"{'[ Update  Best ]':<15} {gen} {gen_best_fitness}")
+                print(f"{'[ Update  Best ]':<20} {gen} {gen_best_fitness}")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
 
@@ -1874,23 +1888,26 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 if not isSomeDosenNotSet:
                     break
 
-            if int(gen) % 20 == 0:
+            if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
                 print(f"{f'[Gen {gen}]':<10}[({len(populasi)} population)]")
                 print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {gen_best_fitness:<5}BEST ALLTIME: {best_fitness_global}")
                 hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
                 print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n" if find_missing_course(gen_best_individual, matakuliah_list) else "\n") 
 
-        isSomeDosenNotSet, whoNotSet = is_some_lecture_not_scheduled(gen_best_individual, matakuliah_list, dosen_list)
         print("===== ===== ===== ===== ===== FINAL RES ===== ===== ===== ===== =====")
         print(f"{f'[Last Gen {gen}]':<10}[({len(populasi)} population)]")
-        print(f"{f'':<10}BEST ALLTIME: {best_fitness_global}")
-        hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, detail=True)
-        print(f"{'':<10}Some Dosen Not Set: {isSomeDosenNotSet}" if isSomeDosenNotSet else "") 
-        print(f"{'':<10}Missing: {find_missing_course(best_individual_global, matakuliah_list)}\n" if find_missing_course(best_individual_global, matakuliah_list) else "\n") 
-        score_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, return_detail=True)
+        print(f"{f'BEST ALLTIME':<25}: {best_fitness_global}")
+        if best_fitness_global != 1000:
+            # best_individual_global = repair_jadwal(best_individual_global, matakuliah_list, dosen_list, ruang_list)
+            report_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, return_detail=True)
+            print(f"{f'REPAIRED BEST ALLTIME':<25}: {report_fitness['score']}")
+        else:
+            report_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, return_detail=True)
+        print(f"{'':<5}{'Some Dosen Not Set':<20}: {len(report_fitness['dosen_not_set'])} {report_fitness['dosen_not_set']}" if len(report_fitness["dosen_not_set"]) > 0 else "") 
+        print(f"{'':<5}{'Missing':<20}: {find_missing_course(best_individual_global, matakuliah_list)}\n" if find_missing_course(best_individual_global, matakuliah_list) else "\n") 
     except Exception as e:
         print(f"{'[ GA ]':<25} Error: {e}")
         print(traceback.print_exc())
         return { 'status': False, 'message': e }
     
-    return { 'status': True, 'data': convertOutputToDict(best_individual_global), 'score': score_fitness }
+    return { 'status': True, 'data': convertOutputToDict(best_individual_global), 'score': report_fitness }
