@@ -579,7 +579,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         seen_kode_matkul.add(sesi.kode_matkul)
         matkul = matkul_by_kode.get(sesi.kode_matkul[:5])
 
-        if sesi.tipe_kelas == "ONLINE" or (matkul.get("take_all_lecture") and matkul.get("kelas_online")):
+        if sesi.tipe_kelas == "ONLINE" or (matkul.get("take_all_lecture") and matkul.get("tipe_kelas") == "ONLINE"):
             continue
         
         conflict = False
@@ -761,7 +761,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         if sesi.kode_matkul[5:] == "A": 
             continue
         dosen = dosen_by_nip.get(sesi.kode_dosen)
-        if matkul.get("take_all_lecture") or matkul.get("kelas_online"): continue
+        if matkul.get("take_all_lecture") or matkul.get("tipe_kelas") == "ONLINE": continue
 
         if matkul and dosen:
             beban_pengajar_matkul = {
@@ -1035,7 +1035,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
     max_attempt = 5 # 10
     
     for matkul in matakuliah_list:
-        if matkul.get("kelas_online") and matkul.get("take_all_lecture"):
+        if matkul.get("tipe_kelas") == "ONLINE" and matkul.get("take_all_lecture"):
             index_kelas = 1
             for dosen in dosen_list:
                 if dosen["status"] != "TETAP" or dosen.get("prodi") != matkul.get("prodi"):
@@ -1055,7 +1055,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 )
                 jadwal.append(sesi_dosen)
                 index_kelas += 1
-        elif matkul.get("kelas_online"):
+        elif matkul.get("tipe_kelas") == "ONLINE":
             putaran_kelas = int(matkul.get('jumlah_kelas') or 1)
             index_kelas = 1
             if index_kelas == 1:
@@ -1082,7 +1082,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 index_kelas += 1
                 putaran_kelas -= 1
 
-        if matkul.get("kelas_online") or matkul.get("take_all_lecture"):
+        if matkul.get("tipe_kelas") == "ONLINE" or matkul.get("take_all_lecture"):
             continue
         
         index_kelas = 1
@@ -1663,7 +1663,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
     # CEK KEKURANGAN KAPASITAS TIAP MATKUL
     for kode_matkul, data in detail_jadwal_matkul.items():
         matkul_detail = next((matkul for matkul in matakuliah_list if matkul['kode'] == kode_matkul), None)
-        if matkul_detail.get("take_all_lecture") or matkul_detail.get("kelas_online"): continue
+        if matkul_detail.get("take_all_lecture") or matkul_detail.get("tipe_kelas") == "ONLINE": continue
         
         if matkul_detail:
             if matkul_detail.get('jumlah_kelas') and data['jumlah_kelas'] < matkul_detail['jumlah_kelas']:
