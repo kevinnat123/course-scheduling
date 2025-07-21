@@ -1886,8 +1886,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
-            elif gen_best_fitness >= 950:
-                print(f"{'[ fitness >= 950 ]':<20} {gen} {gen_best_fitness}")
 
             if gen_best_fitness == 1000:
                 isSomeDosenNotSet, whoNotSet = is_some_lecture_not_scheduled(gen_best_individual, matakuliah_list, dosen_list)
