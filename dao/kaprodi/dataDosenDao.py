@@ -131,6 +131,8 @@ class dataDosenDao:
             if params.get('preferensi'):
                 if params['preferensi'].get('value'):
                     params['preferensi'] = {k: v for k, v in params['preferensi'].items() if v}
+                    if "hindari_jam" in params["preferensi"]:
+                        params["preferensi"]["hindari_jam"] = [int(j) for j in params["preferensi"]["hindari_jam"]]
                     params['preferensi'].pop('value', None)
                 else:
                     params.pop('preferensi', None)
@@ -223,7 +225,10 @@ class dataDosenDao:
                     for k, v in dict(params['preferensi']).items():
                         preferensi.append(k)
                         if v:
-                            params[f'preferensi.{k}'] = v
+                            if k == "hindari_jam":
+                                params[f'preferensi.{k}'] = [int(j) for j in v]
+                            else:
+                                params[f'preferensi.{k}'] = v
                         else:
                             unset[f'preferensi.{k}'] = ""
                         params["preferensi"].pop(k, None)
