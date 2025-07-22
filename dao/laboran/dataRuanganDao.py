@@ -20,7 +20,7 @@ class dataRuanganDao:
             )
             for kelas in result['data']:
                 toCheck = copy.deepcopy(session['user']['list_prodi'])
-                toCheck.extend(["GENERAL"])
+                toCheck.extend(["GENERAL", "SPECIFIC"])
                 if kelas.get("plot") and kelas["plot"][0] in toCheck:
                     kelas["prodi"] = kelas["plot"].pop(0) # pop index ke 0
         return result['data'] if result and result.get('status') else []

@@ -109,7 +109,8 @@
         <div class="col">
           <select class="form-select" id="input_prodi">
             <option value="default">-- Pilih Program Studi --</option>
-            <option value="GENERAL">GENERAL</option>
+            <option value="SPECIFIC">-- SPECIFIC --</option>
+            <option value="GENERAL">-- GENERAL --</option>
             {% for prodi in session['user']['list_prodi'] %}
             <option value="{{ prodi }}">{{ prodi }}</option>
             {% endfor %}
@@ -244,7 +245,7 @@
 <script>
   const list_prodi = JSON.parse(
     `{{ session['user']['list_prodi'] | safe }}`.replace(/'/g, '"')
-  ).concat(["default", "GENERAL"]);
+  ).concat(["default", "SPECIFIC", "GENERAL"]);
 
   $(document).ready(function () {
     setTimeout(() => {
