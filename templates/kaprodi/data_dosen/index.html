@@ -549,7 +549,11 @@
     $("#modal-matkul tbody").on("click", "tr", async function () {
       let row = matkul_lov.row(this).data();
       $("#modal-matkul").modal("hide");
-      await addBadge("field_matkul_ajar", "list_matkul_ajar", row.nama);
+      await addBadge(
+        "field_matkul_ajar",
+        "list_matkul_ajar",
+        row.kode + "-" + row.nama
+      );
     });
 
     $("#modal-pakar tbody").on("click", "tr", async function () {
@@ -611,10 +615,19 @@
         data.pakar.forEach((element) => {
           addBadge("field_pakar", "list_pakar", element);
         });
-      if (data.matkul_ajar)
-        data.matkul_ajar.forEach((element) => {
-          addBadge("field_matkul_ajar", "list_matkul_ajar", element);
+      if (data.matkul_ajar) {
+        let filtered_matkul = matkul_lov
+          .data()
+          .toArray()
+          .filter((dataLov) => data.matkul_ajar.includes(dataLov.kode));
+        filtered_matkul.forEach((element) => {
+          addBadge(
+            "field_matkul_ajar",
+            "list_matkul_ajar",
+            element.kode + "-" + element.nama
+          );
         });
+      }
       $(".preferensi_detail").attr("hidden", data.preferensi ? false : true);
       if (data.preferensi) {
         if (data.preferensi.hindari_hari)
@@ -956,7 +969,7 @@
         await addBadge(
           "field_matkul_ajar",
           "list_matkul_ajar",
-          resultKode[0].nama
+          resultKode[0].kode + "-" + resultKode[0].nama
         );
       else if (resultKode.length > 1) {
         let infoData = [];
@@ -967,7 +980,10 @@
 
         if (infoData.length > 1) {
           let selectOptions = resultKode
-            .map((data) => `<option value="${data.nama}">${data.nama}</option>`)
+            .map(
+              (data) =>
+                `<option value="${data.kode}-${data.nama}">${data.kode} - ${data.nama}</option>`
+            )
             .join("");
 
           Swal.fire({
@@ -995,7 +1011,11 @@
             }
           });
         } else
-          addBadge("field_matkul_ajar", "list_matkul_ajar", infoData[0].nama);
+          addBadge(
+            "field_matkul_ajar",
+            "list_matkul_ajar",
+            infoData[0].kode + "-" + infoData[0].nama
+          );
       } else
         await popUpTimer(
           "error",

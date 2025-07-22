@@ -1840,10 +1840,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
     if not ruang_list: print('[ KOSONG ] list ruang')
 
     try:
-        for dosen in dosen_list:
-            kode_matkul = set(matkul["kode"] for matkul in matakuliah_list if matkul["nama"] in dosen.get("matkul_ajar", []))
-            if kode_matkul: dosen["matkul_ajar"] = kode_matkul
-
         for matkul in matakuliah_list:
             kode_dosen = set(dosen["nip"] for dosen in dosen_list if dosen["nama"] in matkul.get("dosen_ajar", []))
             if kode_dosen: matkul["dosen_ajar"] = kode_dosen

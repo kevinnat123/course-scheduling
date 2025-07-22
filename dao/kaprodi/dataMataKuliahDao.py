@@ -137,7 +137,7 @@ class dataMataKuliahDao:
                     if data_dosen and data_dosen.get('status'):
                         data_dosen = data_dosen['data'].get('matkul_ajar') or []
                         if params['nama'] not in data_dosen:
-                            data_dosen.append(params['nama'])
+                            data_dosen.append(params['kode'])
                             self.connection.update_one(
                                 collection_name = db_dosen, 
                                 filter          = {'nama': dosen}, 
@@ -234,14 +234,14 @@ class dataMataKuliahDao:
                     if data_dosen and data_dosen.get('status'):
                         data_dosen = data_dosen['data'].get('matkul_ajar') or []
                         if params['nama'] not in data_dosen:
-                            data_dosen.append(params['nama'])
+                            data_dosen.append(params['kode'])
                             self.connection.update_one(
                                 collection_name = db_dosen, 
                                 filter          = {'nama': dosen}, 
                                 update_data     = {'matkul_ajar': data_dosen}
                             )
                     else:
-                        raise Exception
+                        raise CustomError({ "message": "Data Dosen tidak ditemukan!" })
 
             if len(params.get('dosen_ajar') or []) < len(isExist['data'].get('dosen_ajar') or []):
                 dosen_ajar_lama = isExist['data'].get('dosen_ajar') or []
@@ -255,22 +255,24 @@ class dataMataKuliahDao:
                     )
                     if data_dosen and data_dosen.get('status'):
                         data_dosen = data_dosen['data']
-                        data_dosen['matkul_ajar'].remove(params['nama'])
-                        if data_dosen['matkul_ajar']:
-                            self.connection.update_one(
-                                collection_name = db_dosen, 
-                                filter          = {'nama': dosen}, 
-                                update_data     = {'matkul_ajar': data_dosen["matkul_ajar"]}
-                            )
-                        else:
-                            self.connection.update_one(
-                                collection_name = db_dosen, 
-                                filter          = {'nama': dosen}, 
-                                update_data     = {}, 
-                                unset_data      = {'matkul_ajar': ''}
-                            )
+                        if data_dosen.get("matkul_ajar"):
+                            if params["kode"] in data_dosen["matkul_ajar"]:
+                                data_dosen['matkul_ajar'].remove(params['kode'])
+                            if data_dosen['matkul_ajar']:
+                                self.connection.update_one(
+                                    collection_name = db_dosen, 
+                                    filter          = {'nama': dosen}, 
+                                    update_data     = {'matkul_ajar': data_dosen["matkul_ajar"]}
+                                )
+                            else:
+                                self.connection.update_one(
+                                    collection_name = db_dosen, 
+                                    filter          = {'nama': dosen}, 
+                                    update_data     = {}, 
+                                    unset_data      = {'matkul_ajar': ''}
+                                )
                     else:
-                        raise Exception
+                        raise CustomError({ "message": "Data Dosen tidak ditemukan!" })
                                         
             if res['status'] == True:
                 result.update({ 'message': res['message'] })
@@ -302,7 +304,7 @@ class dataMataKuliahDao:
                 list_kode = [item["kode"] for item in params]
                 list_prodi = [item["prodi"] for item in params]
             else:
-                raise Exception
+                raise CustomError({ "message": "Data Matkul Terpilih tidak ditemukan!" })
             
             if session['user']['role'] == "KAPRODI":
                 if any(prodi != session['user']['prodi'] for prodi in list_prodi):
@@ -319,21 +321,23 @@ class dataMataKuliahDao:
                     )
                     if data_dosen and data_dosen.get('status'):
                         data_dosen = data_dosen['data']
-                        data_dosen['matkul_ajar'].remove(matkul['nama'])
-                        if data_dosen['matkul_ajar']:
-                            self.connection.update_one(
-                                collection_name = db_dosen, 
-                                filter          = {'nama': dosen}, 
-                                update_data     = {'matkul_ajar': data_dosen['matkul_ajar']}
-                            )
-                        else:
-                            self.connection.update_one(
-                                collection_name = db_dosen, 
-                                filter          = {'nama': dosen}, 
-                                update_data     = {}, 
-                                unset_data      = {'matkul_ajar': ""})
+                        if data_dosen.get("matkul_ajar"):
+                            if matkul["kode"] in data_dosen["matkul_ajar"]:
+                                data_dosen['matkul_ajar'].remove(matkul['kode'])
+                            if data_dosen['matkul_ajar']:
+                                self.connection.update_one(
+                                    collection_name = db_dosen, 
+                                    filter          = {'nama': dosen}, 
+                                    update_data     = {'matkul_ajar': data_dosen['matkul_ajar']}
+                                )
+                            else:
+                                self.connection.update_one(
+                                    collection_name = db_dosen, 
+                                    filter          = {'nama': dosen}, 
+                                    update_data     = {}, 
+                                    unset_data      = {'matkul_ajar': ""})
                     else:
-                        raise Exception
+                        raise CustomError({ "message": "Data Dosen tidak ditemukan!" })
             
             res = self.connection.delete_many(
                 collection_name = db_matkul, 

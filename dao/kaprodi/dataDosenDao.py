@@ -61,23 +61,32 @@ class dataDosenDao:
     
     def get_dosen_prodi(self, prodi):
         print(f"{'[ DAO ]':<25} Get Dosen Prodi (Prodi: {prodi})")
-        result = self.connection.find_many(
-            collection_name = db_dosen, 
-            filter          = {
-                    # '$and': [
-                        # {
-                            '$or': [
-                                {'prodi': prodi}, 
-                                {'status': 'TIDAK_TETAP'}
-                            ]
-                        # },
-                        # {
-                        #     'status': { '$ne': 'TIDAK_AKTIF' }
-                        # }
-                    # ]
-                }, 
-            sort            = [ ("status", 1), ("nip", 1) ]
-        )
+        if session["user"]["role"] == "KEPALA PROGRAM STUDI":
+            result = self.connection.find_many(
+                collection_name = db_dosen, 
+                filter          = {
+                        # '$and': [
+                            # {
+                                '$or': [
+                                    {'prodi': prodi}, 
+                                    {'status': 'TIDAK_TETAP'}
+                                ]
+                            # },
+                            # {
+                            #     'status': { '$ne': 'TIDAK_AKTIF' }
+                            # }
+                        # ]
+                    }, 
+                sort            = [ ("status", 1), ("nip", 1) ]
+            )
+        elif session['user']['role'] == "ADMIN":
+            result = self.connection.find_many(
+                collection_name = db_dosen, 
+                filter          = {
+                        'status': { '$ne': 'TIDAK_AKTIF' }
+                    }, 
+                sort            = [ ("status", 1), ("nip", 1) ]
+            )
         if result and result.get('status'):
             for dosen in result['data']:
                 dosen.setdefault('pakar', None)
@@ -133,6 +142,12 @@ class dataDosenDao:
                 accessible_field = [item['pakar'] for item in accessible_field]
                 params['pakar'] = [item for item in params['pakar'] if item in accessible_field]
                 
+            if params.get("matkul_ajar"):
+                temp = []
+                for matkul in params["matkul_ajar"]:
+                    temp.append(matkul.split("-")[0])
+                params["matkul_ajar"] = temp
+            
             params = {k: v for k, v in params.items() if v}
 
             res = self.connection.insert_one(
@@ -142,10 +157,10 @@ class dataDosenDao:
 
             # update matkul
             if params.get('matkul_ajar'):
-                for matkul in params['matkul_ajar']:
+                for kode_matkul in params['matkul_ajar']:
                     exist = self.connection.find_one(
                         collection_name = db_matkul, 
-                        filter          = {"nama": matkul}
+                        filter          = {"kode": kode_matkul}
                     )
                     if exist and exist.get('status'):
                         dosen_ajar_lama = exist['data'].get('dosen_ajar') or []
@@ -153,7 +168,7 @@ class dataDosenDao:
                             dosen_ajar_lama.append(params['nama'])
                             self.connection.update_one(
                                 collection_name = db_matkul, 
-                                filter          = {"nama": matkul}, 
+                                filter          = {"kode": kode_matkul}, 
                                 update_data     = {"dosen_ajar": dosen_ajar_lama}
                             )
 
@@ -233,10 +248,17 @@ class dataDosenDao:
                 unset['pakar'] = ""
                 params.pop('pakar', None)
 
+            if params.get("matkul_ajar"):
+                temp = []
+                for matkul in params.get("matkul_ajar"):
+                    temp.append(matkul.split("-")[0])
+                params["matkul_ajar"] = temp
+            else:
+                params.pop("matkul_ajar", None)
+                unset["matkul_ajar"] = ""
+
             params = {k: v for k, v in params.items() if v}
                 
-            print(params)
-            print(unset)
             res = self.connection.update_one(
                 collection_name = db_dosen, 
                 filter          = {'nip': params['nip']}, 
@@ -246,10 +268,10 @@ class dataDosenDao:
 
             # update matkul
             if params.get('matkul_ajar'):
-                for matkul in params['matkul_ajar']:
+                for kode_matkul in params['matkul_ajar']:
                     exist = self.connection.find_one(
                         collection_name = db_matkul, 
-                        filter          = {"nama": matkul}
+                        filter          = {"kode": kode_matkul}
                     )
                     if exist and exist.get('status'):
                         dosen_ajar_lama = exist['data'].get('dosen_ajar') or []
@@ -257,7 +279,7 @@ class dataDosenDao:
                             dosen_ajar_lama.append(params['nama'])
                             self.connection.update_one(
                                 collection_name = db_matkul, 
-                                filter          = {"nama": matkul}, 
+                                filter          = {"kode": kode_matkul}, 
                                 update_data     = {"dosen_ajar": dosen_ajar_lama}
                             )
 
@@ -266,29 +288,31 @@ class dataDosenDao:
                 matkul_ajar_baru = params.get('matkul_ajar') or []
                 data_dihapus = [dt for dt in matkul_ajar_lama if dt not in matkul_ajar_baru]
 
-                for matkul in data_dihapus:
+                for kode_matkul in data_dihapus:
                     data_matkul = self.connection.find_one(
                         collection_name = db_matkul, 
-                        filter          = {'nama': matkul}
+                        filter          = {'kode': kode_matkul}
                     )
                     if data_matkul and data_matkul.get('status'):
                         old_data = data_matkul['data']
-                        old_data['dosen_ajar'].remove(params['nama'])
-                        if old_data['dosen_ajar']:
-                            self.connection.update_one(
-                                collection_name = db_matkul, 
-                                filter          = {'nama': matkul}, 
-                                update_data     = {'dosen_ajar': old_data['dosen_ajar']}
-                            )
-                        else:
-                            self.connection.update_one(
-                                collection_name = db_matkul, 
-                                filter          = {'nama': matkul}, 
-                                update_data     = {}, 
-                                unset_data      = {'dosen_ajar': ""}
-                            )
+                        if old_data.get("dosen_ajar"):
+                            if params["nama"] in old_data["dosen_ajar"]:
+                                old_data['dosen_ajar'].remove(params['nama'])
+                            if old_data['dosen_ajar']:
+                                self.connection.update_one(
+                                    collection_name = db_matkul, 
+                                    filter          = {'kode': kode_matkul}, 
+                                    update_data     = {'dosen_ajar': old_data['dosen_ajar']}
+                                )
+                            else:
+                                self.connection.update_one(
+                                    collection_name = db_matkul, 
+                                    filter          = {'kode': kode_matkul}, 
+                                    update_data     = {}, 
+                                    unset_data      = {'dosen_ajar': ""}
+                                )
                     else:
-                        raise Exception
+                        raise CustomError({ "message": "Data Matkul tidak ditemukan!" })
             
             if res['status'] == True:
                 result.update({ 'message': res['message'] })
@@ -325,7 +349,7 @@ class dataDosenDao:
                     list_nip = [d['nip'] for d in params]
                     list_prodi = [d['prodi'] for d in params]
                 else:
-                    raise Exception
+                    raise CustomError({ "message": "Data Dosen tidak ditemukan!" })
 
                 if session['user']['role'] == "KEPALA PROGRAM STUDI":
                     if any(prodi != session['user']['prodi'] for prodi in list_prodi):
@@ -355,7 +379,7 @@ class dataDosenDao:
                                     unset_data      = {'dosen_ajar': ""}
                                 )
                         else:
-                            raise Exception
+                            raise CustomError({ "message": "Data Matkul tidak ditemukan!" })
                     
                 res = self.connection.delete_many(
                     collection_name = db_dosen, 
