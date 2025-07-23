@@ -392,18 +392,16 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
     if not bidang or (forAsisten and data_matkul.get("tipe_kelas_asistensi") == "PRAKTIKUM"):
         bidang = data_matkul.get("bidang", [])
 
-    ruangan_utama = []
-    if bidang:
+    ruangan_utama = [
+        r for r in list_ruangan
+        if r["kode"] not in excluded_room
+            and any(plot in r["plot"] for plot in bidang)
+    ]
+    if not ruangan_utama:
         ruangan_utama = [
             r for r in list_ruangan
-            if r["kode"] not in excluded_room
-                and any(plot in r["plot"] for plot in bidang)
+            if any(plot in r["plot"] for plot in bidang)
         ]
-        if not ruangan_utama:
-            ruangan_utama = [
-                r for r in list_ruangan
-                if any(plot in r["plot"] for plot in bidang)
-            ]
     if not ruangan_utama:
         ruangan_utama = [
             r for r in list_ruangan
@@ -589,6 +587,13 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         if not matkul:
             continue
             
+        old_data = {
+            "kode_ruangan": sesi.kode_ruangan, 
+            "hari": sesi.hari, 
+            "jam_mulai": sesi.jam_mulai, 
+            "jam_selesai": sesi.jam_selesai
+        }
+        
         bidang = matkul.get("bidang", []) or []
         if sesi.tipe_kelas == "INTERNATIONAL": 
             bidang = bidang + ["INTERNATIONAL"]
@@ -598,7 +603,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
         # IF DOSEN: 
         #   - TENTUKAN LIST DOSEN PAKAR, CEK BEBAN SKS DOSEN, CEK BENTROK JADWAL DOSEN, CEK LANGGAR PREFERENSI
         # IF ASISTEN:
-        #   - CARI SESI DOSEN, CEK BENTROK JADWAL DOSEN x ASISTEN
+        #   - CARI SESI DOSEN
         # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
         if sesi.kode_dosen != "AS":
             dosen = dosen_by_nip.get(sesi.kode_dosen)
@@ -649,7 +654,8 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
             if sesi.hari == sesi_dosen.hari:
                 if sesi.jam_mulai < sesi_dosen.jam_selesai and sesi.jam_selesai > sesi_dosen.jam_mulai:
                     conflict = True
-            preferensi_hari, preferensi_jam = pilihan_hari_asisten, list(range(7, 19 + 1))
+            preferensi_hari = pilihan_hari_asisten
+            preferensi_jam = list(range(7, 19 + 1))
 
         # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
         # CHECK BENTROK JADWAL RUANGAN
@@ -989,7 +995,7 @@ def repair_jadwal(jadwal, matakuliah_list, dosen_list, ruang_list):
                 hindari_jam_pengganti = calon_dosen_pengganti.get("preferensi", {}).get("hindari_jam", [])
                 if sesi.hari in hindari_hari_pengganti: continue
                 if any(jam in hindari_jam_pengganti for jam in range(sesi.jam_mulai, sesi.jam_selesai)): continue
-                for sesi_lain in jadwal_by_dosen.get(nip, []):
+                for sesi_lain in jadwal_by_dosen[nip]:
                     if sesi.hari == sesi_lain.hari:
                         if sesi.jam_mulai < sesi_lain.jam_selesai and sesi.jam_selesai > sesi_lain.jam_mulai:
                             continue
@@ -1834,10 +1840,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
     if not ruang_list: print('[ KOSONG ] list ruang')
 
     try:
-        for dosen in dosen_list:
-            if dosen.get("preferensi") and dosen["preferensi"].get("hindari_jam"):
-                dosen["preferensi"]["hindari_jam"] = [int(j) for j in dosen["preferensi"]["hindari_jam"]]
-        
         for matkul in matakuliah_list:
             kode_dosen = set(dosen["nip"] for dosen in dosen_list if dosen["nama"] in matkul.get("dosen_ajar", []))
             if kode_dosen: matkul["dosen_ajar"] = kode_dosen
@@ -1895,7 +1897,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
 
             if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
                 print(f"{f'[Gen {gen}]':<10}[({len(populasi)} population)]")
-                print(f"{f'[Gen {gen}]':<10}All Fitness: {fitness_scores}")
                 print(f"{f'[Gen {gen}]':<10}Worst: {min(fitness_scores):<5}Best: {gen_best_fitness:<5}BEST ALLTIME: {best_fitness_global}")
                 hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
                 print(f"{'':<5}Missing: {find_missing_course(gen_best_individual, matakuliah_list)}\n" if find_missing_course(gen_best_individual, matakuliah_list) else "\n") 
