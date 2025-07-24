@@ -48,16 +48,6 @@ BOBOT_PENALTI = {
     "istirahat": 5,
 }
 
-def is_some_lecture_not_scheduled(jadwal_list=None, matakuliah_list=[], dosen_list=[]):
-    matkul_take_all_lecture = [matkul["kode"] for matkul in matakuliah_list if matkul.get("take_all_lecture")]
-    scheduled_dosen = set(sesi.kode_dosen for sesi in jadwal_list if sesi.kode_matkul[:5] not in matkul_take_all_lecture)
-    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP")
-    all_dosen_tetap_scheduled = all(dosen in scheduled_dosen for dosen in set_dosen_tetap)
-    if not all_dosen_tetap_scheduled:
-        return True, [dosen for dosen in set_dosen_tetap if dosen not in scheduled_dosen]
-    else:
-        return False, []
-
 def convertOutputToDict(jadwal_list):
     """
     Menkonversi object jadwal menjadi dictionary.
@@ -95,6 +85,16 @@ def safe_remove_LO(mapping, key, item):
 def move_item_LO(mapping, old_key, new_key, item):
     safe_remove_LO(mapping, old_key, item)
     safe_append_LO(mapping, new_key, item)
+
+def is_some_lecture_not_scheduled(jadwal_list=None, matakuliah_list=[], dosen_list=[]):
+    matkul_take_all_lecture = [matkul["kode"] for matkul in matakuliah_list if matkul.get("take_all_lecture")]
+    scheduled_dosen = set(sesi.kode_dosen for sesi in jadwal_list if sesi.kode_matkul[:5] not in matkul_take_all_lecture)
+    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP")
+    all_dosen_tetap_scheduled = all(dosen in scheduled_dosen for dosen in set_dosen_tetap)
+    if not all_dosen_tetap_scheduled:
+        return True, [dosen for dosen in set_dosen_tetap if dosen not in scheduled_dosen]
+    else:
+        return False, []
 
 def find_available_schedule(jadwal:list, kode:str, hari:str):
     """
@@ -386,23 +386,12 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
     if not bidang or (forAsisten and data_matkul.get("tipe_kelas_asistensi") == "PRAKTIKUM"):
         bidang = data_matkul.get("bidang", [])
 
+    # 1. Define ruangan utama
     ruangan_utama = []
     if bidang:
         ruangan_utama = [
             r for r in list_ruangan
-            if r["kode"] not in excluded_room
-                and any(plot in r["plot"] for plot in bidang)
-        ]
-        if not ruangan_utama:
-            ruangan_utama = [
-                r for r in list_ruangan
-                if any(plot in r["plot"] for plot in bidang)
-            ]
-    if not ruangan_utama:
-        ruangan_utama = [
-            r for r in list_ruangan
-            if r["kode"] not in excluded_room
-                and any(plot in r["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
+            if any(plot in r["plot"] for plot in bidang)
         ]
     if not ruangan_utama:
         ruangan_utama = [
@@ -410,6 +399,7 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
             if any(plot in r["plot"] for plot in ["GENERAL", data_matkul["prodi"]])
         ]
 
+    # 2. Sesuaikan tipe ruangan
     if not forAsisten:
         kandidat_ruangan = [
             r for r in ruangan_utama 
@@ -420,18 +410,16 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
 
         if data_matkul.get("asistensi", False):
             if data_matkul.get("tipe_kelas_asistensi", None) == "PRAKTIKUM":
-                max_kapasitas_lab = max(
-                    [ 
-                        r["kapasitas"] for r in list_ruangan 
-                        if r["tipe_ruangan"] == "PRAKTIKUM" 
-                    ] or [40]
-                )
-                kandidat_ruangan = [
-                    r for r in kandidat_ruangan 
-                    if r["kapasitas"] < max_kapasitas_lab
+                list_kapasitas_lab = [ 
+                    r["kapasitas"] for r in list_ruangan 
+                    if r["tipe_ruangan"] == "PRAKTIKUM" 
                 ]
-                if not kandidat_ruangan:
-                    kandidat_ruangan = ruangan_utama
+                if list_kapasitas_lab:
+                    max_kapasitas_lab = max(list_kapasitas_lab)
+                    kandidat_ruangan = [
+                        r for r in kandidat_ruangan 
+                        if r["kapasitas"] <= max_kapasitas_lab
+                    ]
     elif forAsisten:
         kandidat_ruangan = [
             r for r in ruangan_utama 
@@ -443,18 +431,18 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
                 r for r in ruangan_utama 
                 if r["kapasitas"] >= kapasitas_ruangan_dosen
             ]
-        if not kandidat_ruangan:
-            kandidat_ruangan = ruangan_utama
     
     if not kandidat_ruangan:
         if ruangan_utama:
-            print(f"💣 Random Ruangan Return Random Ruangan Utama {data_matkul['kode'], data_matkul['nama']}")
             return random.choice(ruangan_utama)
         else:
-            print(f"💣 Random Ruangan Return Random List Ruangan (tanpa cek plot) {data_matkul['kode'], data_matkul['nama']}")
             return random.choice(list_ruangan)
     
     if len(kandidat_ruangan) > 1:
+        not_excluded_room = [r for r in kandidat_ruangan if r["kode"] not in excluded_room]
+        if not_excluded_room:
+            kandidat_ruangan = not_excluded_room
+
         kapasitas_ruangan = [r["kapasitas"] for r in kandidat_ruangan if r["tipe_ruangan"] not in ["RAPAT"]]
         max_kapasitas = max(kapasitas_ruangan)
 
@@ -666,24 +654,34 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
         is_asisten = sesi.kode_dosen == "AS"
         if not is_asisten:
             is_missmatch_type = sesi.tipe_kelas != "INTERNATIONAL" and ruangan.get("tipe_ruangan") != matkul.get("tipe_kelas")
+            international_miss = sesi.tipe_kelas == "INTERNATIONAL" and matkul.get("tipe_kelas") == "TEORI" and sesi.tipe_kelas not in ruangan.get("tipe_ruangan")
             class_type_needed = matkul.get("tipe_kelas")
         else:
             is_missmatch_type = sesi.tipe_kelas != "INTERNATIONAL" and ruangan.get("tipe_ruangan") != matkul.get("tipe_kelas_asistensi")
+            international_miss = sesi.tipe_kelas == "INTERNATIONAL" and matkul.get("tipe_kelas_asistensi") == "TEORI" and sesi.tipe_kelas not in ruangan.get("tipe_ruangan")
             class_type_needed = matkul.get("tipe_kelas_asistensi")
         is_missmatch_plot = not any(bidang in plot_ruangan for bidang in bidang_matkul)
 
         sukses = True
         if is_missmatch_plot or is_missmatch_type:
-            roomWithPlot = [
-                r for r in ruang_list
-                if (
-                    (is_missmatch_plot and any(plot in bidang_matkul for plot in r.get("plot")))
-                    or (is_missmatch_type and r.get("tipe_ruangan") == class_type_needed)
-                )
-            ]
+            if international_miss:
+                roomWithPlot = [
+                    r for r in ruang_list
+                    if sesi.tipe_kelas in r.get("plot", [])
+                ]
+            else:
+                roomWithPlot = [
+                    r for r in ruang_list
+                    if (
+                        (is_missmatch_plot and any(plot in bidang_matkul for plot in r.get("plot")))
+                        or (is_missmatch_type and r.get("tipe_ruangan") == class_type_needed)
+                    )
+                ]
 
             isRoomWithPlotExist = len(roomWithPlot)
             if isRoomWithPlotExist == 0:
+                continue
+            elif international_miss and not any(sesi.tipe_kelas in r.get("plot", []) for r in roomWithPlot):
                 continue
             elif not any(room.get("tipe_ruangan") == class_type_needed for room in roomWithPlot):
                 continue
@@ -1706,6 +1704,9 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                     if sesi.tipe_kelas != "INTERNATIONAL" and info_ruangan.get("tipe_ruangan") != info_matkul.get("tipe_kelas"):
                         hitung_salah_tipe_kelas += 1
                         penalti += BOBOT_PENALTI["tipe_ruang_salah"]
+                    elif sesi.tipe_kelas == "INTERNATIONAL" and info_matkul.get("tipe_kelas") == "TEORI" and "INTERNATIONAL" not in info_ruangan.get("plot", []):
+                        hitung_salah_tipe_kelas += 1
+                        penalti += BOBOT_PENALTI["tipe_ruang_salah"]
                     
                     # CEK BENTROK DOSEN
                     for sesi_lain in jadwal_dosen[sesi.kode_dosen]:
@@ -1730,6 +1731,10 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                         elif pelanggaran_hari or pelanggaran_jam:
                             pelanggaran_preferensi.append({"kode_dosen": sesi.kode_dosen, "kode_matkul": sesi.kode_matkul, "hari": sesi.hari, "jam_mulai": sesi.jam_mulai, "jam_selesai": sesi.jam_selesai})
                             penalti += (BOBOT_PENALTI['melanggar_preferensi'])
+
+                    # HITUNG TOTAL KAPASITAS
+                    detail_jadwal_matkul[kode_matkul]['jumlah_kelas'] += 1
+                    detail_jadwal_matkul[kode_matkul]['kapasitas_total'] += sesi.kapasitas
 
                 # CEK SOLO TEAM
                 if sesi.team_teaching:
@@ -1774,11 +1779,6 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                                         elif pelanggaran_hari or pelanggaran_jam:
                                             pelanggaran_preferensi.append({"kode_dosen": sesi_team.kode_dosen, "kode_matkul": sesi_team.kode_matkul, "hari": sesi_team.hari, "jam_mulai": sesi_team.jam_mulai, "jam_selesai": sesi_team.jam_selesai})
                                             penalti += (BOBOT_PENALTI['melanggar_preferensi'])
-                
-                if sesi.kode_ruangan != "ONLINE":
-                    # HITUNG TOTAL KAPASITAS
-                    detail_jadwal_matkul[kode_matkul]['jumlah_kelas'] += 1
-                    detail_jadwal_matkul[kode_matkul]['kapasitas_total'] += sesi.kapasitas
 
                 # CEK EKSISTENSI KELAS ASISTEN
                 if info_matkul.get('asistensi') and not info_matkul.get('integrated_class'):
@@ -1795,6 +1795,9 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                         hitung_kelas_asisten_missing += 1
             else:
                 if sesi.tipe_kelas != "INTERNATIONAL" and sesi.tipe_kelas != info_matkul.get("tipe_kelas_asistensi"):
+                    hitung_salah_tipe_kelas += 1
+                    penalti += BOBOT_PENALTI["tipe_ruang_salah"]
+                elif sesi.tipe_kelas == "INTERNATIONAL" and info_matkul.get("tipe_kelas_asistensi") == "TEORI" and "INTERNATIONAL" not in info_ruangan.get("plot", []):
                     hitung_salah_tipe_kelas += 1
                     penalti += BOBOT_PENALTI["tipe_ruang_salah"]
                     
@@ -2056,7 +2059,7 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 asisten_bentrok = gen_fitness_report.get("bentrok_dosen_asdos") > 0
                 solo_team = len(gen_fitness_report.get("solo_team_teaching", {}).keys()) > 0
                 if not (dosen_bentrok or ruangan_bentrok or asisten_bentrok or solo_team):
-                    print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
+                    print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness} ( Unique: {len(unique_fitness)}/{len(populasi)} )")
                     best_fitness_global = gen_best_fitness
                     best_individual_global = copy.deepcopy(gen_best_individual)
 
