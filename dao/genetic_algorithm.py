@@ -638,62 +638,37 @@ def distribute_sks(jadwal, matkul_by_kode, dosen_by_nip, beban_dosen, jadwal_by_
                     break
 
 def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, matkul_by_kode, ruang_by_kode, dosen_by_nip):
-    max_attempt = 10
-    possible_day = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]
+    max_attempt = 10    
     for sesi in jadwal:
         if sesi.tipe_kelas == "ONLINE": continue
         
         matkul = matkul_by_kode.get(sesi.kode_matkul[:5])
         ruangan = ruang_by_kode.get(sesi.kode_ruangan)
 
+        isAsisten = sesi.kode_dosen == "AS"
         bidang_matkul = matkul.get("bidang", [])
-        if sesi.tipe_kelas == "INTERNATIONAL" and not (sesi.kode_dosen == "AS" and matkul.get("tipe_kelas_asistensi") == "PRAKTIKUM"): 
+        
+        needed_class_type = matkul.get("tipe_kelas_asistensi") if isAsisten else matkul.get("tipe_kelas")
+        if sesi.tipe_kelas == "INTERNATIONAL" and needed_class_type == "TEORI": 
             bidang_matkul = bidang_matkul + ["INTERNATIONAL"]
         plot_ruangan = ruangan.get("plot", [])
 
-        is_asisten = sesi.kode_dosen == "AS"
-        if not is_asisten:
-            is_missmatch_type = sesi.tipe_kelas != "INTERNATIONAL" and ruangan.get("tipe_ruangan") != matkul.get("tipe_kelas")
-            international_miss = sesi.tipe_kelas == "INTERNATIONAL" and matkul.get("tipe_kelas") == "TEORI" and sesi.tipe_kelas not in ruangan.get("tipe_ruangan")
-            class_type_needed = matkul.get("tipe_kelas")
-        else:
-            is_missmatch_type = sesi.tipe_kelas != "INTERNATIONAL" and ruangan.get("tipe_ruangan") != matkul.get("tipe_kelas_asistensi")
-            international_miss = sesi.tipe_kelas == "INTERNATIONAL" and matkul.get("tipe_kelas_asistensi") == "TEORI" and sesi.tipe_kelas not in ruangan.get("tipe_ruangan")
-            class_type_needed = matkul.get("tipe_kelas_asistensi")
-        is_missmatch_plot = not any(bidang in plot_ruangan for bidang in bidang_matkul)
-
         sukses = True
-        if is_missmatch_plot or is_missmatch_type:
-            if international_miss:
-                roomWithPlot = [
-                    r for r in ruang_list
-                    if sesi.tipe_kelas in r.get("plot", [])
-                ]
-            else:
-                roomWithPlot = [
-                    r for r in ruang_list
-                    if (
-                        (is_missmatch_plot and any(plot in bidang_matkul for plot in r.get("plot")))
-                        or (is_missmatch_type and r.get("tipe_ruangan") == class_type_needed)
-                    )
-                ]
-
+        if not any(bidang in plot_ruangan for bidang in bidang_matkul):
+            roomWithPlot = [ruangan for ruangan in ruang_list if any(plot in bidang_matkul for plot in ruangan["plot"])]
             isRoomWithPlotExist = len(roomWithPlot)
-            if isRoomWithPlotExist == 0:
-                continue
-            elif international_miss and not any(sesi.tipe_kelas in r.get("plot", []) for r in roomWithPlot):
-                continue
-            elif not any(room.get("tipe_ruangan") == class_type_needed for room in roomWithPlot):
-                continue
+            if isRoomWithPlotExist > 0:
+                sukses = False
+            
+            if sukses: continue
 
             old_kode_ruangan = sesi.kode_ruangan
 
-            qty = next((sesi_dosen.kapasitas for sesi_dosen in jadwal if sesi_dosen.kode_matkul == sesi.kode_matkul[:-3]), 0) if is_asisten else 0
-            preferensi_hari = possible_day[:]
-            if not is_asisten:
+            qty = next((sesi_dosen.kapasitas for sesi_dosen in jadwal if sesi_dosen.kode_matkul == sesi.kode_matkul[:-3]), 0) if isAsisten else 0
+            preferensi_hari = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]
+            if not isAsisten:
                 preferensi_hari.remove("SABTU")
                 dosen = dosen_by_nip.get(sesi.kode_dosen)
-                
                 preferensi_dosen = dosen.get("preferensi", {}) or {}
                 preferensi_hari = [hari for hari in preferensi_hari if hari not in preferensi_dosen.get('hindari_hari', [])]
                 preferensi_jam = [jam for jam in range(7, 19 + 1) if jam not in preferensi_dosen.get('hindari_jam', [])]
@@ -701,14 +676,13 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
             attempt = 1
             excluded_room = []
             while not sukses and attempt <= max_attempt:
-                if all(room["kode"] in excluded_room for room in roomWithPlot): 
-                    break
+                if all(room["kode"] in excluded_room for room in roomWithPlot): break
                 ruang_pengganti = rand_ruangan(
                     list_ruangan=roomWithPlot, 
                     data_matkul=matkul,
                     bidang=bidang_matkul,
                     excluded_room=excluded_room,
-                    forAsisten=is_asisten,
+                    forAsisten=isAsisten,
                     kapasitas_ruangan_dosen=qty
                 )
 
@@ -723,7 +697,7 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
                 while not all(hari in excluded_day for hari in preferensi_hari):
                     hari = random.choice([hari for hari in preferensi_hari if hari not in excluded_day])
 
-                    if not is_asisten:
+                    if not isAsisten:
                         jadwal_dosen_kosong = find_available_schedule(
                             jadwal=jadwal_by_dosen,
                             kode=sesi.kode_dosen,
@@ -749,7 +723,7 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
                             sesi.jam_mulai = jam
                             sesi.jam_selesai = jam + sesi.sks_akademik
 
-                            if not is_asisten:
+                            if not isAsisten:
                                 move_item_LO(jadwal_by_dosen, sesi.kode_dosen, sesi.kode_dosen, sesi)
 
                             move_item_LO(jadwal_by_ruangan, old_kode_ruangan, sesi.kode_ruangan, sesi)
@@ -1704,7 +1678,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                     if sesi.tipe_kelas != "INTERNATIONAL" and info_ruangan.get("tipe_ruangan") != info_matkul.get("tipe_kelas"):
                         hitung_salah_tipe_kelas += 1
                         penalti += BOBOT_PENALTI["tipe_ruang_salah"]
-                    elif sesi.tipe_kelas == "INTERNATIONAL" and info_matkul.get("tipe_kelas") == "TEORI" and "INTERNATIONAL" not in info_ruangan.get("plot", []):
+                    elif sesi.tipe_kelas == "INTERNATIONAL" and info_matkul.get("tipe_kelas") == "TEORI" and sesi.tipe_kelas not in info_ruangan.get("plot", []):
                         hitung_salah_tipe_kelas += 1
                         penalti += BOBOT_PENALTI["tipe_ruang_salah"]
                     
@@ -1965,6 +1939,7 @@ def mutasi(individu, matakuliah_list, ruang_list, peluang_mutasi=0.1):
                 ruang_pengganti = rand_ruangan(
                     list_ruangan=ruang_list,
                     data_matkul=matkul,
+                    bidang=sesi.tipe_kelas if sesi.tipe_kelas == "INTERNATIONAL" else None,
                     forAsisten=is_asisten,
                     kapasitas_ruangan_dosen=kapasitas_ruangan_dosen
                 )
