@@ -118,14 +118,14 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
         dosen_by_prodi[prodi].append(dosen["nip"])
     # Grouping dosen by NIP
     dosen_by_nip = {d['nip']: d for d in dosen_list}
+    # Grouping matkul by kode
+    matkul_by_kode = {m['kode']: m for m in matakuliah_list}
     # Hitung beban sks dosen
     beban_dosen = ga.hitung_beban_sks_dosen_all(
         jadwal=object_jadwal, 
         dosen_list=dosen_list, 
-        matakuliah_list=matakuliah_list
+        matkul_by_kode=matkul_by_kode
     )
-    # Grouping dosen by NIP
-    matkul_by_kode = {m['kode']: m for m in matakuliah_list}
 
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
     # Sheet 1 - Beban SKS Dosen
