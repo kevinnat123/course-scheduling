@@ -552,13 +552,13 @@ def switch_dosen_by_matkul(
     detail_matkul = matkul_by_kode.get(target_matkul, {})
     for sesi in jadwal_by_matkul.get(target_matkul, []):
         if sesi.kode_matkul[5:] == "A":
-            if dosen.get("prodi") != detail_matkul.get("prodi"):
+            if data_dosen.get("prodi") != detail_matkul.get("prodi"):
                 continue
         if (sesi.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai))) and not forced:
             continue
 
         old_dosen = sesi.kode_dosen
-        new_dosen = dosen["nip"]
+        new_dosen = data_dosen["nip"]
         sesi.kode_dosen = new_dosen
 
         beban_dosen[old_dosen] = hitung_beban_sks_dosen_specific(
