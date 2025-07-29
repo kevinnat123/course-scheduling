@@ -1097,6 +1097,7 @@ def repair_jadwal_soft(jadwal, matakuliah_list, dosen_list, ruang_list):
     fix_lecturer_preference_violations(
         dosen_list=dosen_list,
         jadwal_by_dosen=jadwal_by_dosen,
+        jadwal_by_ruangan=jadwal_by_ruangan,
         dosen_by_nip=dosen_by_nip,
         matkul_by_kode=matkul_by_kode,
         pilihan_hari_dosen=pilihan_hari_dosen
@@ -1141,7 +1142,8 @@ def repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list):
         jadwal_by_dosen     = jadwal_by_dosen,
         jadwal_by_matkul    = jadwal_by_matkul, 
         jadwal_by_ruangan   = jadwal_by_ruangan,
-        matkul_by_kode      = matkul_by_kode
+        matkul_by_kode      = matkul_by_kode,
+        dosen_by_nip        = dosen_by_nip
     )
 
     distribute_sks(
@@ -1190,6 +1192,7 @@ def repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list):
     fix_lecturer_preference_violations(
         dosen_list          = dosen_list, 
         jadwal_by_dosen     = jadwal_by_dosen, 
+        jadwal_by_ruangan   = jadwal_by_ruangan,
         dosen_by_nip        = dosen_by_nip, 
         matkul_by_kode      = matkul_by_kode, 
         pilihan_hari_dosen  = pilihan_hari_dosen
