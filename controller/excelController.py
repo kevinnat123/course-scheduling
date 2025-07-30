@@ -99,6 +99,13 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
         'bg_color': "#ffd438",
         'bottom': 1
     })
+    format_beban = workbook.add_format({
+        'bg_color': "#c4a01c"
+    })
+    format_beban_with_bottom = workbook.add_format({
+        'bg_color': "#c4a01c",
+        'bottom': 1
+    })
     format_error = workbook.add_format({
         'bg_color': '#ff0000'
     })
@@ -157,9 +164,13 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
             row += 1
             if beban_dosen[nip] > 20:
                 format = format_error
+            elif beban_dosen[nip] > 12:
+                format = format_beban
+            elif beban_dosen[nip] > 12 and row == last_row:
+                format = format_beban
             elif beban_dosen[nip] == 0 and row == last_row:
                 format = format_warning_with_bottom
-            elif beban_dosen[nip] == 0 or beban_dosen[nip] > 12:
+            elif beban_dosen[nip] == 0:
                 format = format_warning
             elif row == last_row:
                 format = format_bottom
