@@ -76,6 +76,8 @@ class mataKuliahPilihanDao:
                raise CustomError({ 'message': 'Input Angkatan belum diisi!', 'target': 'input_angkatan' })
             if not params.get('jumlah_mahasiswa') and not params.get('angkatan') == 'ALL':
                 raise CustomError({ 'message': 'Jumlah Mahasiswa Aktif belum diisi!', 'target': 'input_mhsAktif' })
+            if not params.get("prodi"):
+                raise CustomError({ 'message': 'Program Studi belum diisi!', 'target': 'input_prodi' })
             if not params.get('list_matkul'):
                 raise CustomError({ 'message': 'Belum ada matkul yang dibuka untuk semester ini!', 'target': 'input_matkul' })
 
@@ -159,6 +161,8 @@ class mataKuliahPilihanDao:
                 raise CustomError({ 'message': 'Input Angkatan belum diisi!', 'target': 'input_angkatan' })
             if not params.get('jumlah_mahasiswa') and not params.get('angkatan') == 'ALL':
                 raise CustomError({ 'message': 'Jumlah Mahasiswa Aktif belum diisi!', 'target': 'input_mhsAktif' })
+            if not params.get("prodi"):
+                raise CustomError({ 'message': 'Program Studi belum diisi!', 'target': 'input_prodi' })
             if not params.get('list_matkul'):
                 raise CustomError({ 'message': 'Belum ada matkul yang dibuka untuk semester ini!', 'target': 'input_matkul' })
 
