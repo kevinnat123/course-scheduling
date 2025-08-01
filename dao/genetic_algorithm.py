@@ -76,6 +76,9 @@ def convertOutputToDict(jadwal_list):
 
     return jadwal
 
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+# FUNCTION PENDUKUNG
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 def safe_append_LO(mapping, key, item):
     if item not in mapping.setdefault(key, []):
         mapping[key].append(item)
@@ -358,28 +361,35 @@ def check_dosen_availability(data_dosen:dict, matkul_by_kode:dict, jadwal_by_dos
         return False, estimated_number_of_class
     
     jadwal_dosen = jadwal_by_dosen.get(nip, [])
-    jadwal_dosen = [sesi for sesi in jadwal_dosen if not matkul_by_kode.get(sesi.kode_matkul[:5], {}).get("take_all_lecture")]
+    jadwal_dosen = [
+        sesi for sesi in jadwal_dosen 
+        if sesi.kode_matkul[:5] in matkul_by_kode and not matkul_by_kode.get(sesi.kode_matkul[:5]).get("take_all_lecture", False)
+    ]
 
     if len(jadwal_dosen) < estimated_number_of_class:
         return True, estimated_number_of_class
     else:
         return False, estimated_number_of_class
 
-def define_prioritize_dosen(dosen_pakar:list, matkul_by_kode:dict, dosen_by_nip:dict, beban_dosen:dict, jadwal_by_dosen:dict, pilihan_hari:list):    
+def define_prioritize_dosen(dosen_pakar:list, matkul_by_kode:dict, jadwal_by_dosen:dict):    
+    dosen_pakar_by_nip = {d["nip"]: d for d in dosen_pakar}
+
     nip_with_both_preference = [
         d["nip"] for d in dosen_pakar 
         if d.get("preferensi") and d["preferensi"].get("hindari_jam") and d["preferensi"].get("hindari_hari")
     ]
     nip_with_either_preference = [
         d["nip"] for d in dosen_pakar 
-        if d.get("preferensi") and d["nip"] not in nip_with_both_preference
+        if d.get("preferensi") and (
+            not d["preferensi"].get("hindari_jam") or not d["preferensi"].get("hindari_hari")
+        )
     ]
     
-    def filter_nip_prioritas(data_list):
+    def filter_nip_prioritas(list_nip):
         return [
             d for d in dosen_pakar
-            if d["nip"] in data_list and
-                check_dosen_availability(dosen_by_nip.get(d["nip"], {}), matkul_by_kode, jadwal_by_dosen)
+            if d["nip"] in list_nip and
+                check_dosen_availability(dosen_pakar_by_nip.get(d["nip"], {}), matkul_by_kode, jadwal_by_dosen)[0]
         ]
     
     prioritas = filter_nip_prioritas(nip_with_both_preference)
@@ -408,7 +418,7 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_d
         # 1. Dosen Tetap dan Sesuai Prodi dengan beban sks 0
         kandidat_dosen = [
             dosen for dosen in list_dosen_pakar
-            if dict_beban_sks_dosen[dosen['nip']] == 0
+            if dict_beban_sks_dosen.get(dosen['nip'], 0) == 0
                 and dosen["status"] == "TETAP"
                 and dosen.get("prodi") == data_matkul.get("prodi")
         ]
@@ -417,34 +427,34 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  dict_beban_sks_d
         if not kandidat_dosen:
             kandidat_dosen = [
                 dosen for dosen in list_dosen_pakar
-                if dict_beban_sks_dosen[dosen['nip']] == 0
+                if dict_beban_sks_dosen.get(dosen['nip'], 0) == 0
                     and dosen["status"] == "TIDAK_TETAP"
             ]
 
         # 3. Dosen dengan beban < beban maksimum yang ada
         if not kandidat_dosen:
             list_beban_sks_dosen = [
-                dict_beban_sks_dosen[d["nip"]] for d in list_dosen_pakar
+                dict_beban_sks_dosen.get(d["nip"], 0) for d in list_dosen_pakar
             ]
             max_beban = max(list_beban_sks_dosen or [0])
 
             if any(sks_dosen < max_beban for sks_dosen in list_beban_sks_dosen):
                 kandidat_dosen = [
                     dosen for dosen in list_dosen_pakar
-                    if dict_beban_sks_dosen[dosen['nip']] < max_beban 
+                    if dict_beban_sks_dosen.get(dosen['nip'], 0) < max_beban 
                 ]
             else:
                 kandidat_dosen = [
                     dosen for dosen in list_dosen_pakar
-                    if dict_beban_sks_dosen[dosen['nip']] <= max_beban 
+                    if dict_beban_sks_dosen.get(dosen['nip'], 0) <= max_beban 
                 ]
 
             # 3a. Prioritaskan dosen prodi / tidak tetap dengan total beban sks <= 12
-            sks_matkul = (1/3 * data_matkul["sks_akademik"]) * 2
+            sks_matkul = (data_matkul["sks_akademik"]/3) * 2
             prioritize = [
                 d for d in kandidat_dosen
                 if (d.get("prodi") == data_matkul.get("prodi") or d["status"] == "TIDAK_TETAP")
-                and dict_beban_sks_dosen[d["nip"]] + sks_matkul <= 12
+                and dict_beban_sks_dosen.get(d["nip"], 0) + sks_matkul <= 12
             ]
             if prioritize:
                 kandidat_dosen = prioritize
@@ -523,11 +533,24 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
         kapasitas_ruangan = [r["kapasitas"] for r in kandidat_ruangan if r["tipe_ruangan"] not in ["RAPAT"]]
         max_kapasitas = max(kapasitas_ruangan)
 
+        def calc_bobot_kandidat_ruangan(data_ruang):
+            plot_prodi = [data_matkul["prodi"], "GENERAL"]
+            exceed_minimum_kapasitas = data_ruang["kapasitas"] > max_kapasitas*0.75
+            is_ruang_rapat = data_ruang["tipe_ruangan"] == "RAPAT"
+
+            eq_bidang = len(set(data_ruang.get("plot", [])) & set(bidang))*10 or 1
+            eq_prodi = 10 if any(plot in data_ruang.get("plot", []) for plot in plot_prodi) else 1
+            eq_kapasitas = data_ruang["kapasitas"] if exceed_minimum_kapasitas else 0
+
+            bobot = (eq_bidang * eq_prodi * eq_kapasitas) if not is_ruang_rapat else 1
+            if "INTERNATIONAL" not in bidang:
+                expected_tipe = data_matkul.get("tipe_kelas") if not forAsisten else data_matkul.get("tipe_kelas_asistensi")
+                eq_tipe = 10 if data_ruang.get("tipe_ruangan") == expected_tipe else 1
+                bobot *= eq_tipe
+            return bobot
+
         bobot_kandidat_ruangan = [
-            ((len(set(r.get("plot", [])) & set(bidang))*10 or 1) * 
-                (10 if any(plot in r.get("plot", []) for plot in [data_matkul["prodi"], "GENERAL"]) else 1) * 
-                (r["kapasitas"] if r["kapasitas"] > max_kapasitas*0.75 else 0))
-            if r["tipe_ruangan"] not in ["RAPAT"] else 1
+            calc_bobot_kandidat_ruangan(r)
             for r in kandidat_ruangan
         ]
 
@@ -538,6 +561,109 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
         return ruangan_terpilih
     elif len(kandidat_ruangan) == 1:
         return kandidat_ruangan[0]
+
+def repair_schedule_on_spot(target:object, dosen_by_nip:dict, matkul_by_kode:dict, ruang_list:list, jadwal_by_ruangan:list, jadwal_by_dosen:list, jadwal_by_matkul:list):
+    max_attempt = 10
+
+    is_asisten = target.kode_dosen == "AS"
+    dosen = dosen_by_nip.get(target.kode_dosen, {})
+    matkul = matkul_by_kode.get(target.kode_matkul[:5], {})
+    bidang = matkul.get("bidang", []) or []
+    if target.tipe_kelas == "INTERNATIONAL": 
+        bidang = bidang + ["INTERNATIONAL"]
+
+    preferensi_hari, preferensi_jam = define_dosen_preference(dosen)
+    if is_asisten:
+        preferensi_hari += ["SABTU"]
+        sesi_dosen = next(
+            (
+                sd for sd in jadwal_by_matkul.get(target.kode_matkul[:5], []) 
+                if f"{sd.kode_matkul}-AS" == target.kode_matkul
+            ), None
+        )
+    else:
+        sesi_dosen = None
+
+    sukses = False
+    attempt = 1
+    excluded_day= []
+    excluded_room = []
+    while attempt <= max_attempt:
+        if target.hari not in preferensi_hari:
+            safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
+            safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+            target.hari = random.choice(preferensi_hari)
+            safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
+            safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+        
+        possible_schedule = find_available_schedule(jadwal_by_ruangan, target.kode_ruangan, target.hari)
+
+        if not is_asisten:
+            possible_lecture_schedule = find_available_schedule(jadwal_by_dosen, target.kode_dosen, target.hari)
+            possible_schedule = list(set(possible_schedule) & set(possible_lecture_schedule))
+
+            if target.team_teaching:
+                for sesi_team in jadwal_by_matkul.get(target.kode_matkul[:5], []):
+                    if sesi_team.kode_matkul == target.kode_matkul and sesi_team.kode_dosen != target.kode_dosen:
+                        possible_team_schedule = find_available_schedule(jadwal_by_dosen, sesi_team.kode_dosen, target.hari)
+                        possible_schedule = list(set(possible_schedule) & set(possible_team_schedule))
+        
+        for jam in possible_schedule:
+            range_waktu = range(jam, jam + target.sks_akademik + 1)
+            if not is_asisten:
+                additional_condition = all(jam in preferensi_jam for jam in range_waktu)
+            else:
+                additional_condition = not (
+                    target.hari == sesi_dosen.hari and 
+                    jam < sesi_dosen.jam_selesai and 
+                    (jam + target.sks_akademik) > sesi_dosen.jam_mulai
+                )
+            
+            if all(jam in possible_schedule for jam in range_waktu) and additional_condition:
+                sukses = True
+                safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
+                safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+                target.jam_mulai = jam
+                target.jam_selesai = jam + target.sks_akademik
+                safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
+                safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+                break
+
+        if sukses:
+            break
+        else:
+            excluded_day.append(target.hari)
+            if all(hari in excluded_day for hari in preferensi_hari):
+                excluded_day = []
+                excluded_room.append(target.kode_ruangan)
+                kapasitas_dosen = (sesi_dosen.kapasitas or 0) if is_asisten and sesi_dosen else 0
+
+                ruang_pengganti = rand_ruangan(
+                    list_ruangan=ruang_list, 
+                    data_matkul=matkul, 
+                    bidang=bidang, 
+                    excluded_room=excluded_room,
+                    forAsisten=is_asisten,
+                    kapasitas_ruangan_dosen=kapasitas_dosen
+                )
+
+                safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+                target.kode_ruangan = ruang_pengganti["kode"]
+                target.kapasitas = ruang_pengganti["kapasitas"]
+                safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+            else:
+                preferensi_hari = [d for d in preferensi_hari if d not in excluded_day]
+
+                safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
+                safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+                target.hari = random.choice(preferensi_hari)
+                safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
+                safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
+                
+        attempt += 1
+        
+    if not is_asisten and target.team_teaching:
+        sync_team_teaching(sesi_dosen=target, jadwal=jadwal_by_matkul.get(target.kode_matkul[:5], []), jadwal_dosen=jadwal_by_dosen, jadwal_ruangan=jadwal_by_ruangan)
 
 def switch_dosen_by_matkul(
         jadwal:list, 
@@ -556,7 +682,7 @@ def switch_dosen_by_matkul(
         if sesi.kode_matkul[5:] == "A":
             if data_dosen.get("prodi") != detail_matkul.get("prodi"):
                 continue
-        if (sesi.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai))) and not forced:
+        if (sesi.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1))) and not forced:
             continue
 
         old_dosen = sesi.kode_dosen
@@ -573,6 +699,9 @@ def switch_dosen_by_matkul(
         move_item_LO(jadwal_by_dosen, old_dosen, new_dosen, sesi)
         break
 
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+# RELATED FUNCTION ke MAIN FUNCTION
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 def assign_schedule_for_idle_lecturers(
         jadwal, 
         dosen_list, 
@@ -638,7 +767,7 @@ def assign_teaching_partners(jadwal, jadwal_by_dosen, matakuliah_list, matkul_by
                 if team.kode_matkul == sesi.kode_matkul and team.kode_dosen != sesi.kode_dosen
             ]) + 1
 
-            if count_dosen > 1:
+            if count_dosen > matkul_by_kode.get(sesi.kode_matkul[:5], {}).get("jumlah_dosen", 1):
                 continue
 
             sesi_team = next((team for team in jadwal if team.kode_matkul == sesi.kode_matkul), None)
@@ -670,7 +799,7 @@ def assign_teaching_partners(jadwal, jadwal_by_dosen, matakuliah_list, matkul_by
                     hari=sesi.hari
                 )
 
-                range_time = range(sesi.jam_mulai, sesi.jam_selesai)
+                range_time = range(sesi.jam_mulai, sesi.jam_selesai + 1)
                 if all(jam in jadwal_kosong_team_pengganti for jam in range_time):
                     old_nip = sesi_team.kode_dosen
                     sesi_team.kode_dosen = team_pengganti["nip"]
@@ -690,12 +819,13 @@ def distribute_sks(jadwal, matkul_by_kode, dosen_by_nip, beban_dosen, jadwal_by_
             continue
 
         matkul = matkul_by_kode.get(sesi.kode_matkul[:5])
-        if dosen_by_nip.get(sesi.kode_dosen, {}).get("prodi") != matkul.get("prodi") or dosen_by_nip.get(sesi.kode_dosen, {}).get("status") not in ["TETAP", "TIDAK_TETAP"]:
+        if matkul.get("take_all_lecture") or matkul.get("tipe_kelas") == "ONLINE": 
+            continue
+        if dosen_by_nip.get(sesi.kode_dosen, {}).get("status") not in ["TETAP", "TIDAK_TETAP"] or dosen_by_nip.get(sesi.kode_dosen, {}).get("prodi") != matkul.get("prodi"):
             continue
         if sesi.kode_matkul[5:] == "A": 
             continue
         dosen = dosen_by_nip.get(sesi.kode_dosen)
-        if matkul.get("take_all_lecture") or matkul.get("tipe_kelas") == "ONLINE": continue
 
         if matkul and dosen:
             beban_pengajar_matkul = {
@@ -721,7 +851,7 @@ def distribute_sks(jadwal, matkul_by_kode, dosen_by_nip, beban_dosen, jadwal_by_
                 ]
 
                 for sesi_over in jadwal_beban_tertinggi:
-                    if sesi_over.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi_over.jam_mulai, sesi_over.jam_selesai)):
+                    if sesi_over.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi_over.jam_mulai, sesi_over.jam_selesai + 1)):
                         continue
 
                     if sesi_over.kode_matkul[5:] == "A":
@@ -840,21 +970,94 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
                         excluded_room.append(ruang_pengganti["kode"])
                         attempt += 1
                         break
+                    
+            if not isAsisten and sesi.team_teaching:
+                sync_team_teaching(sesi, jadwal, jadwal_by_dosen, jadwal_by_ruangan)
 
-def fix_lecturer_preference_violations(dosen_list, jadwal_by_dosen, jadwal_by_ruangan, dosen_by_nip, matkul_by_kode, pilihan_hari_dosen):
+def fix_lecturer_preference_violations(dosen_list, jadwal_by_dosen, jadwal_by_ruangan, jadwal_by_matkul, dosen_by_nip, matkul_by_kode, pilihan_hari_dosen):
     for dosen in dosen_list:
-        if not jadwal_by_dosen.get(dosen["nip"], []): 
+        if not jadwal_by_dosen.get(dosen["nip"]): 
             continue
         
+        _, availability_dosen = check_dosen_availability(dosen, matkul_by_kode, jadwal_by_dosen)
         preferensi_hari, preferensi_jam = define_dosen_preference(dosen)
         
         for sesi in jadwal_by_dosen.get(dosen["nip"], []):
-            if sesi.hari in preferensi_hari and all(jam in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)):
+            if sesi.hari in preferensi_hari and all(jam in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1)):
                 continue
 
-            dosen_ajar = matkul_by_kode.get(sesi.kode_matkul[:5], {}).get("dosen_ajar", [])
-            old_dosen = sesi.kode_dosen
+            matkul = matkul_by_kode.get(sesi.kode_matkul[:5], {})
+
             sukses = False
+            for sesi_lain in jadwal_by_ruangan.get(sesi.kode_ruangan, []):
+                if sesi is sesi_lain or sesi.kode_matkul == sesi_lain.kode_matkul:
+                    continue
+
+                # Saling cek apakah bentrok dengan jadwal current dan target
+                range_waktu = range(sesi_lain.jam_mulai, sesi_lain.jam_selesai + 1)
+                jadwal_current_dosen = jadwal_by_dosen.get(dosen["nip"], [])
+                if sesi_lain.hari not in preferensi_hari or any(j not in preferensi_jam for j in range_waktu) or any(
+                    sesi_lain.hari == sl.hari and sesi_lain.jam_selesai > sl.jam_mulai and sesi_lain.jam_mulai < sl.jam_selesai
+                    for sl in jadwal_current_dosen
+                ):
+                    continue
+
+                sesi_lain_is_asisten = sesi_lain.kode_dosen == "AS"
+                if not sesi_lain_is_asisten:
+                    dosen_target = dosen_by_nip.get(sesi_lain.kode_dosen, {})
+                    _, availability_dosen_target = check_dosen_availability(dosen_target, matkul_by_kode, jadwal_by_dosen)
+                    # Kalau dosen lain lebih ketat, continue
+                    if availability_dosen_target < availability_dosen:
+                        continue
+                    preferensi_hari_target, preferensi_jam_target = define_dosen_preference(dosen_by_nip.get(sesi_lain.kode_dosen, {}))
+                    range_waktu_target = range(sesi.jam_mulai, sesi.jam_selesai + 1)
+                    jadwal_dosen_target = jadwal_by_dosen.get(sesi_lain.kode_dosen, [])
+                    if sesi.hari not in preferensi_hari_target or any(j not in preferensi_jam_target for j in range_waktu_target) or any(
+                        sesi.hari == sl.hari and sesi.jam_selesai > sl.jam_mulai and sesi.jam_mulai < sl.jam_selesai
+                        for sl in jadwal_dosen_target
+                    ):
+                        continue
+                
+                current_ruangan, target_ruangan = sesi.kode_ruangan, sesi_lain.kode_ruangan
+                current_kapasitas, target_kapasitas = sesi.kapasitas, sesi_lain.kapasitas
+                current_hari, target_hari = sesi.hari, sesi_lain.hari
+                current_jam_mulai, target_jam_mulai = sesi.jam_mulai, sesi_lain.jam_mulai
+                current_jam_selesai, target_jam_selesai = sesi.jam_selesai, sesi_lain.jam_selesai
+
+                safe_remove_LO(jadwal_by_dosen, sesi.kode_dosen, sesi)
+                safe_remove_LO(jadwal_by_dosen, sesi_lain.kode_dosen, sesi_lain)
+                safe_remove_LO(jadwal_by_ruangan, sesi.kode_ruangan, sesi)
+                safe_remove_LO(jadwal_by_ruangan, sesi_lain.kode_ruangan, sesi_lain)
+
+                sesi.kode_ruangan = target_ruangan
+                sesi.kapasitas = target_kapasitas
+                sesi.hari = target_hari
+                sesi.jam_mulai = target_jam_mulai
+                sesi.jam_selesai = target_jam_selesai
+
+                sesi_lain.kode_ruangan = current_ruangan
+                sesi_lain.kapasitas = current_kapasitas
+                sesi_lain.hari = current_hari
+                sesi_lain.jam_mulai = current_jam_mulai
+                sesi_lain.jam_selesai = current_jam_selesai
+
+                safe_append_LO(jadwal_by_dosen, sesi.kode_dosen, sesi)
+                safe_append_LO(jadwal_by_dosen, sesi_lain.kode_dosen, sesi_lain)
+                safe_append_LO(jadwal_by_ruangan, sesi.kode_ruangan, sesi)
+                safe_append_LO(jadwal_by_ruangan, sesi_lain.kode_ruangan, sesi_lain)
+
+                sukses = True
+                break
+
+            if sesi.team_teaching:
+                sync_team_teaching(sesi, jadwal_by_matkul.get(sesi.kode_matkul[:5], []), jadwal_by_dosen, jadwal_by_ruangan)
+            if sesi_lain.team_teaching:
+                sync_team_teaching(sesi_lain, jadwal_by_matkul.get(sesi_lain.kode_matkul[:5], []), jadwal_by_dosen, jadwal_by_ruangan)
+            if sukses:
+                continue
+            
+            dosen_ajar = matkul.get("dosen_ajar", [])
+            old_dosen = sesi.kode_dosen
             for nip in dosen_ajar:
                 if nip == dosen["nip"]:
                     continue
@@ -863,23 +1066,21 @@ def fix_lecturer_preference_violations(dosen_list, jadwal_by_dosen, jadwal_by_ru
                     continue
 
                 hindari_hari_pengganti, hindari_jam_pengganti = define_dosen_preference(calon_dosen_pengganti)
-                if sesi.hari in hindari_hari_pengganti or any(jam in hindari_jam_pengganti for jam in range(sesi.jam_mulai, sesi.jam_selesai)): 
+                if sesi.hari in hindari_hari_pengganti or any(jam in hindari_jam_pengganti for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1)): 
                     continue
                 
-                for sesi_lain in jadwal_by_dosen.get(nip, []):
-                    if sesi.hari == sesi_lain.hari:
-                        if sesi.jam_mulai < sesi_lain.jam_selesai and sesi.jam_selesai > sesi_lain.jam_mulai:
-                            continue
-                        sesi.kode_dosen = nip
-                        sukses = True
-                        break
-                if sukses: 
+                jadwal_target = jadwal_by_dosen.get(nip, [])
+                if all(
+                    sesi.hari != sl.hari or sesi.jam_selesai <= sl.jam_mulai or sesi.jam_mulai >= sl.jam_selesai
+                    for sl in jadwal_target
+                ):
+                    sesi.kode_dosen = nip
+                    sukses = True
                     break
             if sukses:
                 move_item_LO(jadwal_by_dosen, old_dosen, sesi.kode_dosen, sesi)
 
 def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by_nip, dosen_by_matkul, pilihan_hari_dosen, pilihan_hari_asisten, beban_dosen, jadwal_by_dosen, jadwal_by_matkul, jadwal_by_ruangan):
-    max_attempt = 10
     seen_kode_matkul = set()
     for sesi in jadwal:
         if sesi.kode_matkul in seen_kode_matkul:
@@ -920,7 +1121,11 @@ def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by
                 if dosen_pakar:
                     old_dosen = sesi.kode_dosen
                     safe_remove_LO(jadwal_by_dosen, old_dosen, sesi)
-                    sesi.kode_dosen = rand_dosen_pakar(list_dosen_pakar=dosen_pakar, data_matkul=matkul, dict_beban_sks_dosen=beban_dosen)["nip"]
+                    sesi.kode_dosen = rand_dosen_pakar(
+                        list_dosen_pakar=dosen_pakar, 
+                        data_matkul=matkul, 
+                        dict_beban_sks_dosen=beban_dosen
+                    )["nip"]
                     beban_dosen[old_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=old_dosen, matkul_by_kode=matkul_by_kode)
                     beban_dosen[sesi.kode_dosen] = hitung_beban_sks_dosen_specific(jadwal=jadwal, kode_dosen=sesi.kode_dosen, matkul_by_kode=matkul_by_kode)
                     safe_append_LO(jadwal_by_dosen, sesi.kode_dosen, sesi)
@@ -938,7 +1143,7 @@ def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by
             # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
             # CHECK LANGGAR PREFERENSI
             # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-            if sesi.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai)): 
+            if sesi.hari not in preferensi_hari or any(jam not in preferensi_jam for jam in range(sesi.jam_mulai, sesi.jam_selesai + 1)): 
                 conflict = True
                 target = sesi
         else:
@@ -956,7 +1161,9 @@ def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by
             if sesi is not sesi_lain and sesi.kode_matkul != sesi_lain.kode_matkul and sesi.hari == sesi_lain.hari:
                 if sesi.jam_mulai < sesi_lain.jam_selesai and sesi.jam_selesai > sesi_lain.jam_mulai:
                     conflict = True
-                    if sesi_lain.kode_dosen == "AS":
+                    if sesi.kode_dosen == "AS":
+                        target = sesi
+                    elif sesi_lain.kode_dosen == "AS":
                         target = sesi_lain
                         sesi_dosen = next((sd for sd in jadwal_by_matkul.get(sesi_lain.kode_matkul[:5], []) if f"{sd.kode_matkul}-AS" == sesi_lain.kode_matkul), None)
                     else: # IF DOSEN
@@ -977,92 +1184,24 @@ def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by
         if not conflict:
             continue
 
-        matkul = matkul_by_kode.get(target.kode_matkul[:5], {})
-        bidang = matkul.get("bidang", []) or []
-        if target.tipe_kelas == "INTERNATIONAL": 
-            bidang = bidang + ["INTERNATIONAL"]
-
         # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
         # WHILE CONFLICT
         #   - CARI POSSIBLE SCHEDULE UNTUK DIGANTI
         #   - CEK APAKAH RANGE WAKTU MULAI - SELESAI ADA DI POSSIBLE SCHEDULE
         #   - JIKA TIDAK, GANTI HARI or GANTI RUANGAN
         # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-        attempt = 1
-        excluded_day = []
-        excluded_room = []
-        while conflict and attempt <= max_attempt:
-            if target.hari not in preferensi_hari:
-                safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
-                safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                target.hari = random.choice(preferensi_hari)
-                safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
-                safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                
-            possible_schedule = find_available_schedule(jadwal_by_ruangan, target.kode_ruangan, target.hari)
-            if target.kode_dosen != "AS":
-                possible_lecture_schedule = find_available_schedule(jadwal_by_dosen, target.kode_dosen, target.hari)
-                possible_schedule = list(set(possible_schedule) & set(possible_lecture_schedule))
+        repair_schedule_on_spot(
+            target=target, 
+            dosen_by_nip=dosen_by_nip, 
+            matkul_by_kode=matkul_by_kode, 
+            ruang_list=ruang_list, 
+            jadwal_by_ruangan=jadwal_by_ruangan, 
+            jadwal_by_dosen=jadwal_by_dosen, 
+            jadwal_by_matkul=jadwal_by_matkul)
 
-                if target.team_teaching:
-                    for sesi_team in jadwal_by_matkul.get(target.kode_matkul[:5], []):
-                        if sesi_team.kode_matkul == target.kode_matkul and sesi_team.kode_dosen != target.kode_dosen:
-                            possible_team_schedule = find_available_schedule(jadwal_by_dosen, sesi_team.kode_dosen, target.hari)
-                            possible_schedule = list(set(possible_schedule) & set(possible_team_schedule))
-
-            for jam in possible_schedule:
-                range_waktu = range(jam, jam + target.sks_akademik + 1)
-                if target.kode_dosen != "AS":
-                    additional_condition = all(jam in preferensi_jam for jam in range_waktu)
-                else:
-                    additional_condition = not (target.hari == sesi_dosen.hari and jam < sesi_dosen.jam_selesai and (jam + matkul['sks_akademik']) > sesi_dosen.jam_mulai)
-                
-                if all(jam in possible_schedule for jam in range_waktu) and additional_condition:
-                    conflict = False
-                    safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
-                    safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                    target.jam_mulai = jam
-                    target.jam_selesai = jam + target.sks_akademik
-                    safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
-                    safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                    break
-                
-            if not conflict:
-                if target.kode_dosen != "AS":
-                    if target.team_teaching:
-                        sync_team_teaching(sesi_dosen=target, jadwal=jadwal, jadwal_dosen=jadwal_by_dosen, jadwal_ruangan=jadwal_by_ruangan)
-                break
-            else:
-                excluded_day.append(target.hari)
-                if all(hari in excluded_day for hari in preferensi_hari):
-                    excluded_day = []
-                    excluded_room.append(target.kode_ruangan)
-                    isAsisten = target.kode_dosen == "AS"
-                    kapasitas_dosen = (sesi_dosen.kapasitas or 0) if isAsisten and sesi_dosen else 0
-                    
-                    ruang_pengganti = rand_ruangan(
-                        list_ruangan=ruang_list, 
-                        data_matkul=matkul, 
-                        bidang=bidang, 
-                        excluded_room=excluded_room,
-                        forAsisten=isAsisten,
-                        kapasitas_ruangan_dosen=kapasitas_dosen
-                    )
-
-                    safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                    target.kode_ruangan = ruang_pengganti["kode"]
-                    target.kapasitas = ruang_pengganti["kapasitas"]
-                    safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                else:
-                    preferensi_hari = [d for d in preferensi_hari if d not in excluded_day]
-                    safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
-                    safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-                    target.hari = random.choice(preferensi_hari)
-                    safe_append_LO(jadwal_by_dosen, target.kode_dosen, target)
-                    safe_append_LO(jadwal_by_ruangan, target.kode_ruangan, target)
-            
-            attempt += 1
-
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+# FUNCTION of GA's STEPs
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 def repair_jadwal(jadwal, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list):
     if random.random() < probabilitas_agresif_repair:
         return repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list)
@@ -1095,21 +1234,6 @@ def repair_jadwal_soft(jadwal, matakuliah_list, dosen_list, ruang_list):
             safe_append_LO(jadwal_by_dosen, sesi.kode_dosen, sesi)
         safe_append_LO(jadwal_by_matkul, sesi.kode_matkul[:5], sesi)
 
-    repair_bentrok(
-        jadwal=jadwal,
-        matakuliah_list=matakuliah_list,
-        ruang_list=ruang_list,
-        matkul_by_kode=matkul_by_kode,
-        dosen_by_nip=dosen_by_nip,
-        dosen_by_matkul=dosen_by_matkul,
-        pilihan_hari_dosen=pilihan_hari_dosen,
-        pilihan_hari_asisten=pilihan_hari_asisten,
-        beban_dosen=beban_dosen,
-        jadwal_by_dosen=jadwal_by_dosen,
-        jadwal_by_matkul=jadwal_by_matkul,
-        jadwal_by_ruangan=jadwal_by_ruangan
-    )
-
     fix_room_mismatch(
         jadwal=jadwal,
         jadwal_by_dosen=jadwal_by_dosen,
@@ -1124,9 +1248,25 @@ def repair_jadwal_soft(jadwal, matakuliah_list, dosen_list, ruang_list):
         dosen_list=dosen_list,
         jadwal_by_dosen=jadwal_by_dosen,
         jadwal_by_ruangan=jadwal_by_ruangan,
+        jadwal_by_matkul=jadwal_by_matkul,
         dosen_by_nip=dosen_by_nip,
         matkul_by_kode=matkul_by_kode,
         pilihan_hari_dosen=pilihan_hari_dosen
+    )
+
+    repair_bentrok(
+        jadwal=jadwal,
+        matakuliah_list=matakuliah_list,
+        ruang_list=ruang_list,
+        matkul_by_kode=matkul_by_kode,
+        dosen_by_nip=dosen_by_nip,
+        dosen_by_matkul=dosen_by_matkul,
+        pilihan_hari_dosen=pilihan_hari_dosen,
+        pilihan_hari_asisten=pilihan_hari_asisten,
+        beban_dosen=beban_dosen,
+        jadwal_by_dosen=jadwal_by_dosen,
+        jadwal_by_matkul=jadwal_by_matkul,
+        jadwal_by_ruangan=jadwal_by_ruangan
     )
 
     return jadwal
@@ -1159,6 +1299,16 @@ def repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list):
         jadwal_by_dosen[sesi.kode_dosen].append(sesi)
         jadwal_by_matkul[sesi.kode_matkul[:5]].append(sesi)
 
+    fix_room_mismatch(
+        jadwal              = jadwal,
+        jadwal_by_dosen     = jadwal_by_dosen,
+        jadwal_by_ruangan   = jadwal_by_ruangan,
+        ruang_list          = ruang_list,
+        matkul_by_kode      = matkul_by_kode,
+        ruang_by_kode       = ruang_by_kode,
+        dosen_by_nip        = dosen_by_nip
+    )
+
     assign_schedule_for_idle_lecturers(
         jadwal              = jadwal, 
         dosen_list          = dosen_list,
@@ -1181,6 +1331,25 @@ def repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list):
         matakuliah_list = matakuliah_list
     )
 
+    assign_teaching_partners(
+        jadwal          = jadwal,
+        jadwal_by_dosen = jadwal_by_dosen,
+        matakuliah_list = matakuliah_list,
+        matkul_by_kode  = matkul_by_kode,
+        dosen_by_matkul = dosen_by_matkul,
+        beban_dosen     = beban_dosen
+    )
+
+    fix_lecturer_preference_violations(
+        dosen_list          = dosen_list, 
+        jadwal_by_dosen     = jadwal_by_dosen, 
+        jadwal_by_ruangan   = jadwal_by_ruangan,
+        jadwal_by_matkul=jadwal_by_matkul,
+        dosen_by_nip        = dosen_by_nip, 
+        matkul_by_kode      = matkul_by_kode, 
+        pilihan_hari_dosen  = pilihan_hari_dosen
+    )
+
     repair_bentrok(
         jadwal              = jadwal,
         matakuliah_list     = matakuliah_list,
@@ -1194,34 +1363,6 @@ def repair_jadwal_hard(jadwal, matakuliah_list, dosen_list, ruang_list):
         jadwal_by_dosen     = jadwal_by_dosen,
         jadwal_by_matkul    = jadwal_by_matkul,
         jadwal_by_ruangan   = jadwal_by_ruangan
-    )
-    
-    assign_teaching_partners(
-        jadwal          = jadwal,
-        jadwal_by_dosen = jadwal_by_dosen,
-        matakuliah_list = matakuliah_list,
-        matkul_by_kode  = matkul_by_kode,
-        dosen_by_matkul = dosen_by_matkul,
-        beban_dosen     = beban_dosen
-    )
-    
-    fix_room_mismatch(
-        jadwal              = jadwal,
-        jadwal_by_dosen     = jadwal_by_dosen,
-        jadwal_by_ruangan   = jadwal_by_ruangan,
-        ruang_list          = ruang_list,
-        matkul_by_kode      = matkul_by_kode,
-        ruang_by_kode       = ruang_by_kode,
-        dosen_by_nip        = dosen_by_nip
-    )
-    
-    fix_lecturer_preference_violations(
-        dosen_list          = dosen_list, 
-        jadwal_by_dosen     = jadwal_by_dosen, 
-        jadwal_by_ruangan   = jadwal_by_ruangan,
-        dosen_by_nip        = dosen_by_nip, 
-        matkul_by_kode      = matkul_by_kode, 
-        pilihan_hari_dosen  = pilihan_hari_dosen
     )
     
     return jadwal
@@ -1284,7 +1425,11 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 dosen_pakar = dosen_by_matkul.get(matkul["kode"], {}).get("pakar")
 
             while putaran_kelas > 0:
-                dosen = rand_dosen_pakar(list_dosen_pakar=dosen_pakar, data_matkul=matkul, dict_beban_sks_dosen=beban_dosen)
+                dosen = rand_dosen_pakar(
+                    list_dosen_pakar=dosen_pakar, 
+                    data_matkul=matkul, 
+                    dict_beban_sks_dosen=beban_dosen
+                )
                 sesi_dosen = JadwalKuliah(
                     kapasitas       = 0,
                     kode_matkul     = f"{matkul['kode']}{angka_ke_huruf(index_kelas)}",
@@ -1777,7 +1922,7 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
                 for sesi_lain in jadwal_ruangan[sesi.kode_ruangan]:
                     if sesi.hari == sesi_lain['hari']:
                         if sesi.jam_mulai < sesi_lain['jam_selesai'] and sesi.jam_selesai > sesi_lain['jam_mulai']:
-                            set_ruang_bentrok.add(sesi.kode_matkul)
+                            set_ruang_bentrok.add(frozenset({sesi.kode_matkul: sesi.kode_ruangan}.items()))
                             penalti += BOBOT_PENALTI['ruangan_bentrok']
                             hitung_ruangan_bentrok += 1
                 jadwal_ruangan[sesi.kode_ruangan].append({'hari': sesi.hari, 'jam_mulai': sesi.jam_mulai, 'jam_selesai': sesi.jam_selesai})
@@ -1904,8 +2049,8 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
 
     if detail:
         if hitung_dosen_overdose: print(f"{'':<10}{'Dosen Overdose':<40} : {hitung_dosen_overdose}")
-        if hitung_dosen_bentrok: print(f"{'':<10}{'Bentrok Dosen':<40} : {hitung_dosen_bentrok}")
-        if hitung_ruangan_bentrok: print(f"{'':<10}{'Bentrok Ruangan':<40} : {hitung_ruangan_bentrok}")
+        if hitung_dosen_bentrok: print(f"{'':<10}{'Bentrok Dosen':<40} : {hitung_dosen_bentrok} {[value for item in set_dosen_bentrok for _, value in dict(item).items()]}")
+        if hitung_ruangan_bentrok: print(f"{'':<10}{'Bentrok Ruangan':<40} : {hitung_ruangan_bentrok} {[value for item in set_ruang_bentrok for _, value in dict(item).items()]}")
         if hitung_asdos_nabrak_dosen: print(f"{'':<10}{'Bentrok Dosen-Asdos':<40} : {hitung_asdos_nabrak_dosen}")
         if hitung_diluar_jam_kerja: print(f"{'':<10}{'Kelas Diluar Jam Kerja':<40} : {hitung_diluar_jam_kerja}")
         if hitung_kelas_dosen_missing: print(f"{'':<10}{'Kelas Dosen Missing':<40} : {hitung_kelas_dosen_missing}")
@@ -1918,11 +2063,8 @@ def hitung_fitness(jadwal, matakuliah_list, dosen_list, ruang_list, detail=False
         if whoNotSet: print(f"{'':<10}{'dosen tidak mengajar':<40} : {whoNotSet}")
 
     if return_detail:
-        list_dosen_bentrok = list()
-        list_ruang_bentrok = list(set_ruang_bentrok)
-        for item in set_dosen_bentrok:
-            d = dict(item)
-            list_dosen_bentrok.append(d)
+        list_dosen_bentrok = [dict(item) for item in set_dosen_bentrok]
+        list_ruang_bentrok = [dict(item) for item in set_ruang_bentrok]
         data_return = {
             "score": max(0, 1000 - penalti),
             "dosen_overdose": hitung_dosen_overdose,
@@ -1992,7 +2134,7 @@ def crossover(parent1: object, parent2: object):
     child2 = parent2[:titik2] + parent1[titik1:]
     return child1, child2
 
-def mutasi(individu, matakuliah_list, ruang_list, peluang_mutasi=0.1):
+def mutasi(individu, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi=0.1):
     """
     Melakukan mutasi pada individu (jadwal) secara acak berdasarkan peluang yang ditentukan.
 
@@ -2009,30 +2151,31 @@ def mutasi(individu, matakuliah_list, ruang_list, peluang_mutasi=0.1):
         list: Individu yang telah mengalami mutasi (bisa sama atau berbeda).
     """
     
-    pilihan_hari_dosen = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT"]
-    pilihan_hari_asisten = copy.deepcopy(pilihan_hari_dosen)
-    pilihan_hari_asisten.append("SABTU")
-    pilihan_waktu = range(7, 19 + 1)
+    pilihan_hari_asisten = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]
     max_attempt = 10
 
     for sesi in individu:
-        matkul = matakuliah_list.get(sesi.kode_matkul[:5], {})
+        if sesi.team_teaching:
+            continue
+        matkul = matkul_by_kode.get(sesi.kode_matkul[:5], {})
+        preferensi_hari, preferensi_jam = define_dosen_preference(dosen_by_nip.get(sesi.kode_dosen, {}))
         if matkul.get("online") or matkul.get("take_all_lecture"):
             continue
         if sesi.tipe_kelas == "ONLINE": continue
         
         if random.random() < peluang_mutasi:
             # Randomly mutate hari, jam, atau ruangan
-            attr = random.choice(['hari', 'jam', 'ruang'])
+            mutation_target = ['hari', 'jam', 'ruang']
+            attr = random.choice(mutation_target)
 
-            if attr == 'hari':
-                sesi.hari = random.choice(pilihan_hari_dosen) if sesi.kode_dosen != "AS" else random.choice(pilihan_hari_asisten)
-            elif attr == 'jam':
+            if 'hari' in attr:
+                sesi.hari = random.choice(preferensi_hari) if sesi.kode_dosen != "AS" else random.choice(pilihan_hari_asisten)
+            elif 'jam' in attr:
                 success= False
                 attempt = 1
                 while not success and attempt <= max_attempt:
-                    jam_mulai = random.choice(pilihan_waktu)
-                    if jam_mulai + sesi.sks_akademik <= max(pilihan_waktu):
+                    jam_mulai = random.choice(preferensi_jam)
+                    if jam_mulai + sesi.sks_akademik <= max(preferensi_jam):
                         sesi.jam_mulai = jam_mulai
                         sesi.jam_selesai = jam_mulai + sesi.sks_akademik
                         success = True
@@ -2040,20 +2183,27 @@ def mutasi(individu, matakuliah_list, ruang_list, peluang_mutasi=0.1):
                     attempt += 1
                 if not success:
                     sesi.jam_mulai, sesi.jam_selesai = 7, 7 + sesi.sks_akademik
-            elif attr == 'ruang':
+            elif 'ruang' in attr:
                 is_asisten = sesi.kode_dosen == "AS"
                 kapasitas_ruangan_dosen = next((sesi_dosen.kapasitas for sesi_dosen in individu if sesi_dosen.kode_matkul == sesi.kode_matkul[:-3]), 0) if is_asisten else 0
+                
+                bidang = matkul.get("bidang", [])
+                if sesi.tipe_kelas == "INTERNATIONAL":
+                    bidang = bidang + ["INTERNATIONAL"]
                 
                 ruang_pengganti = rand_ruangan(
                     list_ruangan=ruang_list,
                     data_matkul=matkul,
-                    bidang=sesi.tipe_kelas if sesi.tipe_kelas == "INTERNATIONAL" else None,
+                    bidang=bidang,
                     forAsisten=is_asisten,
                     kapasitas_ruangan_dosen=kapasitas_ruangan_dosen
                 )
                 sesi.kode_ruangan = ruang_pengganti['kode']
     return individu
 
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+# MAIN GA's FUNCTION
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=75, jumlah_generasi=100, peluang_mutasi=0.1):
     """
     Melakukan mutasi pada individu (jadwal) secara acak berdasarkan peluang yang ditentukan.
@@ -2086,6 +2236,7 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             if kode_dosen: matkul["dosen_ajar"] = kode_dosen
 
         matkul_by_kode = {m["kode"]: m for m in matakuliah_list}
+        dosen_by_nip = {d["nip"]: d for d in dosen_list}
         
         populasi = generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi)
         probabilitas_agresif_repair = random.random()
@@ -2107,8 +2258,8 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
 
                 child1, child2 = crossover(parent1, parent2)
 
-                child1 = mutasi(child1, matkul_by_kode, ruang_list, peluang_mutasi)
-                child2 = mutasi(child2, matkul_by_kode, ruang_list, peluang_mutasi)
+                child1 = mutasi(child1, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi)
+                child2 = mutasi(child2, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi)
 
                 child1 = repair_jadwal(child1, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list)
                 child2 = repair_jadwal(child2, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list)
@@ -2125,9 +2276,16 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             gen_best_fitness = max(fitness_scores)
             gen_best_individual = populasi[fitness_scores.index(gen_best_fitness)]
             
-            if gen > 5 and len(unique_fitness) < 5:
-                break
-            elif gen > 5 and gen_best_fitness == 1000:
+            if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
+                print(f"\n{f'[Gen {gen}]':<10} BEST ALLTIME: {best_fitness_global}")
+                print(f"All Unique Fitness: ({len(unique_fitness)}/{len(populasi)}) {f'(min: {gen_worst_fitness})':<12}{f'(max: {gen_best_fitness})':<12}")
+                hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
+                print("\n")
+            
+            if gen < 0:
+                continue
+
+            if gen_best_fitness == 1000:
                 print(f"{'[ Found 1000 ]':<20} {gen}")
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
@@ -2135,22 +2293,19 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 # Kalo semua dosen udah di schedule: return
                 if not isSomeDosenNotSet:
                     break
-            elif gen > 5 and gen_best_fitness >= best_fitness_global:
+            elif gen_best_fitness >= best_fitness_global:
                 gen_fitness_report = hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, return_detail=True)
                 dosen_bentrok = gen_fitness_report.get("bentrok_dosen") > 0
                 ruangan_bentrok = gen_fitness_report.get("bentrok_ruangan") > 0
                 asisten_bentrok = gen_fitness_report.get("bentrok_dosen_asdos") > 0
                 solo_team = len(gen_fitness_report.get("solo_team_teaching", {}).keys()) > 0
                 if not (dosen_bentrok or ruangan_bentrok or asisten_bentrok or solo_team):
-                    print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness} ( Unique: {len(unique_fitness)}/{len(populasi)} )")
+                    print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
                     best_fitness_global = gen_best_fitness
                     best_individual_global = copy.deepcopy(gen_best_individual)
 
-            if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
-                print(f"\n{f'[Gen {gen}]':<10} BEST ALLTIME: {best_fitness_global}")
-                print(f"All Unique Fitness: ({len(unique_fitness)}/{len(populasi)}) {f'(min: {gen_worst_fitness})':<12}{f'(max: {gen_best_fitness})':<12}")
-                hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-                print("\n")
+            if len(unique_fitness) < 5:
+                break
 
         print("\n===== ===== ===== ===== ===== FINAL RES ===== ===== ===== ===== =====")
         print(f"{f'[LAST GEN {gen}]':<10} Count Unique Fitness {len(unique_fitness)}/{len(populasi)}")
