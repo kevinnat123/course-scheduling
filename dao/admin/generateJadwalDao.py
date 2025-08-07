@@ -90,7 +90,7 @@ class generateJadwalDao:
         )
         return result['data'] if result and result.get('status') else {}
     
-    def upload_jadwal(self, jadwal, report_fitness):
+    def upload_jadwal(self, jadwal, report_fitness, bkd):
         print(f"{'[ DAO ]':<25} Upload Jadwal")
         result = { 'status': False }
 
@@ -104,7 +104,8 @@ class generateJadwalDao:
                 if (res['status'] == True):
                     data = {
                         "jadwal": jadwal,
-                        "report": report_fitness
+                        "report": report_fitness,
+                        "bkd"   : bkd
                     }
                     res = self.connection.update_one(
                         collection_name = db_jadwal, 

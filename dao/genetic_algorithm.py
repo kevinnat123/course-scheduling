@@ -21,35 +21,21 @@ class JadwalKuliah:
         self.team_teaching = team_teaching
         self.changeable = changeable
 
-# TO BE CHECKED:
-# (20)  Jadwal Ruangan Bertabrakan                                  >> ruangan_bentrok          (DONE)
-# (20)  Jadwal Dosen Bertabrakan                                    >> dosen_bentrok            (DONE)
-# (20)  Jadwal Dosen dan Asisten Berjalan Bersamaan                 >> asdos_nabrak_dosen       (DONE)
-# (15)  Dosen Tetap Tidak Mengajar                                  >> dosen_nganggur           (DONE)
-# (15)  Kelas Dosen atau Asisten Hilang atau Tidak Lengkap          >> kelas_gaib               (DONE)
-# (15)  Solo Team_Teaching                                          >> solo_team
-# (15)  Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19    >> diluar_jam_kerja         (DONE)
-# (10)  Beban SKS Dosen melebihi 12 sks                             >> dosen_overdosis          (DONE)
-# (10)  Cek Total Kelas Bisa Cangkup Semua Mahasiswa                >> kapasitas_kelas_terbatas (DONE)
-# (5)   Tipe Ruangan Tidak Sesuai                                   >> tipe_ruang_salah         (DONE)
-# (5)   Tidak Sesuai dengan permintaan / request dosen              >> melanggar_preferensi     (DONE)
-BOBOT_PENALTI = {
-    "ruangan_bentrok": 20,
-    "dosen_bentrok": 20,
-    "asdos_nabrak_dosen": 20,
-    "dosen_nganggur": 15,
-    "kelas_gaib": 15,
-    "solo_team": 15,
-    "diluar_jam_kerja": 15,
-    "dosen_overdosis": 10,
-    "kapasitas_kelas_terbatas": 10,
-    "tipe_ruang_salah": 5,
-    "melanggar_preferensi": 5,
-
-    "weekend_class": 10,
-    "istirahat": 5,
-}
+MAX_ATTEMPT = 10
 MAX_BEBAN_SKS_DOSEN = 12
+BOBOT_PENALTI = {
+    "ruangan_bentrok": 20,          # Jadwal Ruangan Bertabrakan
+    "dosen_bentrok": 20,            # Jadwal Dosen Bertabrakan
+    "asdos_nabrak_dosen": 20,       # Jadwal Dosen dan Asisten Berjalan Bersamaan
+    "dosen_nganggur": 15,           # Dosen Tetap Tidak Mengajar
+    "kelas_gaib": 15,               # Kelas Dosen atau Asisten Hilang atau Tidak Lengkap
+    "solo_team": 15,                # Solo Team_Teaching
+    "diluar_jam_kerja": 15,         # Matkul berlangsung sebelum pukul 7 atau sesudah pukul 19
+    "dosen_overdosis": 10,          # Beban SKS Dosen melebihi 12 sks
+    "kapasitas_kelas_terbatas": 10, # Cek Total Kelas Bisa Cangkup Semua Mahasiswa
+    "tipe_ruang_salah": 5,          # Tipe Ruangan Tidak Sesuai
+    "melanggar_preferensi": 5,      # Tidak Sesuai dengan permintaan / request dosen
+}
 
 def convertOutputToDict(jadwal_list):
     """
@@ -579,8 +565,6 @@ def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], exclu
         return kandidat_ruangan[0]
 
 def repair_schedule_on_spot(target:object, dosen_by_nip:dict, matkul_by_kode:dict, ruang_list:list, jadwal_by_ruangan:list, jadwal_by_dosen:list, jadwal_by_matkul:list):
-    max_attempt = 10
-
     is_asisten = target.kode_dosen == "AS"
     dosen = dosen_by_nip.get(target.kode_dosen, {})
     matkul = matkul_by_kode.get(target.kode_matkul[:5], {})
@@ -604,7 +588,7 @@ def repair_schedule_on_spot(target:object, dosen_by_nip:dict, matkul_by_kode:dic
     attempt = 1
     excluded_day= []
     excluded_room = []
-    while attempt <= max_attempt:
+    while attempt <= MAX_ATTEMPT:
         if target.hari not in preferensi_hari:
             safe_remove_LO(jadwal_by_dosen, target.kode_dosen, target)
             safe_remove_LO(jadwal_by_ruangan, target.kode_ruangan, target)
@@ -765,7 +749,7 @@ def assign_schedule_for_idle_lecturers(
                 available, _ = check_dosen_availability(dosen, matkul_by_kode, jadwal_by_dosen, beban_dosen.get(dosen['nip'], 0))
                 if not available:
                     break
-                
+
 def assign_teaching_partners(jadwal, jadwal_by_dosen, matakuliah_list, dosen_by_nip, matkul_by_kode, dosen_by_matkul, beban_dosen):
     for sesi in jadwal:
         if not sesi.team_teaching or sesi.tipe_kelas == "ONLINE":
@@ -891,7 +875,6 @@ def distribute_sks(jadwal, matkul_by_kode, dosen_by_nip, beban_dosen, jadwal_by_
                     break
 
 def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, matkul_by_kode, ruang_by_kode, dosen_by_nip):
-    max_attempt = 10    
     for sesi in jadwal:
         if sesi.tipe_kelas == "ONLINE": continue
         
@@ -926,7 +909,7 @@ def fix_room_mismatch(jadwal, jadwal_by_dosen, jadwal_by_ruangan, ruang_list, ma
 
             attempt = 1
             excluded_room = []
-            while not sukses and attempt <= max_attempt:
+            while not sukses and attempt <= MAX_ATTEMPT:
                 if all(room["kode"] in excluded_room for room in roomWithPlot): break
                 ruang_pengganti = rand_ruangan(
                     list_ruangan=roomWithPlot, 
@@ -1412,8 +1395,6 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
     for ruangan in ruang_list:
         jadwal_by_ruangan[ruangan["kode"]] = []
 
-    max_attempt = 5 # 10
-    
     for matkul in matakuliah_list:
         if matkul.get("tipe_kelas") == "ONLINE" and matkul.get("take_all_lecture"):
             index_kelas = 1
@@ -1506,7 +1487,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                     sukses = False
                     attempt = 1
                     excluded_room = []
-                    while not sukses and attempt <= max_attempt:
+                    while not sukses and attempt <= MAX_ATTEMPT:
                         if all(ruang["kode"] in excluded_room for ruang in kandidat_ruangan):
                             break
                         
@@ -1614,7 +1595,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 attempt = 0
                 excluded_day = []
                 excluded_room = []
-                while not sukses and max_attempt >= attempt:
+                while not sukses and MAX_ATTEMPT >= attempt:
                     jadwal_ruangan_kosong = find_available_schedule(
                         jadwal_by=jadwal_by_ruangan, 
                         kode=ruang_asisten['kode'], 
@@ -1703,7 +1684,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                     sukses = False
                     excluded_room = []
                     attempt = 1
-                    while not sukses and attempt <= max_attempt:
+                    while not sukses and attempt <= MAX_ATTEMPT:
                         if all(ruang["kode"] in excluded_room for ruang in kandidat_ruangan):
                             break
                         
@@ -1814,7 +1795,7 @@ def generate_jadwal(matakuliah_list, dosen_list, ruang_list):
                 attempt = 0
                 excluded_day = []
                 excluded_room = []
-                while not sukses and max_attempt >= attempt:
+                while not sukses and MAX_ATTEMPT >= attempt:
                     jadwal_ruangan_kosong = find_available_schedule(
                         jadwal_by=jadwal_by_ruangan, 
                         kode=ruang_asisten['kode'], 
@@ -2184,7 +2165,6 @@ def mutasi(individu, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi=0.
     """
     
     pilihan_hari_asisten = ["SENIN", "SELASA", "RABU", "KAMIS", "JUMAT", "SABTU"]
-    max_attempt = 10
 
     for sesi in individu:
         if sesi.team_teaching:
@@ -2205,7 +2185,7 @@ def mutasi(individu, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi=0.
             elif 'jam' in attr:
                 success= False
                 attempt = 1
-                while not success and attempt <= max_attempt:
+                while not success and attempt <= MAX_ATTEMPT:
                     jam_mulai = random.choice(preferensi_jam)
                     if jam_mulai + sesi.sks_akademik <= max(preferensi_jam):
                         sesi.jam_mulai = jam_mulai

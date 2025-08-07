@@ -57,7 +57,7 @@ def generate_jadwal():
             if best_schedule and best_schedule.get('status') == False:
                 raise CustomError({ 'message': best_schedule.get('message') })
             
-            dao.upload_jadwal(best_schedule['data'], best_schedule["score"])
+            dao.upload_jadwal(best_schedule['data'], best_schedule["score"], best_schedule["bkd"])
         else:
             raise CustomError({ 'message': 'Anda tidak berhak generate jadwal!\nSilahkan hubungi Admin! '})
     except CustomError as e:
@@ -68,15 +68,15 @@ def generate_jadwal():
 
     return jsonify({ 'status': True, 'score': best_schedule['score'] })
 
-@generateJadwal.route("/generate_jadwal/upload_jadwal", methods=['POST'])
-@login_required
-def upload_jadwal():
-    print(f"{'[ CONTROLLER ]':<25} Upload Jadwal")
-    if session['user']['role'] == "ADMIN":
-        req = request.get_json('data')
-        data = dao.upload_jadwal(req['jadwal'])
+# @generateJadwal.route("/generate_jadwal/upload_jadwal", methods=['POST'])
+# @login_required
+# def upload_jadwal():
+#     print(f"{'[ CONTROLLER ]':<25} Upload Jadwal")
+#     if session['user']['role'] == "ADMIN":
+#         req = request.get_json('data')
+#         data = dao.upload_jadwal(req['jadwal'])
 
-    return jsonify( data )
+#     return jsonify( data )
 
 @generateJadwal.route("/generate_jadwal/evaluate_jadwal", methods=["GET"])
 @login_required
