@@ -119,8 +119,7 @@ def is_schedule_fit(jam_mulai, sks, preferensi_jam, available_schedule):
 def is_some_lecture_not_scheduled(jadwal_list=None, matakuliah_list=[], dosen_list=[]):
     matkul_take_all_lecture = [matkul["kode"] for matkul in matakuliah_list if matkul.get("take_all_lecture")]
     scheduled_dosen = set(sesi.kode_dosen for sesi in jadwal_list if sesi.kode_matkul[:5] not in matkul_take_all_lecture)
-    # set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP")
-    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP" and dosen.get("prodi") == "S1 TEKNIK INFORMATIKA")
+    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP")
     all_dosen_tetap_scheduled = all(dosen in scheduled_dosen for dosen in set_dosen_tetap)
     if not all_dosen_tetap_scheduled:
         return True, [dosen for dosen in set_dosen_tetap if dosen not in scheduled_dosen]
