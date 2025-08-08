@@ -331,12 +331,15 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
                         if not status: 
                             worksheet.write(row_idx - 1, col_idx, old_nama_dosen, format_error)
                 elif attr == "kapasitas":
-                    # if kode_dosen == "AS":
-                    #     kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if f"{sesi['kode_matkul']}-AS" == kode_matkul), None)
-                    #     value = kapasitas_dosen
-                    # else:
-                    #     value = jadwal[attr]
-                    value = jadwal[attr]
+                    if kode_dosen == "AS":
+                        kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if f"{sesi['kode_matkul']}-AS" == kode_matkul), None)
+                        value = kapasitas_dosen
+                    else:
+                        value = jadwal[attr]
+                    if data_matkul.get("asistensi") \
+                        and data_matkul.get("tipe_kelas_asistensi") == "PRAKTIKUM" \
+                        and int(value) > 40:
+                        value = 40
                 else:
                     value = jadwal[attr] if attr in jadwal else ""
 
