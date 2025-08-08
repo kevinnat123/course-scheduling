@@ -42,6 +42,9 @@ def convertOutputToDict(jadwal_list):
     """
     Menkonversi object jadwal menjadi dictionary.
 
+    Args:
+        jadwal_list (list of object): Jadwal yang sudah berhasil di generate.
+
     Returns:
         dict: Jadwal dalam bentuk dictionary.
     """
@@ -66,6 +69,18 @@ def convertOutputToDict(jadwal_list):
     return jadwal
 
 def bkd_info(jadwal, dosen_by_nip, matkul_by_kode):
+    """
+        Menghitung informasi BKD tiap dosen
+
+        Args:
+            jadwal (list of object): Jadwal yang akan dikalkulasi.
+            dosen_by_nip (dict): Data dosen yang disimpan berdasarkan nip.
+            matkul_by_kode (dict): Data mata kuliah yang disimpan berdasarkan kode matkul.
+
+        Returns:
+            dict: Hasil kalkulasi BKD dengan format {nip: {sks: value, matakuliah: dict}}
+    """
+
     bkd = defaultdict()
     jadwal_by_dosen = defaultdict(list)
     for sesi in jadwal:
@@ -367,6 +382,18 @@ def define_dosen_preference(data_dosen):
     return preferensi_hari, preferensi_jam
 
 def check_dosen_availability(data_dosen:dict, matkul_by_kode:dict, jadwal_by_dosen:dict, beban_sks_dosen:int):
+    """
+        Mengecek ketersediaan dosen berdasarkan preferensi.
+
+        Args:
+            data_dosen (dict): Data dosen yang akan dicek.
+            matkul_by_kode (dict): Data mata kuliah yang disimpan berdasarkan kode matkul.
+            jadwal_by_dosen (dict): Data jadwal dosen yang disimpan berdasarkan nip.
+            beban_sks_dosen (int): Beban SKS dosen yang akan dicek.
+
+        Returns:
+            tuple(bool, int): Mengembalikan ketersediaan dosen dalam bentuk boolean dan jumlah estimasi kelas dalam bentuk int.
+    """
     avg_sks = 3
     
     nip = data_dosen.get("nip")
@@ -401,6 +428,19 @@ def check_dosen_availability(data_dosen:dict, matkul_by_kode:dict, jadwal_by_dos
         return False, estimated_number_of_class
 
 def define_prioritize_dosen(dosen_pakar:list, data_matkul:dict, matkul_by_kode:dict, jadwal_by_dosen:dict, beban_sks_dosen:dict):
+    """
+        Mendefinisikan dosen prioritas berdasarkan jumlah preferensinya.
+
+        Args:
+            dosen_pakar(list): Data dosen pakar.
+            data_matkul(dict): Data mata kuliah yang akan dicek prioritas dosennya.
+            matkul_by_kode(dict): Data mata kuliah yang disimpan berdasarkan kode.
+            jadwal_by_dosen(dict): Data jadwal dosen yang disimpan berdasarkan nip.
+            beban_sks_dosen(dict): Data beban sks dosen yang disimpan berdasarkan nip.
+
+        Returns:
+            list: Data dosen prioritas.
+    """
     def filter_nip_prioritas(list_nip):
         return [
             d for d in dosen_pakar
@@ -459,9 +499,12 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  matkul_by_kode:d
     Random dosen by Status, Prodi, beban sks
 
     Args:
-        list_dosen_pakar (list): list dosen yang sudah di sort berdasarkan pakar + prodi
-        beban_sks_dosen (dict): Optional, dictionary beban sks dosen, untuk tujuan distribusi sks
-        excluded_dosen (list): Opsional, nip dosen dosen yang diabaikan
+        list_dosen_pakar (list): list dosen yang sudah di sort berdasarkan pakar + prodi.
+        data_matkul (dict): data mata kuliah yang akan dicari dosennya.
+        matkul_by_kode (dict): data mata kuliah yang disimpan berdasarkan kode.
+        jadwal_by_dosen (dict): jadwal dosen yang disimpan berdasarkan nip.
+        beban_sks_dosen (dict|optional): dictionary beban sks dosen, untuk tujuan distribusi sks.
+        excluded_dosen (list|optional): nip dosen dosen yang diabaikan.
 
     Returns:
         object: Dosen yang terpilih dari populasi.
@@ -531,6 +574,20 @@ def rand_dosen_pakar(list_dosen_pakar: list, data_matkul:dict,  matkul_by_kode:d
         return list_dosen_pakar[0]
 
 def rand_ruangan(list_ruangan: list, data_matkul: dict, bidang: list = [], excluded_room: list = [], forAsisten: bool = False, kapasitas_ruangan_dosen: int = 0):
+    """
+    Random ruangan
+
+    Args:
+        list_ruangan (list): data ruangan.
+        data_matkul (dict): data mata kuliah.
+        bidang (list|optional): bidang mata kuliah.
+        excluded_room (list|optional) : kode ruangan yang diabaikan.
+        forAsisten (bool|optional): apakah random ruangan untuk asisten.
+        kapasitas_ruangan_dosen (int|optional): jika untuk asisten, berapa kapasitas ruangan dosen.
+
+    Returns:
+        object: Ruangan yang terpilih dari populasi.
+    """
     if not bidang or (forAsisten and data_matkul.get("tipe_kelas_asistensi") == "PRAKTIKUM"):
         bidang = data_matkul.get("bidang", [])
 
