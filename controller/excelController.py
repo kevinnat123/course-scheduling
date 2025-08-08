@@ -146,63 +146,62 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
     dosen_by_nip = {d['nip']: d for d in dosen_list}
     # Grouping matkul by kode
     matkul_by_kode = {m['kode']: m for m in matakuliah_list}
-    # beban_dosen = ga.hitung_beban_sks_dosen_all(
-    #     jadwal=object_jadwal, 
-    #     dosen_list=dosen_list, 
-    #     matkul_by_kode=matkul_by_kode
-    # ) # NOTE: PERHITUNGAN SKS DARI LUAR GA SALAH
     if report_fitness["pelanggaran_preferensi"]:
         report_fitness["pelanggaran_preferensi"] = {dt["kode_matkul"]: dt for dt in report_fitness["pelanggaran_preferensi"]}
+    beban_dosen = defaultdict()
+    for nip, calc_bkd in bkd.items():
+        beban_dosen[nip] = calc_bkd["sks"]
+    
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 
-    # # Sheet 1 - Beban SKS Dosen # NOTE: PERHITUNGAN SKS DARI LUAR GA SALAH
-    # # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-    # worksheet = workbook.add_worksheet("BEBAN SKS")
+    # Sheet 1 - Beban SKS Dosen
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+    worksheet = workbook.add_worksheet("BEBAN SKS")
 
-    # # Set Ukuran Kolom
-    # worksheet.set_column("A:A", 15)
-    # worksheet.set_column("B:B", 50)
-    # worksheet.set_column("C:C", 10)
-    # worksheet.set_column("E:E", 15)
-    # worksheet.set_column("F:F", 50)
-    # worksheet.set_column("G:G", 10)
+    # Set Ukuran Kolom
+    worksheet.set_column("A:A", 15)
+    worksheet.set_column("B:B", 50)
+    worksheet.set_column("C:C", 10)
+    worksheet.set_column("E:E", 15)
+    worksheet.set_column("F:F", 50)
+    worksheet.set_column("G:G", 10)
     
-    # row = 1
-    # for prodi, data_dosen in dosen_by_prodi.items():
-    #     if prodi == "TIDAK_TETAP":
-    #         row, col = 1, 4
-    #         # worksheet.merge_range(f"E{row}:G{row}", "Dosen Tidak Tetap", format_header_with_top)
-    #     else:
-    #         col = 0
-    #         # worksheet.merge_range(f"A{row}:C{row}", f"Dosen Tetap - {prodi}", format_header_with_top)
-    #     worksheet.write(row, col, "NIP", format_header_with_bottom)
-    #     worksheet.write(row, col + 1, "Nama", format_header_with_bottom)
-    #     worksheet.write(row, col + 2, "Beban SKS", format_header_with_bottom)
+    row = 1
+    for prodi, data_dosen in dosen_by_prodi.items():
+        if prodi == "TIDAK_TETAP":
+            row, col = 1, 4
+            worksheet.merge_range(f"E{row}:G{row}", "Dosen Tidak Tetap", format_header_with_top)
+        else:
+            col = 0
+            worksheet.merge_range(f"A{row}:C{row}", f"Dosen Tetap - {prodi}", format_header_with_top)
+        worksheet.write(row, col, "NIP", format_header_with_bottom)
+        worksheet.write(row, col + 1, "Nama", format_header_with_bottom)
+        worksheet.write(row, col + 2, "Beban SKS", format_header_with_bottom)
 
-    #     last_row = row + len(data_dosen)
-    #     for nip in data_dosen:
-    #         row += 1
-    #         if beban_dosen[nip] > 20:
-    #             format = format_error
-    #         elif beban_dosen[nip] > 12:
-    #             format = format_beban
-    #         elif beban_dosen[nip] > 12 and row == last_row:
-    #             format = format_beban
-    #         elif beban_dosen[nip] == 0 and row == last_row:
-    #             format = format_warning_with_bottom
-    #         elif beban_dosen[nip] == 0:
-    #             format = format_warning
-    #         elif row == last_row:
-    #             format = format_bottom_line
-    #         else:
-    #             format = None
-    #         worksheet.write(row, col, nip, format)
-    #         worksheet.write(row, col+1, dosen_by_nip[nip]["nama"], format)
-    #         worksheet.write(row, col+2, beban_dosen[nip], format)
+        last_row = row + len(data_dosen)
+        for nip in data_dosen:
+            row += 1
+            if beban_dosen[nip] > 20:
+                format = format_error
+            elif beban_dosen[nip] > 12:
+                format = format_beban
+            elif beban_dosen[nip] > 12 and row == last_row:
+                format = format_beban
+            elif beban_dosen[nip] == 0 and row == last_row:
+                format = format_warning_with_bottom
+            elif beban_dosen[nip] == 0:
+                format = format_warning
+            elif row == last_row:
+                format = format_bottom_line
+            else:
+                format = None
+            worksheet.write(row, col, nip, format)
+            worksheet.write(row, col+1, dosen_by_nip[nip]["nama"], format)
+            worksheet.write(row, col+2, beban_dosen[nip], format)
 
-    #     if prodi != "TIDAK_TETAP":
-    #         row += 3 # 1 buat space, 1 buat merge_range
-    # # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+        if prodi != "TIDAK_TETAP":
+            row += 3 # 1 buat space, 1 buat merge_range
+    # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 
     # Sheet 2 - BKD
     # ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
@@ -332,11 +331,12 @@ def export_jadwal_to_excel(jadwal_list, matakuliah_list, dosen_list, report_fitn
                         if not status: 
                             worksheet.write(row_idx - 1, col_idx, old_nama_dosen, format_error)
                 elif attr == "kapasitas":
-                    if kode_dosen == "AS":
-                        kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if f"{sesi['kode_matkul']}-AS" == kode_matkul), None)
-                        value = kapasitas_dosen
-                    else:
-                        value = jadwal[attr]
+                    # if kode_dosen == "AS":
+                    #     kapasitas_dosen = next((sesi['kapasitas'] for sesi in jadwal_list if f"{sesi['kode_matkul']}-AS" == kode_matkul), None)
+                    #     value = kapasitas_dosen
+                    # else:
+                    #     value = jadwal[attr]
+                    value = jadwal[attr]
                 else:
                     value = jadwal[attr] if attr in jadwal else ""
 
