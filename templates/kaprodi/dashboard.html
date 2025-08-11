@@ -5,7 +5,7 @@
       class="row align-items-center justify-content-between mb-3 hover-element"
     >
       <h4 id="formTitle" class="col btn-toggle-card">
-        <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
+        <i class="fas fa-folder-closed fa-fw toggle-icon me-2"></i
         ><span>General Setting</span>
       </h4>
       <div class="col-auto text-end">
@@ -43,7 +43,7 @@
       class="row align-items-center justify-content-between mb-3 hover-element"
     >
       <h4 id="formTitle" class="col btn-toggle-card">
-        <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
+        <i class="fas fa-folder-closed fa-fw toggle-icon me-2"></i
         ><span>Setting Kelompok Mata Kuliah</span>
       </h4>
       <div class="col-auto text-end">
@@ -109,7 +109,7 @@
       class="row align-items-center justify-content-between mb-3 hover-element"
     >
       <h4 id="formTitle" class="col btn-toggle-card">
-        <i class="fas fa-folder-open fa-fw toggle-icon me-2"></i
+        <i class="fas fa-folder-closed fa-fw toggle-icon me-2"></i
         ><span>Setting Pakar / Bidang</span>
       </h4>
       <div class="col-auto text-end">
@@ -185,7 +185,7 @@
       const $card = $(this).closest(".card");
       $card.toggleClass("collapsed");
 
-      const $icon = $(".toggle-icon");
+      const $icon = $card.find(".toggle-icon");
 
       if ($icon.hasClass("fa-folder-open")) {
         $icon.removeClass("fa-folder-open").addClass("fa-folder-closed");
