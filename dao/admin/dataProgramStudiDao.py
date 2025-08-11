@@ -78,23 +78,24 @@ class dataProgramStudiDao:
                         collection_name = db_dosen,
                         filter          = { 'nama': params['kepala_program_studi'] }
                     )
-                    if data_kaprodi_baru['status']:
-                        nip_kaprodi = data_kaprodi_baru['data']['nip']
-                        params['kepala_program_studi'] = nip_kaprodi
-                        # tambahkan user baru
-                        self.connection.insert_one(
-                            collection_name = db_user,
-                            data            = {
-                                'u_id': nip_kaprodi,
-                                'nama': data_kaprodi_baru['data']['nama'],
-                                'password': generate_password_hash(nip_kaprodi, method='pbkdf2:sha256'),
-                                'role': 'KEPALA PROGRAM STUDI',
-                                'prodi': params['program_studi'],
-                                'last_update': datetime.now().strftime("%d-%b-%Y")
-                            }
-                        )
-                    else:
+                    if not data_kaprodi_baru['status']:
                         raise CustomError({ 'message': 'Data calon kaprodi tidak ditemukan' })
+                    if data_kaprodi_baru["data"]["status"] != "TETAP":
+                        raise CustomError({ 'message': 'Kaprodi pilihan anda bukan Dosen Tetap' })
+                    nip_kaprodi = data_kaprodi_baru['data']['nip']
+                    params['kepala_program_studi'] = nip_kaprodi
+                    # tambahkan user baru
+                    self.connection.insert_one(
+                        collection_name = db_user,
+                        data            = {
+                            'u_id': nip_kaprodi,
+                            'nama': data_kaprodi_baru['data']['nama'],
+                            'password': generate_password_hash(nip_kaprodi, method='pbkdf2:sha256'),
+                            'role': 'KEPALA PROGRAM STUDI',
+                            'prodi': params['program_studi'],
+                            'last_update': datetime.now().strftime("%d-%b-%Y")
+                        }
+                    )
                 else:
                     raise CustomError({ 'message': 'Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!' })
             else:
@@ -183,6 +184,8 @@ class dataProgramStudiDao:
                             filter          = { 'nama': params['kepala_program_studi'] }
                         )
                         if data_kaprodi_baru['status']:
+                            if data_kaprodi_baru["data"]["status"] != "TETAP":
+                                raise CustomError({ 'message': 'Kaprodi pilihan anda bukan Dosen Tetap' })
                             data_kaprodi_baru = data_kaprodi_baru['data']
                             nip_kaprodi_baru = data_kaprodi_baru['nip']
                             params['kepala_program_studi'] = nip_kaprodi_baru

@@ -383,6 +383,14 @@
         "error",
         "Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!!"
       );
+    } else if (
+      dosen_lov
+        .data()
+        .toArray()
+        .find((data) => data.nama == $("#input_kaprodi").val()).status !=
+      "TETAP"
+    ) {
+      return popUpTimer("error", "Kaprodi pilihan anda bukan Dosen Tetap");
     }
 
     let params = {
@@ -468,6 +476,14 @@
         "error",
         "Kepala Program Studi tidak boleh menjabat di 2 program studi berbeda!!"
       );
+    } else if (
+      dosen_lov
+        .data()
+        .toArray()
+        .find((data) => data.nama == $("#input_kaprodi").val()).status !=
+      "TETAP"
+    ) {
+      return popUpTimer("error", "Kaprodi pilihan anda bukan Dosen Tetap");
     }
 
     let params = {
