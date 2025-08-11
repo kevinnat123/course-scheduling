@@ -11,12 +11,14 @@ class dataDosenDao:
 
     def get_display_dosen(self):
         print(f"{'[ DAO ]':<25} Get Display Dosen")
+        custom_order = ["TETAP", "TIDAK_TETAP", "TIDAK_AKTIF"]
         if session['user']['role'] == "KEPALA PROGRAM STUDI":
             result = self.connection.find_many(
                 collection_name = db_dosen, 
                 filter          = {
                         '$or': [
                             {'prodi': session['user']['prodi']}, 
+                            {'status': 'TIDAK_TETAP'}
                         ]
                     }, 
                 sort            = [ ("status", 1), ("nip", 1) ]
@@ -31,7 +33,11 @@ class dataDosenDao:
                 dosen.setdefault('pakar', None)
                 dosen.setdefault('prodi', None)
                 # dosen.setdefault('matkul_ajar', None)
-        return result['data'] if result and result.get('status') else []
+            result_sorted = sorted(
+                result['data'],
+                key=lambda x: custom_order.index(x.get("status", "TIDAK_AKTIF"))
+            )
+        return result_sorted if result and result.get('status') else []
 
     def get_dosen(self):
         print(f"{'[ DAO ]':<25} Get Dosen")
