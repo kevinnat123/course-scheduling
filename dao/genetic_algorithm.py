@@ -2467,20 +2467,23 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
     if not ruang_list: print('[ KOSONG ] list ruang')
 
     try:
+        # Persiapan data lookup
         for dosen in dosen_list:
             if dosen.get("preferensi") and dosen["preferensi"].get("hindari_jam"):
                 dosen["preferensi"]["hindari_jam"] = [int(j) for j in dosen["preferensi"]["hindari_jam"]]
-        
         for matkul in matakuliah_list:
             kode_dosen = set(dosen["nip"] for dosen in dosen_list if dosen["nama"] in matkul.get("dosen_ajar", []))
             if kode_dosen: matkul["dosen_ajar"] = kode_dosen
-
         matkul_by_kode = {m["kode"]: m for m in matakuliah_list}
         dosen_by_nip = {d["nip"]: d for d in dosen_list}
-        
+
+        # Generate populasi awal dan perbaiki
         populasi = generate_populasi(matakuliah_list, dosen_list, ruang_list, ukuran_populasi)
         probabilitas_agresif_repair = random.random()
-        populasi = [repair_jadwal(j, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list) for j in populasi]
+        populasi = [
+            repair_jadwal(j, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list) 
+            for j in populasi
+        ]
 
         best_gen = None
         best_fitness_global = float('-inf')
@@ -2489,19 +2492,25 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         for gen in range(jumlah_generasi):
             probabilitas_agresif_repair = random.random()
 
-            fitness_scores = [hitung_fitness(individu, matakuliah_list, dosen_list, ruang_list) for individu in populasi]
+            # Hitung fitness untuk populasi
+            fitness_scores = [
+                hitung_fitness(individu, matakuliah_list, dosen_list, ruang_list) 
+                for individu in populasi
+            ]
             next_gen = []
 
-            # Generate anak baru
+            # Proses reproduksi
             while len(next_gen) < ukuran_populasi:
                 parent1 = roulette_selection(populasi, fitness_scores)
                 parent2 = roulette_selection(populasi, fitness_scores)
 
                 child1, child2 = crossover(parent1, parent2)
 
+                # Mutasi
                 child1 = mutasi(child1, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi)
                 child2 = mutasi(child2, matkul_by_kode, ruang_list, dosen_by_nip, peluang_mutasi)
 
+                # Repair jadwal
                 child1 = repair_jadwal(child1, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list)
                 child2 = repair_jadwal(child2, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list)
                 
@@ -2511,7 +2520,11 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 
             populasi = next_gen
 
-            fitness_scores = [hitung_fitness(individu, matakuliah_list, dosen_list, ruang_list) for individu in populasi]
+            # Evaluasi generasi
+            fitness_scores = [
+                hitung_fitness(individu, matakuliah_list, dosen_list, ruang_list) 
+                for individu in populasi
+            ]
             unique_fitness = set(fitness_scores)
             gen_worst_fitness = min(fitness_scores)
             gen_best_fitness = max(fitness_scores)
@@ -2527,7 +2540,6 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 continue
 
             if gen_best_fitness == 1000:
-                # print(f"{'[ Found 1000 ]':<20} {gen}")
                 best_gen = gen
                 best_fitness_global = gen_best_fitness
                 best_individual_global = copy.deepcopy(gen_best_individual)
@@ -2541,24 +2553,34 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
                 ruangan_bentrok = gen_fitness_report.get("bentrok_ruangan") > 0
                 asisten_bentrok = gen_fitness_report.get("bentrok_dosen_asdos") > 0
                 # solo_team = len(gen_fitness_report.get("solo_team_teaching", {}).keys()) > 0
-                if not (dosen_bentrok or ruangan_bentrok or asisten_bentrok): # or solo_team):
-                    # print(f"{'[ Update Best ]':<20} {gen} {gen_best_fitness}")
+                no_conflict = not (
+                    dosen_bentrok or 
+                    ruangan_bentrok or 
+                    asisten_bentrok
+                )
+
+                if no_conflict:
                     best_gen = gen
                     best_fitness_global = gen_best_fitness
                     best_individual_global = copy.deepcopy(gen_best_individual)
 
+            # Stop jika variasi fitness terlalu sedikit
             if len(unique_fitness) < 5:
                 break
 
         print("\n===== ===== ===== ===== ===== FINAL RES ===== ===== ===== ===== =====")
         print(f"{f'[LAST GEN {gen}]':<10} Count Unique Fitness {len(unique_fitness)}/{len(populasi)}")
         print(f"{f'BEST ALLTIME (Gen: {best_gen})':<25}: {best_fitness_global}")
+        
+        # Final repair jika belum perfect
         if best_fitness_global != 1000:
             repaired_individual_global = repair_jadwal_hard(best_individual_global, matakuliah_list, dosen_list, ruang_list)
             fitness_repaired_global = hitung_fitness(repaired_individual_global, matakuliah_list, dosen_list, ruang_list)
             print(f"{f'REPAIRED BEST ALLTIME':<25}: {fitness_repaired_global}")
             if fitness_repaired_global > best_fitness_global:
                 best_individual_global = repaired_individual_global
+
+        # Hasil akhir
         report_fitness = hitung_fitness(best_individual_global, matakuliah_list, dosen_list, ruang_list, detail=True, return_detail=True)
         bkd = bkd_info(best_individual_global, dosen_by_nip, matkul_by_kode)
     except Exception as e:
@@ -2566,5 +2588,10 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
         print(traceback.print_exc())
         return { 'status': False, 'message': e }
 
-    return { 'status': True, 'data': convertOutputToDict(best_individual_global), 'score': report_fitness, 'bkd': bkd }
+    return { 
+        'status': True, 
+        'data': convertOutputToDict(best_individual_global), 
+        'score': report_fitness, 
+        'bkd': bkd 
+    }
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
