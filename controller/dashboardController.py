@@ -85,31 +85,22 @@ def dashboardKaprodi_updatePakar():
 @login_required
 def dashboardLaboran_updateOs():
     print(f"{'[ CONTROLLER ]':<25} Update OS")
-    
     req = request.get_json('data')
-
     result = dashboardDao.update_os(req)
-
     return jsonify( result )
 
 @dashboard.route("/update_processor", methods=['POST'])
 @login_required
 def dashboardLaboran_updateProcessor():
     print(f"{'[ CONTROLLER ]':<25} Update Processor")
-    
     req = request.get_json('data')
-
     result = dashboardDao.update_processor(req)
-
     return jsonify( result )
 
 @dashboard.route("/update_prodi", methods=['POST'])
 @login_required
 def dashboardLaboran_updateProdi():
     print(f"{'[ CONTROLLER ]':<25} Update Prodi")
-    
     req = request.get_json('data')
-
     result = dashboardDao.update_prodi(req)
-
     return jsonify( result )

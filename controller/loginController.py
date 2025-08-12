@@ -34,31 +34,31 @@ def login():
 
         user = loginDao.verify_user(nip, password)
 
-        if user['status']:
-            user_obj = User(user['data']['u_id'], user['data'])
-            login_user(user_obj)
+        if not user['status']:
+            return jsonify({'status': False, 'message': user['message']}), 401
+        
+        user_obj = User(user['data']['u_id'], user['data'])
+        login_user(user_obj)
 
-            session['user'] = user['data']
+        session['user'] = user['data']
 
-            list_prodi = loginDao.get_prodi()
-            session['user']['list_prodi'] = list_prodi
+        list_prodi = loginDao.get_prodi()
+        session['user']['list_prodi'] = list_prodi
 
-            menu = loginDao.get_menu(session['user']['role'])
-            session['menu'] = menu if menu else []
-            session['academic_details'] = get_academic_details()
+        menu = loginDao.get_menu(session['user']['role'])
+        session['menu'] = menu if menu else []
+        session['academic_details'] = get_academic_details()
 
-            session.permanent = True  # Aktifkan waktu hidup session
-            session.modified = True
+        session.permanent = True  # Aktifkan waktu hidup session
+        session.modified = True
 
-            print(f"{'':<25} {'Session User':<30}: {session['user']}\n")
-            print(f"{'':<25} {'Session Academic_Details':<30}: {session['academic_details']}\n")
-            print(f"{'':<25} {'Session Menu':<30}: {session['menu']}\n")
+        print(f"{'':<25} {'Session User':<30}: {session['user']}\n")
+        print(f"{'':<25} {'Session Academic_Details':<30}: {session['academic_details']}\n")
+        print(f"{'':<25} {'Session Menu':<30}: {session['menu']}\n")
 
-            if password == nip:
-                return jsonify({'status': True, 'redirect_url': url_for('signin.pengaturan_akun')}), 200
-            return jsonify({'status': True, 'redirect_url': url_for('dashboard.dashboard_index')}), 200
-
-        return jsonify({'status': False, 'message': user['message']}), 401
+        if password == nip:
+            return jsonify({'status': True, 'redirect_url': url_for('signin.pengaturan_akun')}), 200
+        return jsonify({'status': True, 'redirect_url': url_for('dashboard.dashboard_index')}), 200
     return render_template('signin.html')
 
 @signin.route("/pengaturan_akun")

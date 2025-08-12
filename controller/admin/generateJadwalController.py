@@ -32,34 +32,34 @@ def generate_jadwal():
     print(f"{'[ CONTROLLER ]':<25} Generate Jadwal")
 
     try:
-        if session['user']['role'] == "ADMIN":
-            param = request.args.to_dict()
-            regenerate = True if param['regenerate'] == 'true' else False
-            
-            jadwal = dao.get_jadwal()
-            if jadwal and jadwal.get('jadwal') and not regenerate:
-                return jsonify({ 'status': False, 'reason': 'exist'})
-            
-            data_dosen = dao.get_dosen()
-            data_ruang = dao.get_kelas()
-            data_matkul = dao.get_open_matkul()
-
-            attempt = 1
-            while attempt <= 3:
-                best_schedule = ga.genetic_algorithm(
-                    data_matkul, data_dosen, data_ruang, 
-                    ukuran_populasi=75, jumlah_generasi=100, peluang_mutasi=0.05
-                )
-                if best_schedule and best_schedule.get('status') == True:
-                    break
-                attempt += 1
-
-            if best_schedule and best_schedule.get('status') == False:
-                raise CustomError({ 'message': best_schedule.get('message') })
-            
-            dao.upload_jadwal(best_schedule['data'], best_schedule["score"], best_schedule["bkd"])
-        else:
+        if not session['user']['role'] == "ADMIN":
             raise CustomError({ 'message': 'Anda tidak berhak generate jadwal!\nSilahkan hubungi Admin! '})
+        
+        param = request.args.to_dict()
+        regenerate = param['regenerate'] == 'true'
+        
+        jadwal = dao.get_jadwal()
+        if jadwal and jadwal.get('jadwal') and not regenerate:
+            return jsonify({ 'status': False, 'reason': 'exist'})
+        
+        data_dosen = dao.get_dosen()
+        data_ruang = dao.get_kelas()
+        data_matkul = dao.get_open_matkul()
+
+        attempt = 1
+        while attempt <= 3:
+            best_schedule = ga.genetic_algorithm(
+                data_matkul, data_dosen, data_ruang, 
+                ukuran_populasi=75, jumlah_generasi=100, peluang_mutasi=0.05
+            )
+            if best_schedule and best_schedule.get('status') == True:
+                break
+            attempt += 1
+
+        if best_schedule and best_schedule.get('status') == False:
+            raise CustomError({ 'message': best_schedule.get('message') })
+        
+        dao.upload_jadwal(best_schedule['data'], best_schedule["score"], best_schedule["bkd"])
     except CustomError as e:
         return jsonify({ 'status': False, 'message': f"{e.error_dict.get('message')}" })
     except Exception as e:
@@ -84,13 +84,13 @@ def evaluate_jadwal():
     print(f"{'[ CONTROLLER ]':<25} Evaluate Jadwal (Fitness)")
 
     if session['user']['role'] == "ADMIN":
-        isCreated = dao.get_jadwal()
-        if not isCreated and not isCreated.get('jadwal'):
-            return jsonify({ 'status': False, 'message': 'Jadwal belum dibuat!'})
-        elif isCreated and isCreated.get('jadwal'):
-            return jsonify({ 'data': isCreated["report"] })
-        
-    return jsonify({ 'status': False, 'message': 'No Access!'})
+        return jsonify({ 'status': False, 'message': 'No Access!'})
+    
+    isCreated = dao.get_jadwal()
+    if not isCreated and not isCreated.get('jadwal'):
+        return jsonify({ 'status': False, 'message': 'Jadwal belum dibuat!'})
+    elif isCreated and isCreated.get('jadwal'):
+        return jsonify({ 'data': isCreated["report"] })
 
 @generateJadwal.route("/generate_jadwal/get_simpanan_prodi", methods=["GET"])
 @login_required
