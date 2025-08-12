@@ -420,7 +420,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("[ post_prodi ] ", res);
         if (res.status === false && res.reVerify) {
           verificationRes = await verifikasiUserPromise()
             .then((result) => {
@@ -505,7 +504,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("[ put_prodi ] ", res);
         if (res.status === false && res.reVerify) {
           verificationRes = await verifikasiUserPromise()
             .then((result) => {

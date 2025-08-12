@@ -329,7 +329,6 @@
           new_password: password,
           confirm_password: confirm_password,
         };
-        console.log("param");
 
         $.ajax({
           type: "POST",
@@ -343,7 +342,6 @@
             document.getElementById("loadingModal").style.display = "none";
           },
           success: async function (res) {
-            console.log(res);
             if (res.status) {
               Swal.fire({
                 icon: "success",

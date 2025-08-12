@@ -752,7 +752,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("[ post_matkul ] ", res);
         if (res.status === false) {
           await popUpTimer("error", res.message);
           if (res.target)
@@ -870,7 +869,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("[ put_matkul ] ", res);
         if (res.status === false) {
           await popUpTimer("error", res.message);
           if (res.target)
@@ -913,7 +911,6 @@
           hideLoading();
         },
         success: function (res) {
-          console.log("[ delete_matkul ] ", res);
           if (res.status === false) {
             popUpTimer("error", res.message);
           } else {
@@ -1157,7 +1154,6 @@
       },
       success: async function (res) {
         let kelompok = res.data;
-        console.log(kelompok);
 
         if (kelompok.length) {
           $("#input_kelompok").prop("disabled", false);

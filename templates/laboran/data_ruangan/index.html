@@ -392,8 +392,6 @@
       plot: retrieveBadgeValues("list_plot"),
     };
 
-    console.log(params);
-
     $.ajax({
       type: "POST",
       url: "/data_ruangan/put_kelas",
@@ -462,7 +460,6 @@
           hideLoading();
         },
         success: function (res) {
-          console.log("[ delete_kelas ] ", res);
           if (res.status === false) {
             popUpTimer("error", res.message);
           } else {

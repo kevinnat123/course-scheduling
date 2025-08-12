@@ -305,7 +305,6 @@
           if (result.isConfirmed) return true;
           else if (result.isDenied) return false;
         });
-        console.log(lanjut);
 
         if (!lanjut) return;
       }
@@ -326,8 +325,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("res ajax", res);
-
         if (res.status) {
           export_to_excel("Jadwal_Kuliah");
           switch_display(res.score);
@@ -382,9 +379,7 @@
    * @returns {link} - link download document
    */
   async function export_to_excel(downloadBy) {
-    console.warn("downloading...");
     let filename = downloadBy + "_Semester-" + semester_ajaran_depan;
-    console.log(filename);
     try {
       let params = {
         filename: filename,
@@ -436,7 +431,6 @@
   }
 
   async function evaluate_jadwal() {
-    console.log("clicked");
     $.ajax({
       type: "GET",
       url: "/generate_jadwal/evaluate_jadwal",
@@ -448,8 +442,6 @@
         hideLoading();
       },
       success: async function (res) {
-        console.log("res ajax", res);
-
         if (res.data) {
           switch_display(res.data);
         } else {
@@ -460,7 +452,6 @@
   }
 
   async function switch_display(data = undefined) {
-    console.warn(data);
     $("#setting_prodi_done")[0].toggleAttribute("hidden");
     $("#detail_evaluasi")[0].toggleAttribute("hidden");
     $("#div_generate")[0].toggleAttribute("hidden");
