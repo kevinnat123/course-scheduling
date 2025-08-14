@@ -81,9 +81,9 @@ def generate_jadwal():
 @generateJadwal.route("/generate_jadwal/evaluate_jadwal", methods=["GET"])
 @login_required
 def evaluate_jadwal():
-    print(f"{'[ CONTROLLER ]':<25} Evaluate Jadwal (Fitness)")
+    print(f"{'[ CONTROLLER ]':<25} Evaluate Jadwal (Fitness) (User Role: {session['user']['role']})")
 
-    if session['user']['role'] == "ADMIN":
+    if not session['user']['role'] == "ADMIN":
         return jsonify({ 'status': False, 'message': 'No Access!'})
     
     isCreated = dao.get_jadwal()
