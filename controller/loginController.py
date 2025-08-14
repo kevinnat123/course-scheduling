@@ -77,7 +77,7 @@ def pengaturan_akun():
 
 #     # Pastikan session masih valid
 #     if not session.get('user') or 'u_id' not in session['user']:
-#         print("⚠️ Session tidak valid, redirect ke login")
+#         print("! Session tidak valid, redirect ke login")
 #         return redirect(url_for('signin.login'))
     
 #     if session['user']['role'] == 'KEPALA PROGRAM STUDI':

@@ -47,7 +47,7 @@ function capitalizeWords(string) {
 }
 
 // auto uppercase input
-$("input").on("input", function () {
+$('input:not([type="file"])').on("input", function () {
   if (!$(this).hasClass("sensitive-case"))
     $(this).val($(this).val().toUpperCase());
   else $(this).val($(this).val());

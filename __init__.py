@@ -86,7 +86,7 @@ def create_app():
 
     @app.route("/ping")
     def ping():
-        print(f"{'❤ HEARTBEAT ❤':<25} Session: {True if session.get('user') else False}")
+        print(f"{'# HEARTBEAT #':<25} Session: {True if session.get('user') else False}")
         is_alive = session.get('user') and 'u_id' in session['user']
         if not is_alive:
             return jsonify({'status': False, 'expired': True}), 401
@@ -101,11 +101,11 @@ def create_app():
         if current_endpoint is None or current_endpoint in safe_endpoints or "index" in current_endpoint:
             return
         
-        print(f"{'[ 🔍 Before request ]':<25} Current Endpoint: {current_endpoint}")
+        print(f"{'[ @ Before request ]':<25} Current Endpoint: {current_endpoint}")
 
         # Cek apakah session masih ada
         if not current_user.is_authenticated:
-            print(f"{'':<25} ⚠️ Autentikasi user gagal")
+            print(f"{'':<25} ! Autentikasi user gagal")
             abort(401)
         elif current_user.is_authenticated:
             if current_user.last_update != session['user']['last_update']:
@@ -114,12 +114,12 @@ def create_app():
                 return redirect(url_for('signin.login'))
         
         if "user" not in session or 'u_id' not in session['user']:
-            print(f"{'':<25} ⚠️ Session tidak valid")
+            print(f"{'':<25} ! Session tidak valid")
             abort(401)
 
         # Jangan reset lifetime kalau hanya /ping
         if not request.path.startswith('/ping'):
-            print(f"{'':<25} 🔄 Perpanjang lifetime session")
+            print(f"{'':<25} ~ Perpanjang lifetime session")
             session.permanent = True
             session.modified = True
 
