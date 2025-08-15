@@ -1,40 +1,4 @@
 {% extends "layout.html" %} {% block content %}
-<style>
-  .circle-checkbox {
-    display: inline-block;
-    position: relative;
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-  }
-
-  .circle-checkbox input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 24px;
-    width: 24px;
-    border-radius: 50%;
-    background-color: #dc3545; /* merah default */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M18.3 5.7L12 12l6.3 6.3-1.4 1.4L12 13.4l-6.3 6.3-1.4-1.4L10.6 12 4.3 5.7 5.7 4.3 12 10.6 18.3 4.3z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 60%;
-    transition: all 0.2s;
-  }
-
-  .circle-checkbox input:checked + .checkmark {
-    background-color: #28a745; /* hijau */
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9 16.2l-3.5-3.5-1.4 1.4L9 19 20.3 7.7l-1.4-1.4z'/%3E%3C/svg%3E");
-  }
-</style>
-
 <div class="container-fluid mt-4" id="main-window">
   <div class="card">
     <div class="card-body row align-items-center">
@@ -52,7 +16,7 @@
           <div class="col-12 col-lg-4 order-1" id="div_generate">
             <button
               type="button"
-              class="btn btn-success w-100"
+              class="btn btn-primary w-100"
               onclick="generate_jadwal()"
             >
               Generate
@@ -63,7 +27,7 @@
           <div class="col-6 col-lg-4 order-2 order-lg-2">
             <button
               type="button"
-              class="btn btn-primary w-100"
+              class="btn btn-dark w-100"
               onclick="download_excel_by()"
             >
               Download Excel
@@ -74,172 +38,13 @@
           <div class="col-6 col-lg-4 order-3 order-lg-3">
             <button
               type="button"
-              class="btn btn-info w-100"
-              onclick="evaluate_jadwal()"
-              id="btn_eval"
+              class="btn w-100"
+              onclick="ready()"
+              id="btn_ready"
             >
-              Eval Jadwal
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary w-100"
-              onclick="switch_display()"
-              id="btn_kembali"
-              hidden
-            >
-              Kembali
+              Ready
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card-wrapper" id="setting_prodi_done"></div>
-
-  <div class="card" id="detail_evaluasi" hidden>
-    <div class="card-body">
-      <div class="form-group row align-items-center">
-        <label
-          for="score"
-          class="col col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Skor Jadwal</label
-        >
-        <div class="col-3 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="score"
-            disabled
-          />
-        </div>
-        <span class="col"> / 1000</span>
-      </div>
-      <div class="form-group row align-items-center" id="dosen_overdose_div">
-        <label
-          for="dosen_overdose"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Beban SKS Dosen > 12</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="dosen_overdose"
-            disabled
-          />
-        </div>
-      </div>
-      <div class="form-group row align-items-center" id="dosen_not_set_div">
-        <label
-          for="count_dosen_kosong"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Jumlah Dosen Tidak Mengajar</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="count_dosen_kosong"
-            disabled
-          />
-        </div>
-      </div>
-      <div
-        class="form-group row align-items-center fully-disabled"
-        id="field_dosen"
-      >
-        <label
-          for="input_dosen"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2 col-form-label"
-          >Dosen Tidak Mengajar</label
-        >
-        <div class="col" id="list_dosen"></div>
-      </div>
-      <div class="form-group row align-items-center" id="bentrok_dosen_div">
-        <label
-          for="bentrok_dosen"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Dosen Bertabrakan</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="bentrok_dosen"
-            disabled
-          />
-        </div>
-      </div>
-      <div class="form-group row align-items-center" id="bentrok_ruangan_div">
-        <label
-          for="bentrok_ruangan"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Ruangan Bertabrakan</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="bentrok_ruangan"
-            disabled
-          />
-        </div>
-      </div>
-      <div
-        class="form-group row align-items-center"
-        id="bentrok_dosen_asdos_div"
-      >
-        <label
-          for="bentrok_dosen_asdos"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Dosen & Asisten Bertabrakan</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="bentrok_dosen_asdos"
-            disabled
-          />
-        </div>
-      </div>
-      <div
-        class="form-group row align-items-center"
-        id="solo_team_teaching_div"
-      >
-        <label
-          for="solo_team_teaching"
-          class="col-12 col-sm-5 col-md-4 col-lg-3 col-xl-2 col-xxl-2"
-          >Solo Team Teaching</label
-        >
-        <div class="col-2 col-sm-2 col-md-1">
-          <input
-            type="text"
-            class="form-control text-end"
-            id="solo_team_teaching"
-            disabled
-          />
-        </div>
-      </div>
-      <div class="align-items-center" id="pelanggaran_preferensi_div">
-        <label for="table_pelanggaran_preferensi"
-          >Pelanggaran Preferensi Dosen</label
-        >
-        <div class="table-responsive">
-          <table
-            class="table table-bordered table-stripped table-hover w-100"
-            id="table_pelanggaran_preferensi"
-          >
-            <thead>
-              <th>NIP</th>
-              <th>Kode Matkul</th>
-              <th>Hari</th>
-              <th>Jam Mulai</th>
-              <th>Jam Selesai</th>
-            </thead>
-            <tbody></tbody>
-          </table>
         </div>
       </div>
     </div>

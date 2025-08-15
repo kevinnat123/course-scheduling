@@ -19,7 +19,7 @@ def generateJadwal_index():
         jadwal = True if jadwal and jadwal.get('jadwal') else False
         
         return render_template(
-            '/kaprodi/generate_jadwal/index.html', 
+            '/admin/generate_jadwal/index.html', 
             menu = 'Generate Jadwal', 
             title = 'Generate Jadwal', 
             semester_ajaran_depan = session['academic_details']['semester_depan'] + "_" + session['academic_details']['tahun_ajaran_berikutnya'].replace("/", "-"),
