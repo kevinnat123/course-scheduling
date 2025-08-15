@@ -1,5 +1,5 @@
 from flask import render_template, Blueprint, request, jsonify, session, abort
-from dao.admin.generateJadwalDao import generateJadwalDao
+from dao.generateJadwalDao import generateJadwalDao
 from dao import genetic_algorithm as ga
 from dao.genetic_algorithm import JadwalKuliah
 from flask_login import login_required
@@ -19,7 +19,7 @@ def generateJadwal_index():
         jadwal = True if jadwal and jadwal.get('jadwal') else False
         
         return render_template(
-            '/admin/generate_jadwal/index.html', 
+            '/kaprodi/generate_jadwal/index.html', 
             menu = 'Generate Jadwal', 
             title = 'Generate Jadwal', 
             semester_ajaran_depan = session['academic_details']['semester_depan'] + "_" + session['academic_details']['tahun_ajaran_berikutnya'].replace("/", "-"),

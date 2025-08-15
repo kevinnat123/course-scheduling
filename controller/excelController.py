@@ -6,7 +6,7 @@ from collections import defaultdict
 import xlsxwriter
 import random
 
-from dao.admin.generateJadwalDao import generateJadwalDao
+from dao.generateJadwalDao import generateJadwalDao
 from dao.kaprodi.dataMataKuliahDao import dataMataKuliahDao
 from dao.kaprodi.dataDosenDao import dataDosenDao
 from dao import genetic_algorithm as ga

@@ -9,10 +9,10 @@ from controller.loginController import signin
 from controller.dashboardController import dashboard
 from controller.settingController import setting
 from controller.excelController import export
+from controller.generateJadwalController import generateJadwal
 
 # ADMIN
 from controller.admin.dataProgramStudiController import program_studi
-from controller.admin.generateJadwalController import generateJadwal
 
 # LABORAN
 from controller.laboran.dataRuanganController import dataRuangan
@@ -45,10 +45,10 @@ def create_app():
     app.register_blueprint(dashboard)
     app.register_blueprint(setting)
     app.register_blueprint(export)
+    app.register_blueprint(generateJadwal)
 
     # ADMIN
     app.register_blueprint(program_studi)
-    app.register_blueprint(generateJadwal)
 
     # LABORAN
     app.register_blueprint(dataRuangan)
