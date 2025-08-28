@@ -28,7 +28,7 @@ def export_to_excel():
     report_fitness = data_jadwal["report"]
     bkd = data_jadwal["bkd"]
 
-    data_dosen = dosen.get_dosen()
+    data_dosen = dosen.get_dosen_all()
     data_matkul = matkul.get_matkul()
 
     if downloadBy == "jadwal_kuliah":

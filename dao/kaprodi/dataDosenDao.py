@@ -39,6 +39,20 @@ class dataDosenDao:
             )
         return result_sorted if result and result.get('status') else []
 
+    def get_dosen_all(self):
+        print(f"{'[ DAO ]':<25} Get Dosen ALL")
+        result = self.connection.find_many(
+            collection_name = db_dosen, 
+            filter          = { 'status': {'$ne': 'TIDAK_AKTIF'} }, 
+            sort            = [ ("status", 1), ("nip", 1) ]
+        )
+        if result and result.get('status'):
+            for dosen in result['data']:
+                dosen.setdefault('pakar', None)
+                dosen.setdefault('prodi', None)
+                # dosen.setdefault('matkul_ajar', None)
+        return result['data'] if result and result.get('status') else []
+
     def get_dosen(self):
         print(f"{'[ DAO ]':<25} Get Dosen")
         if session['user']['role'] == "KEPALA PROGRAM STUDI":

@@ -1,5 +1,5 @@
 from dao import Database
-from config import MONGO_DB, MONGO_LECTURERS_COLLECTION as db_dosen, MONGO_OPEN_COURSES_COLLECTION as db_matkul_simpanan, MONGO_CLASSES_COLLECTION as db_kelas
+from config import MONGO_DB, MONGO_LECTURERS_COLLECTION as db_dosen, MONGO_OPEN_COURSES_COLLECTION as db_matkul_simpanan, MONGO_CLASSES_COLLECTION as db_kelas, MONGO_PARSIAL_SCHEDULE_COLLECTION as db_ps
 from config import MONGO_SCHEDULE_COLLECTION as db_jadwal
 from flask import session
 from dao.kaprodi.dataMataKuliahDao import dataMataKuliahDao
@@ -40,6 +40,20 @@ class generateJadwalDao:
             })
         return sorted(final_data, key=lambda x: x["status"], reverse=True)
         # return {k: True if (k.split()[0] + ''.join(hrf[0] for hrf in k.split()[1:])) in prodi_done else False for k in list_prodi}
+
+    def prodi_isGenerated(self):
+        print(f"{'[ DAO ]':<25} is Prodi Generated")
+        u_id = str(session['academic_details']['semester_depan']) + "_" + str(session['academic_details']['tahun_ajaran_berikutnya']).replace("/", "-")
+        isGenerated = self.connection.find_one(
+            collection_name = db_ps, 
+            filter          = {
+                    'u_id': u_id,
+                    'prodi': session["user"]["prodi"]
+                }
+        )
+        isExist = isGenerated and isGenerated.get("status")
+        print(isExist)
+        return isExist
     
     def get_open_matkul(self):
         print(f"{'[ DAO ]':<25} Get Matkul")

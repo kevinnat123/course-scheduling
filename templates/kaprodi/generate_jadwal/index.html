@@ -14,6 +14,11 @@
         <div class="row g-2 justify-content-end">
           <!-- Button 1: selalu di atas -->
           <div class="col-12 col-lg-4 order-1" id="div_generate">
+            <button type="button" class="btn w-100" id="btn_submit"></button>
+          </div>
+
+          <!-- Button 2: di bawah untuk <992, sejajar untuk ≥992 -->
+          <div class="col-6 col-lg-4 order-2 order-lg-2">
             <button
               type="button"
               class="btn btn-primary w-100"
@@ -23,47 +28,47 @@
             </button>
           </div>
 
-          <!-- Button 2: di bawah untuk <992, sejajar untuk ≥992 -->
-          <div class="col-6 col-lg-4 order-2 order-lg-2">
-            <button
-              type="button"
-              class="btn btn-dark w-100"
-              onclick="download_excel_by()"
-            >
-              Download Excel
-            </button>
-          </div>
-
           <!-- Button 3: di bawah untuk <992, sejajar untuk ≥992 -->
           <div class="col-6 col-lg-4 order-3 order-lg-3">
             <button
               type="button"
-              class="btn w-100"
-              onclick="ready()"
-              id="btn_ready"
+              class="btn btn-info w-100"
+              onclick="download_excel_by()"
             >
-              Ready
+              Download Excel
             </button>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="card">
+    <div class="card-body"></div>
+  </div>
 </div>
 {% endblock %} {% block script %}
 <script>
   const semester_ajaran_depan = "{{ semester_ajaran_depan | safe }}";
   const prodi = "{{ prodi | safe }}";
-  var jadwal = "{{ jadwal | safe }}";
+  const isExist = "{{ isExist | safe }}";
 
   $(document).ready(async function () {
-    await setting_prodi_done();
+    if (isExist == "True") {
+      $("#btn_submit").addClass("btn-danger");
+      $("#btn_submit").text("Cancel Submission");
+      $("#btn_submit").removeClass("btn-success");
+    } else {
+      $("#btn_submit").addClass("btn-success");
+      $("#btn_submit").text("Submit");
+      $("#btn_submit").removeClass("btn-danger");
+    }
   });
 
-  function setting_prodi_done() {
+  $("#btn_submit").on("click", async function () {
     $.ajax({
       type: "GET",
-      url: "/generate_jadwal/get_simpanan_prodi",
+      url: "/generate_jadwal/is_prodi_generated",
       cache: false,
       beforeSend: () => {
         showLoading();
@@ -72,21 +77,31 @@
         hideLoading();
       },
       success: async function (res) {
-        await res.data.forEach((prodi) => {
-          isChecked = prodi.status ? "checked" : "";
-          $("#setting_prodi_done").append(
-            `<div class="card-responsive d-flex justify-content-between align-items-center fully-disabled">
-              <div class="text-label"><label for="${prodi.prodi}">${prodi.prodi}</label></div>
-                <div class="button-group"><label class="circle-checkbox">
-                  <input type="checkbox" name="prodi_ready" id="${prodi.prodi}" ${isChecked}/>
-                  <span class="checkmark"></span>
-                </label></div>
-              </div>`
-          );
-        });
+        if (res.status) {
+          if ($("#btn_submit").text() == "Submit") {
+            $("#btn_submit").addClass("btn-danger");
+            $("#btn_submit").text("Cancel Submission");
+            $("#btn_submit").removeClass("btn-success");
+          } else {
+            $("#btn_submit").addClass("btn-success");
+            $("#btn_submit").text("Submit");
+            $("#btn_submit").removeClass("btn-danger");
+          }
+        } else {
+          if ($("#btn_submit").text() == "Submit") {
+            $("#btn_submit").addClass("btn-success");
+            $("#btn_submit").text("Submit");
+            $("#btn_submit").removeClass("btn-danger");
+          }
+        }
+        popUpTimer(
+          res.status ? "success" : "error",
+          res.status ? "Jadwal berhasil di-submit" : "Jadwal gagal di-submit",
+          res.status ? undefined : "Jadwal belum di-generate!"
+        );
       },
     });
-  }
+  });
 
   async function generate_jadwal(generate_ulang = false) {
     if (!generate_ulang) {
@@ -234,116 +249,5 @@
       popUpTimer("error", error.status, error.statusText);
     }
   }
-
-  async function evaluate_jadwal() {
-    $.ajax({
-      type: "GET",
-      url: "/generate_jadwal/evaluate_jadwal",
-      cache: false,
-      beforeSend: () => {
-        showLoading();
-      },
-      complete: () => {
-        hideLoading();
-      },
-      success: async function (res) {
-        if (res.data) {
-          switch_display(res.data);
-        } else {
-          popUpTimer("error", res.message);
-        }
-      },
-    });
-  }
-
-  async function switch_display(data = undefined) {
-    $("#setting_prodi_done")[0].toggleAttribute("hidden");
-    $("#detail_evaluasi")[0].toggleAttribute("hidden");
-    $("#div_generate")[0].toggleAttribute("hidden");
-    $("#btn_eval")[0].toggleAttribute("hidden");
-    $("#btn_kembali")[0].toggleAttribute("hidden");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-
-    $.fn.dataTable
-      .tables({
-        visible: true,
-        api: true,
-      })
-      .columns.adjust();
-
-    if (!$("#detail_evaluasi").is("[hidden]") && data) {
-      await $("#detail_evaluasi input").val("");
-      await $("#detail_evaluasi span.badge").remove();
-      $("#field_dosen")[0].toggleAttribute("hidden");
-      await preferensi_tab.clear().draw(false);
-
-      Object.entries(data).forEach(async ([key, value]) => {
-        if (typeof value != "object") {
-          if (!value) $("#" + key + "_div").prop("hidden", true);
-          else $("#" + key + "_div").prop("hidden", false);
-        } else {
-          if (Object.keys(data[key]).length === 0)
-            $("#" + key + "_div").prop("hidden", true);
-          else $("#" + key + "_div").prop("hidden", false);
-        }
-
-        if (key == "pelanggaran_preferensi") {
-          preferensi_tab.rows.add(value).draw(false);
-        } else if (key == "solo_team_teaching") {
-          $("#" + key).val(Object.keys(value).length);
-        } else if (key == "dosen_not_set") {
-          $("#count_dosen_kosong").val(value.length);
-          if (value.length > 0) {
-            $("#field_dosen")[0].toggleAttribute("hidden");
-            await value.forEach((kode) => {
-              addBadge("field_dosen", "list_dosen", kode);
-            });
-          } else {
-            $("#field_dosen").prop("hidden", true);
-          }
-        } else {
-          $("#" + key).val(value);
-        }
-      });
-      if (data.score < 900) {
-        $("#score").addClass("text-danger");
-      } else {
-        $("#score").removeClass("text-danger");
-      }
-      // v_toko_tab.ajax.reload(null, false);
-    }
-  }
-
-  let preferensi_tab = $("#table_pelanggaran_preferensi").DataTable({
-    scrollX: true,
-    scrollY: "50vh",
-    scrollCollapse: true,
-    paging: false,
-    responsive: true,
-    ordering: false,
-    info: false,
-    columns: [
-      {
-        data: "kode_dosen",
-        defaultContent: "",
-      },
-      {
-        data: "kode_matkul",
-        defaultContent: "",
-      },
-      {
-        data: "hari",
-        defaultContent: "",
-      },
-      {
-        data: "jam_mulai",
-        defaultContent: "",
-      },
-      {
-        data: "jam_selesai",
-        defaultContent: "",
-      },
-    ],
-  });
 </script>
 {% endblock %}
