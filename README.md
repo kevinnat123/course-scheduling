@@ -1,3 +1,5 @@
+Sebuah aplikasi sederhana berbasis website yang ditujukan untuk membantu proses penjadwalan mata kuliah dengan menerapkan **Algoritma Genetika** sebagai dasar otomatisasi penjadwalan. Dibangun dengan menggunakan HTML, Bootstrap, jQuery, dan Python.
+
 # Flask Application
 
 ### Cara Menjalankan
