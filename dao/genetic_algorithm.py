@@ -38,6 +38,8 @@ BOBOT_PENALTI = {
     "melanggar_preferensi": 5,      # Tidak Sesuai dengan permintaan / request dosen
 }
 
+#   PROCESSING OUTPUT
+#   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
 def convertOutputToDict(jadwal_list):
     """
     Menkonversi object jadwal menjadi dictionary.
@@ -112,29 +114,46 @@ def bkd_info(jadwal, dosen_by_nip, matkul_by_kode):
         
         bkd[nip] = {"sks": sum(sbs), "matakuliah": matkul_count}
     return bkd
-
-#   FUNCTION PENDUKUNG
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
-def safe_append_LO(mapping, key, item):
-    if item not in mapping.setdefault(key, []):
-        mapping[key].append(item)
 
-def safe_remove_LO(mapping, key, item):
-    if item in mapping.get(key, []):
-        mapping[key].remove(item)
+#   BASIC FUNCTION
+#   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
+def safe_append_LO(jadwal_by:dict, key:str, item:object):
+    if item not in jadwal_by.setdefault(key, []):
+        jadwal_by[key].append(item)
 
-def move_item_LO(mapping, old_key, new_key, item):
-    safe_remove_LO(mapping, old_key, item)
-    safe_append_LO(mapping, new_key, item)
+def safe_remove_LO(jadwal_by:dict, key:str, item:object):
+    if item in jadwal_by.get(key, []):
+        jadwal_by[key].remove(item)
+
+def move_item_LO(jadwal_by:dict, old_key:str, new_key:str, item:object):
+    safe_remove_LO(jadwal_by, old_key, item)
+    safe_append_LO(jadwal_by, new_key, item)
+
+def is_bentrok(jadwal_by:dict, key:str, sesi_to_check:object):
+    for other_session in jadwal_by.get(key, []):
+        if sesi_to_check is not other_session and sesi_to_check.kode_matkul != other_session.kode_matkul and sesi_to_check.hari == other_session.hari:
+            if sesi_to_check.jam_mulai < other_session.jam_selesai and sesi_to_check.jam_selesai > other_session.jam_mulai:
+                return True
+    return False
 
 def is_schedule_fit(jam_mulai, sks, preferensi_jam, available_schedule):
     range_time = range(jam_mulai, jam_mulai + sks + 1)
     return all(j in preferensi_jam and j in available_schedule for j in range_time) and jam_mulai != 12
 
+
+
+
+
+
+
+
+
+
 def is_some_lecture_not_scheduled(jadwal_list=None, matakuliah_list=[], dosen_list=[]):
     matkul_take_all_lecture = [matkul["kode"] for matkul in matakuliah_list if matkul.get("take_all_lecture")]
     scheduled_dosen = set(sesi.kode_dosen for sesi in jadwal_list if sesi.kode_matkul[:5] not in matkul_take_all_lecture)
-    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP")
+    set_dosen_tetap = set(dosen["nip"] for dosen in dosen_list if dosen["status"] == "TETAP" and dosen.get("prodi") == "S1 TEKNIK INFORMATIKA")
     all_dosen_tetap_scheduled = all(dosen in scheduled_dosen for dosen in set_dosen_tetap)
     if not all_dosen_tetap_scheduled:
         return True, [dosen for dosen in set_dosen_tetap if dosen not in scheduled_dosen]
@@ -880,7 +899,7 @@ def switch_dosen_by_matkul(
     return False
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
 
-#   RELATED FUNCTION ke MAIN FUNCTION
+#   SUB FUNCTION
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
 def assign_schedule_for_idle_lecturer(
         jadwal, 
@@ -1430,7 +1449,7 @@ def repair_bentrok(jadwal, matakuliah_list, ruang_list, matkul_by_kode, dosen_by
             jadwal_by_matkul=jadwal_by_matkul)
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
 
-#   FUNCTION of GA's STEPs
+#   MAIN FUNCTION of GA's STEPs
 #   ======= ======= ======= ======= ======= ======= ======= ======= ======= =======
 def repair_jadwal(jadwal, probabilitas_agresif_repair, matakuliah_list, dosen_list, ruang_list):
     if random.random() < probabilitas_agresif_repair:
@@ -2530,11 +2549,11 @@ def genetic_algorithm(matakuliah_list, dosen_list, ruang_list, ukuran_populasi=7
             gen_best_fitness = max(fitness_scores)
             gen_best_individual = populasi[fitness_scores.index(gen_best_fitness)]
             
-            if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
-                print(f"\n{f'[Gen {gen}]':<10} BEST ALLTIME: {best_fitness_global} (Gen {best_gen})")
-                print(f"All Unique Fitness: ({len(unique_fitness)}/{len(populasi)}) {f'(min: {gen_worst_fitness})':<12}{f'(max: {gen_best_fitness})':<12}")
-                hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
-                print("\n")
+            # if int(gen) % 20 == 0 or int(gen) == jumlah_generasi - 1:
+            print(f"\n{f'[Gen {gen}]':<10} BEST ALLTIME: {best_fitness_global} (Gen {best_gen})")
+            print(f"All Unique Fitness: ({len(unique_fitness)}/{len(populasi)}) {f'(min: {gen_worst_fitness})':<12}{f'(max: {gen_best_fitness})':<12}")
+            hitung_fitness(gen_best_individual, matakuliah_list, dosen_list, ruang_list, True)
+            print("\n")
             
             if gen < 0:
                 continue
