@@ -11,8 +11,8 @@ Sebuah aplikasi sederhana berbasis website yang ditujukan untuk membantu proses 
 - Backend    : Python (Flask)
 
 ## Version
-- V4.0 : Secara keseluruhan, program berjalan dengan baik seperti yang diharapkan dan proses penjadwalan sudah bisa dilakukan dan telah melewati pengujian dengan menggunakan dataset mata kuliah S1 TI.
-- V5.0 : Dalam pengembangan... 
+- V4.0 - Deployed - Secara keseluruhan, program berjalan dengan baik seperti yang diharapkan dan proses penjadwalan sudah bisa dilakukan dan telah melewati pengujian dengan menggunakan dataset mata kuliah S1 TI.
+- V5.0 - Dalam pengembangan... 
 
 ### Cara Menjalankan
 1. Buat virtual environment
