@@ -1,5 +1,5 @@
 # Proyek Penjadwalan Mata Kuliah Otomatis menggunakan **Algoritma Genetika**
-Sebuah aplikasi sederhana berbasis website yang ditujukan untuk membantu proses penjadwalan mata kuliah dengan menerapkan **Algoritma Genetika** sebagai dasar otomatisasi penjadwalan. Dibangun dengan menggunakan HTML, Bootstrap, JavaScript, dan Python serta MongoDB sebagai basis data.
+Aplikasi sederhana berbasis website yang ditujukan untuk membantu proses penjadwalan mata kuliah dengan menerapkan **Algoritma Genetika** sebagai dasar otomatisasi penjadwalan. Dibangun dengan menggunakan HTML, Bootstrap, JavaScript, dan Python serta MongoDB sebagai basis data.
 
 ## Fitur
 - Login
@@ -11,10 +11,13 @@ Sebuah aplikasi sederhana berbasis website yang ditujukan untuk membantu proses 
 - Backend    : Python (Flask)
 
 ## Version
-- V4.0 - Deployed - Secara keseluruhan, program berjalan dengan baik seperti yang diharapkan dan proses penjadwalan sudah bisa dilakukan dan telah melewati pengujian dengan menggunakan dataset mata kuliah S1 TI.
+- V4.0 - Deployed
+
+  Secara keseluruhan, program berjalan dengan baik seperti yang diharapkan dan proses penjadwalan sudah bisa dilakukan dan telah melewati pengujian dengan menggunakan dataset mata kuliah S1 TI.
+
 - V5.0 - Dalam pengembangan... 
 
-### Cara Menjalankan
+### Cara Menjalankan Menggunakan Local
 1. Buat virtual environment
    `python -m venv myenv`
 2. Install package
